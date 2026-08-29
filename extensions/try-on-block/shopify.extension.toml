@@ -1,0 +1,11 @@
+api_version = "2024-10"
+
+[[extensions]]
+name = "TryFit"
+handle = "tryfit-block"
+uid = "83bb5402-d1c3-404c-b6bf-94b8bc49f12e65c66f66"
+type = "theme"
+
+  [[extensions.targeting]]
+  module = "./blocks/try-on.liquid"
+  target = "section"

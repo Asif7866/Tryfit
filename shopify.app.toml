@@ -1,0 +1,17 @@
+name = "TryFit"
+client_id = "801b072184a9733e9c66dc11391a28a5"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "testing-ashif.myshopify.com"
+
+[access_scopes]
+scopes = "read_products,write_products"
+
+[auth]
+redirect_urls = ["https://example.com/auth/callback"]
+
+[webhooks]
+api_version = "2024-10"

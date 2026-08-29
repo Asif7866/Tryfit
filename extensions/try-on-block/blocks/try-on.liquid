@@ -1,0 +1,1140 @@
+{% if product %}
+<div
+  id="vto"
+  data-pid="{{ product.id }}"
+  data-ptitle="{{ product.title | escape }}"
+  data-pimg="{{ product.featured_image | image_url: width: 1024 }}"
+  data-shop="{{ shop.permanent_domain }}"
+>
+  <button id="vto-btn" class="vto-btn" type="button">
+    <span class="vto-btn__shimmer"></span>
+    <svg class="vto-btn__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.5 6.5L17.5 17.5"/>
+      <path d="M7 2l-5 5 5 5"/>
+      <path d="M17 22l5-5-5-5"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    <span class="vto-btn__label">{{ block.settings.button_text }}</span>
+    <span class="vto-btn__tag">AI</span>
+  </button>
+
+  <div id="vto-popup" class="vto-popup" style="display:none;">
+    <div class="vto-popup__inner">
+      <img src="{{ product.featured_image | image_url: width: 80 }}" class="vto-popup__thumb" width="44" height="44" alt="" />
+      <div class="vto-popup__text">
+        <strong>See it on you ✨</strong>
+        <span>{{ block.settings.popup_subtitle }}</span>
+      </div>
+      <button id="vto-popup-cta" class="vto-popup__cta" type="button">Try</button>
+      <button id="vto-popup-close" class="vto-popup__x" type="button" aria-label="Close">✕</button>
+    </div>
+  </div>
+
+  <div id="vto-overlay" class="vto-overlay" style="display:none;">
+    <div class="vto-modal" role="dialog" aria-modal="true">
+      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div id="vto-s-upload" class="vto-state">
+        <div class="vto-modal__top">
+          <div class="vto-badge">✨ Virtual Try-On</div>
+          <h2 class="vto-title">{{ block.settings.modal_title }}</h2>
+          <p class="vto-sub">{{ block.settings.modal_subtitle }}</p>
+        </div>
+
+        <div class="vto-product-card">
+          <img src="{{ product.featured_image | image_url: width: 120 }}" class="vto-product-card__img" width="56" height="56" alt="{{ product.title | escape }}" />
+          <div class="vto-product-card__info">
+            <span class="vto-product-card__name">{{ product.title }}</span>
+            <span class="vto-product-card__price">{{ product.price | money }}</span>
+          </div>
+        </div>
+
+        <div id="vto-dropzone" class="vto-drop">
+          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
+          <div id="vto-dz-empty" class="vto-drop__empty">
+            <div class="vto-drop__circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="vto-drop__label">Tap to upload your photo</p>
+            <p class="vto-drop__hint">JPG, PNG or WebP · Max 10 MB</p>
+          </div>
+          <div id="vto-dz-preview" class="vto-drop__preview" style="display:none;">
+            <img id="vto-preview-img" width="200" height="200" alt="Your photo" />
+            <button id="vto-change-photo" class="vto-drop__change" type="button">Change photo</button>
+          </div>
+        </div>
+
+        <button id="vto-submit" class="vto-main-cta" type="button" disabled>
+          <span id="vto-submit-text">Upload photo to try on</span>
+        </button>
+        <p class="vto-privacy">🔒 Your photo is never stored</p>
+      </div>
+
+      <div id="vto-s-loading" class="vto-state" style="display:none;">
+        <div class="vto-loading-wrap">
+          <div class="vto-orbit">
+            <div class="vto-orbit__ring"></div>
+            <div class="vto-orbit__dot"></div>
+          </div>
+          <h3 class="vto-loading__title">Creating your look...</h3>
+          <p class="vto-loading__sub">AI is fitting the garment to your body</p>
+          <div class="vto-progress">
+            <div class="vto-progress__bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="vto-s-result" class="vto-state" style="display:none;">
+        <div class="vto-result-wrap">
+          <div class="vto-badge">🎉 Your Look</div>
+          <div class="vto-result__img-wrap">
+            <img id="vto-result-img" width="400" height="400" alt="Try-on result" />
+          </div>
+          <div class="vto-result__btns">
+            <button id="vto-retry" class="vto-btn-ghost" type="button">↻ Try Another</button>
+            <button id="vto-addtocart" class="vto-main-cta vto-main-cta--sm" type="button">Add to Cart 🛒</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="vto-s-error" class="vto-state" style="display:none;">
+        <div class="vto-error-wrap">
+          <div class="vto-error__emoji">😔</div>
+          <h3 class="vto-error__title">Oops, something broke</h3>
+          <p id="vto-error-msg" class="vto-error__msg"></p>
+          <button id="vto-error-retry" class="vto-main-cta" type="button">Try Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+:root {
+  --vto-primary: {{ block.settings.button_color }};
+  --vto-primary-text: {{ block.settings.button_text_color }};
+  --vto-r: {{ block.settings.button_radius }}px;
+  --vto-ff: system-ui, -apple-system, sans-serif;
+}
+
+/* ── BUTTON ── */
+.vto-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  margin-top: 12px;
+  background: var(--vto-primary);
+  color: var(--vto-primary-text);
+  border: none;
+  border-radius: var(--vto-r);
+  font: 700 15px/1 var(--vto-ff);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .2s;
+}
+.vto-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+.vto-btn:active { transform: translateY(0); }
+.vto-btn__shimmer {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  animation: vto-shimmer 3s infinite;
+}
+.vto-btn__tag {
+  padding: 3px 8px;
+  background: rgba(255,255,255,.2);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* ── POPUP ── */
+.vto-popup {
+  margin-top: 10px;
+  animation: vto-slideUp .4s ease;
+}
+.vto-popup__inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #111;
+  border-radius: 14px;
+  position: relative;
+}
+.vto-popup__thumb {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.vto-popup__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.vto-popup__text strong { color: #fff; font: 600 13px/1.3 var(--vto-ff); }
+.vto-popup__text span { color: #888; font: 400 11px/1.3 var(--vto-ff); }
+.vto-popup__cta {
+  padding: 7px 16px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  font: 700 12px/1 var(--vto-ff);
+  cursor: pointer;
+}
+.vto-popup__x {
+  position: absolute;
+  top: -6px; right: -4px;
+  background: #333;
+  border: none;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── OVERLAY ── */
+.vto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: vto-fadeIn .2s;
+}
+
+/* ── MODAL ── */
+.vto-modal {
+  background: #fff;
+  border-radius: 24px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 24px;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,.2);
+  animation: vto-scaleIn .25s ease;
+}
+.vto-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #555;
+  z-index: 2;
+  transition: background .15s;
+}
+.vto-close:hover { background: #eee; }
+
+/* ── BADGE ── */
+.vto-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #f0f0ff, #fff0f5);
+  border-radius: 20px;
+  font: 600 12px/1 var(--vto-ff);
+  color: #555;
+  margin-bottom: 14px;
+}
+
+.vto-modal__top { text-align: center; margin-bottom: 20px; }
+.vto-title { margin: 0; font: 800 24px/1.15 var(--vto-ff); color: #111; letter-spacing: -0.5px; }
+.vto-sub { margin: 8px 0 0; font: 400 14px/1.4 var(--vto-ff); color: #888; }
+
+/* ── PRODUCT CARD ── */
+.vto-product-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  margin-bottom: 18px;
+}
+.vto-product-card__img {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.vto-product-card__info { display: flex; flex-direction: column; gap: 3px; }
+.vto-product-card__name { font: 600 14px/1.3 var(--vto-ff); color: #111; }
+.vto-product-card__price { font: 600 13px/1 var(--vto-ff); color: #888; }
+
+/* ── DROPZONE ── */
+.vto-drop {
+  position: relative;
+  border: 2px dashed #e0e0e0;
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  margin-bottom: 16px;
+}
+.vto-drop:hover, .vto-drop.dragover {
+  border-color: var(--vto-primary);
+  background: #fafafe;
+}
+.vto-drop input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.vto-drop__circle {
+  width: 56px; height: 56px;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, #f3f0ff, #fff0f5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+.vto-drop__label { margin: 0; font: 600 15px/1 var(--vto-ff); color: #333; }
+.vto-drop__hint { margin: 5px 0 0; font: 400 12px/1 var(--vto-ff); color: #bbb; }
+.vto-drop__preview img {
+  max-height: 220px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+.vto-drop__change {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--vto-primary);
+  font: 500 13px/1 var(--vto-ff);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── CTA ── */
+.vto-main-cta {
+  width: 100%;
+  padding: 16px;
+  background: var(--vto-primary);
+  color: var(--vto-primary-text);
+  border: none;
+  border-radius: var(--vto-r);
+  font: 700 15px/1 var(--vto-ff);
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.vto-main-cta:disabled { opacity: .35; cursor: default; }
+.vto-main-cta:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.vto-main-cta--sm { flex: 1.4; }
+.vto-btn-ghost {
+  flex: 1;
+  padding: 14px;
+  background: #f5f5f5;
+  color: #333;
+  border: none;
+  border-radius: var(--vto-r);
+  font: 600 14px/1 var(--vto-ff);
+  cursor: pointer;
+  transition: background .15s;
+}
+.vto-btn-ghost:hover { background: #eee; }
+.vto-privacy { text-align: center; margin: 10px 0 0; font: 400 11px/1.4 var(--vto-ff); color: #ccc; }
+
+/* ── LOADING ── */
+.vto-loading-wrap { text-align: center; padding: 48px 0 32px; }
+.vto-orbit { width: 64px; height: 64px; margin: 0 auto 24px; position: relative; }
+.vto-orbit__ring {
+  width: 100%; height: 100%;
+  border: 3px solid #f0f0f0;
+  border-top-color: var(--vto-primary);
+  border-radius: 50%;
+  animation: vto-spin .8s linear infinite;
+}
+.vto-orbit__dot {
+  position: absolute;
+  top: -4px; left: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  background: var(--vto-primary);
+  border-radius: 50%;
+  animation: vto-spin .8s linear infinite;
+}
+.vto-loading__title { margin: 0; font: 700 20px/1 var(--vto-ff); color: #111; }
+.vto-loading__sub { margin: 8px 0 0; font: 400 13px/1 var(--vto-ff); color: #999; }
+.vto-progress { width: 80%; margin: 24px auto 0; height: 4px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.vto-progress__bar { width: 0%; height: 100%; background: var(--vto-primary); border-radius: 4px; animation: vto-load 25s ease-out forwards; }
+
+/* ── RESULT ── */
+.vto-result-wrap { text-align: center; }
+.vto-result__img-wrap {
+  margin: 12px 0 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,.1);
+  line-height: 0;
+}
+.vto-result__img-wrap img { width: 100%; display: block; }
+.vto-result__btns { display: flex; gap: 10px; }
+
+/* ── ERROR ── */
+.vto-error-wrap { text-align: center; padding: 40px 0; }
+.vto-error__emoji { font-size: 48px; margin-bottom: 16px; }
+.vto-error__title { margin: 0; font: 700 20px/1 var(--vto-ff); color: #111; }
+.vto-error__msg { margin: 8px 0 24px; font: 400 14px/1.4 var(--vto-ff); color: #999; }
+
+/* ── ANIMATIONS ── */
+@keyframes vto-spin { to { transform: rotate(360deg); } }
+@keyframes vto-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vto-scaleIn { from { opacity: 0; transform: scale(.92) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes vto-slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vto-shimmer { 0% { left: -100%; } 100% { left: 200%; } }
+@keyframes vto-load { 0% { width: 0%; } 30% { width: 40%; } 70% { width: 70%; } 100% { width: 95%; } }
+
+@media (max-width: 480px) {
+  .vto-modal { padding: 22px 18px; border-radius: 20px; }
+  .vto-title { font-size: 20px; }
+  .vto-result__btns { flex-direction: column; }
+}
+</style>
+
+<script>
+(function(){
+  const w=document.getElementById('vto');
+  if(!w)return;
+  const D=w.dataset,$=id=>document.getElementById(id);
+  const btn=$('vto-btn'),popup=$('vto-popup'),overlay=$('vto-overlay'),
+    dropzone=$('vto-dropzone')||$('vto-file')?.parentElement,
+    fileInput=$('vto-file'),submitBtn=$('vto-submit'),submitTxt=$('vto-submit-text'),
+    prevImg=$('vto-preview-img'),dzEmpty=$('vto-dz-empty'),dzPreview=$('vto-dz-preview'),
+    resultImg=$('vto-result-img'),errorMsg=$('vto-error-msg');
+  const states={upload:$('vto-s-upload'),loading:$('vto-s-loading'),result:$('vto-s-result'),error:$('vto-s-error')};
+  let file=null;
+  const show=k=>Object.entries(states).forEach(([n,el])=>el.style.display=n===k?'block':'none');
+  function openModal(){overlay.style.display='flex';document.body.style.overflow='hidden';show('upload');}
+  function closeModal(){overlay.style.display='none';document.body.style.overflow='';reset();}
+  function reset(){file=null;if(fileInput)fileInput.value='';if(dzEmpty)dzEmpty.style.display='block';if(dzPreview)dzPreview.style.display='none';if(submitBtn){submitBtn.disabled=true;submitTxt.textContent='Upload photo to try on';}}
+  function handleFile(f){
+    if(!f)return;
+    if(f.size>10*1024*1024){alert('Photo must be under 10 MB');return;}
+    if(!['image/jpeg','image/png','image/webp'].includes(f.type)){alert('Upload JPG, PNG or WebP');return;}
+    file=f;
+    const r=new FileReader();
+    r.onload=e=>{prevImg.src=e.target.result;dzEmpty.style.display='none';dzPreview.style.display='block';submitBtn.disabled=false;submitTxt.textContent='Try it on →';};
+    r.readAsDataURL(f);
+  }
+  btn.addEventListener('click',openModal);
+  $('vto-popup-cta')?.addEventListener('click',openModal);
+  $('vto-modal-close').addEventListener('click',closeModal);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.style.display!=='none')closeModal();});
+  $('vto-popup-close')?.addEventListener('click',e=>{e.stopPropagation();popup.style.display='none';sessionStorage.setItem('vto_dismissed','1');});
+  if(!sessionStorage.getItem('vto_dismissed')){setTimeout(()=>{if(!overlay.style.display||overlay.style.display==='none')popup.style.display='block';},{{ block.settings.popup_delay }}000);}
+  fileInput?.addEventListener('change',e=>handleFile(e.target.files[0]));
+  $('vto-change-photo')?.addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
+  const dz=fileInput?.parentElement;
+  if(dz){
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');handleFile(e.dataTransfer.files[0]);});
+  }
+  submitBtn?.addEventListener('click',async()=>{
+    if(!file)return;show('loading');
+    try{
+      const fd=new FormData();
+      fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);fd.append('product_image_url',D.pimg);fd.append('user_photo',file);
+      const res=await fetch('/apps/tryon',{method:'POST',body:fd});
+      const data=await res.json();
+      if(!res.ok||!data.success)throw new Error(data.error||'Try-on failed');
+      resultImg.src=data.result_url;show('result');
+    }catch(err){errorMsg.textContent=err.message||'Please try again.';show('error');}
+  });
+  $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});
+  $('vto-error-retry')?.addEventListener('click',()=>{reset();show('upload');});
+  $('vto-addtocart')?.addEventListener('click',async()=>{
+    const vid=document.querySelector('[name="id"]')?.value;
+    try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeModal();window.location.href='/cart';}catch(e){window.location.href='/cart';}
+  });
+})();
+</script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "TryFit – Virtual Try-On",
+  "target": "section",
+  "templates": ["product"],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Try On"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "button_radius",
+      "label": "Corner Radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Popup"
+    },
+    {
+      "type": "text",
+      "id": "popup_subtitle",
+      "label": "Popup Subtitle",
+      "default": "Upload a photo and try it instantly"
+    },
+    {
+      "type": "range",
+      "id": "popup_delay",
+      "label": "Popup Delay",
+      "min": 2,
+      "max": 15,
+      "step": 1,
+      "default": 4,
+      "unit": "s"
+    },
+    {
+      "type": "header",
+      "content": "Modal"
+    },
+    {
+      "type": "text",
+      "id": "modal_title",
+      "label": "Modal Title",
+      "default": "Try it before you buy"
+    },
+    {
+      "type": "text",
+      "id": "modal_subtitle",
+      "label": "Modal Subtitle",
+      "default": "Upload your photo and see this on you in seconds"
+    }
+  ]
+}
+{% endschema %}
+LIQUIDEOFcd ~/Desktop/shopify-tryon-app
+cat > extensions/try-on-block/blocks/try-on.liquid << 'LIQUIDEOF'
+{% if product %}
+<div
+  id="vto"
+  data-pid="{{ product.id }}"
+  data-ptitle="{{ product.title | escape }}"
+  data-pimg="{{ product.featured_image | image_url: width: 1024 }}"
+  data-shop="{{ shop.permanent_domain }}"
+>
+  <button id="vto-btn" class="vto-btn" type="button">
+    <span class="vto-btn__shimmer"></span>
+    <svg class="vto-btn__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.5 6.5L17.5 17.5"/>
+      <path d="M7 2l-5 5 5 5"/>
+      <path d="M17 22l5-5-5-5"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    <span class="vto-btn__label">{{ block.settings.button_text }}</span>
+    <span class="vto-btn__tag">AI</span>
+  </button>
+
+  <div id="vto-popup" class="vto-popup" style="display:none;">
+    <div class="vto-popup__inner">
+      <img src="{{ product.featured_image | image_url: width: 80 }}" class="vto-popup__thumb" width="44" height="44" alt="" />
+      <div class="vto-popup__text">
+        <strong>See it on you ✨</strong>
+        <span>{{ block.settings.popup_subtitle }}</span>
+      </div>
+      <button id="vto-popup-cta" class="vto-popup__cta" type="button">Try</button>
+      <button id="vto-popup-close" class="vto-popup__x" type="button" aria-label="Close">✕</button>
+    </div>
+  </div>
+
+  <div id="vto-overlay" class="vto-overlay" style="display:none;">
+    <div class="vto-modal" role="dialog" aria-modal="true">
+      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div id="vto-s-upload" class="vto-state">
+        <div class="vto-modal__top">
+          <div class="vto-badge">✨ Virtual Try-On</div>
+          <h2 class="vto-title">{{ block.settings.modal_title }}</h2>
+          <p class="vto-sub">{{ block.settings.modal_subtitle }}</p>
+        </div>
+
+        <div class="vto-product-card">
+          <img src="{{ product.featured_image | image_url: width: 120 }}" class="vto-product-card__img" width="56" height="56" alt="{{ product.title | escape }}" />
+          <div class="vto-product-card__info">
+            <span class="vto-product-card__name">{{ product.title }}</span>
+            <span class="vto-product-card__price">{{ product.price | money }}</span>
+          </div>
+        </div>
+
+        <div id="vto-dropzone" class="vto-drop">
+          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
+          <div id="vto-dz-empty" class="vto-drop__empty">
+            <div class="vto-drop__circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="vto-drop__label">Tap to upload your photo</p>
+            <p class="vto-drop__hint">JPG, PNG or WebP · Max 10 MB</p>
+          </div>
+          <div id="vto-dz-preview" class="vto-drop__preview" style="display:none;">
+            <img id="vto-preview-img" width="200" height="200" alt="Your photo" />
+            <button id="vto-change-photo" class="vto-drop__change" type="button">Change photo</button>
+          </div>
+        </div>
+
+        <button id="vto-submit" class="vto-main-cta" type="button" disabled>
+          <span id="vto-submit-text">Upload photo to try on</span>
+        </button>
+        <p class="vto-privacy">🔒 Your photo is never stored</p>
+      </div>
+
+      <div id="vto-s-loading" class="vto-state" style="display:none;">
+        <div class="vto-loading-wrap">
+          <div class="vto-orbit">
+            <div class="vto-orbit__ring"></div>
+            <div class="vto-orbit__dot"></div>
+          </div>
+          <h3 class="vto-loading__title">Creating your look...</h3>
+          <p class="vto-loading__sub">AI is fitting the garment to your body</p>
+          <div class="vto-progress">
+            <div class="vto-progress__bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="vto-s-result" class="vto-state" style="display:none;">
+        <div class="vto-result-wrap">
+          <div class="vto-badge">🎉 Your Look</div>
+          <div class="vto-result__img-wrap">
+            <img id="vto-result-img" width="400" height="400" alt="Try-on result" />
+          </div>
+          <div class="vto-result__btns">
+            <button id="vto-retry" class="vto-btn-ghost" type="button">↻ Try Another</button>
+            <button id="vto-addtocart" class="vto-main-cta vto-main-cta--sm" type="button">Add to Cart 🛒</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="vto-s-error" class="vto-state" style="display:none;">
+        <div class="vto-error-wrap">
+          <div class="vto-error__emoji">😔</div>
+          <h3 class="vto-error__title">Oops, something broke</h3>
+          <p id="vto-error-msg" class="vto-error__msg"></p>
+          <button id="vto-error-retry" class="vto-main-cta" type="button">Try Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+:root {
+  --vto-primary: {{ block.settings.button_color }};
+  --vto-primary-text: {{ block.settings.button_text_color }};
+  --vto-r: {{ block.settings.button_radius }}px;
+  --vto-ff: system-ui, -apple-system, sans-serif;
+}
+
+/* ── BUTTON ── */
+.vto-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  margin-top: 12px;
+  background: var(--vto-primary);
+  color: var(--vto-primary-text);
+  border: none;
+  border-radius: var(--vto-r);
+  font: 700 15px/1 var(--vto-ff);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .2s;
+}
+.vto-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+.vto-btn:active { transform: translateY(0); }
+.vto-btn__shimmer {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  animation: vto-shimmer 3s infinite;
+}
+.vto-btn__tag {
+  padding: 3px 8px;
+  background: rgba(255,255,255,.2);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* ── POPUP ── */
+.vto-popup {
+  margin-top: 10px;
+  animation: vto-slideUp .4s ease;
+}
+.vto-popup__inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #111;
+  border-radius: 14px;
+  position: relative;
+}
+.vto-popup__thumb {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.vto-popup__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.vto-popup__text strong { color: #fff; font: 600 13px/1.3 var(--vto-ff); }
+.vto-popup__text span { color: #888; font: 400 11px/1.3 var(--vto-ff); }
+.vto-popup__cta {
+  padding: 7px 16px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  font: 700 12px/1 var(--vto-ff);
+  cursor: pointer;
+}
+.vto-popup__x {
+  position: absolute;
+  top: -6px; right: -4px;
+  background: #333;
+  border: none;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── OVERLAY ── */
+.vto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: vto-fadeIn .2s;
+}
+
+/* ── MODAL ── */
+.vto-modal {
+  background: #fff;
+  border-radius: 24px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 24px;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,.2);
+  animation: vto-scaleIn .25s ease;
+}
+.vto-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #555;
+  z-index: 2;
+  transition: background .15s;
+}
+.vto-close:hover { background: #eee; }
+
+/* ── BADGE ── */
+.vto-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #f0f0ff, #fff0f5);
+  border-radius: 20px;
+  font: 600 12px/1 var(--vto-ff);
+  color: #555;
+  margin-bottom: 14px;
+}
+
+.vto-modal__top { text-align: center; margin-bottom: 20px; }
+.vto-title { margin: 0; font: 800 24px/1.15 var(--vto-ff); color: #111; letter-spacing: -0.5px; }
+.vto-sub { margin: 8px 0 0; font: 400 14px/1.4 var(--vto-ff); color: #888; }
+
+/* ── PRODUCT CARD ── */
+.vto-product-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  margin-bottom: 18px;
+}
+.vto-product-card__img {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.vto-product-card__info { display: flex; flex-direction: column; gap: 3px; }
+.vto-product-card__name { font: 600 14px/1.3 var(--vto-ff); color: #111; }
+.vto-product-card__price { font: 600 13px/1 var(--vto-ff); color: #888; }
+
+/* ── DROPZONE ── */
+.vto-drop {
+  position: relative;
+  border: 2px dashed #e0e0e0;
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  margin-bottom: 16px;
+}
+.vto-drop:hover, .vto-drop.dragover {
+  border-color: var(--vto-primary);
+  background: #fafafe;
+}
+.vto-drop input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.vto-drop__circle {
+  width: 56px; height: 56px;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, #f3f0ff, #fff0f5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+.vto-drop__label { margin: 0; font: 600 15px/1 var(--vto-ff); color: #333; }
+.vto-drop__hint { margin: 5px 0 0; font: 400 12px/1 var(--vto-ff); color: #bbb; }
+.vto-drop__preview img {
+  max-height: 220px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+.vto-drop__change {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--vto-primary);
+  font: 500 13px/1 var(--vto-ff);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── CTA ── */
+.vto-main-cta {
+  width: 100%;
+  padding: 16px;
+  background: var(--vto-primary);
+  color: var(--vto-primary-text);
+  border: none;
+  border-radius: var(--vto-r);
+  font: 700 15px/1 var(--vto-ff);
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.vto-main-cta:disabled { opacity: .35; cursor: default; }
+.vto-main-cta:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.vto-main-cta--sm { flex: 1.4; }
+.vto-btn-ghost {
+  flex: 1;
+  padding: 14px;
+  background: #f5f5f5;
+  color: #333;
+  border: none;
+  border-radius: var(--vto-r);
+  font: 600 14px/1 var(--vto-ff);
+  cursor: pointer;
+  transition: background .15s;
+}
+.vto-btn-ghost:hover { background: #eee; }
+.vto-privacy { text-align: center; margin: 10px 0 0; font: 400 11px/1.4 var(--vto-ff); color: #ccc; }
+
+/* ── LOADING ── */
+.vto-loading-wrap { text-align: center; padding: 48px 0 32px; }
+.vto-orbit { width: 64px; height: 64px; margin: 0 auto 24px; position: relative; }
+.vto-orbit__ring {
+  width: 100%; height: 100%;
+  border: 3px solid #f0f0f0;
+  border-top-color: var(--vto-primary);
+  border-radius: 50%;
+  animation: vto-spin .8s linear infinite;
+}
+.vto-orbit__dot {
+  position: absolute;
+  top: -4px; left: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  background: var(--vto-primary);
+  border-radius: 50%;
+  animation: vto-spin .8s linear infinite;
+}
+.vto-loading__title { margin: 0; font: 700 20px/1 var(--vto-ff); color: #111; }
+.vto-loading__sub { margin: 8px 0 0; font: 400 13px/1 var(--vto-ff); color: #999; }
+.vto-progress { width: 80%; margin: 24px auto 0; height: 4px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.vto-progress__bar { width: 0%; height: 100%; background: var(--vto-primary); border-radius: 4px; animation: vto-load 25s ease-out forwards; }
+
+/* ── RESULT ── */
+.vto-result-wrap { text-align: center; }
+.vto-result__img-wrap {
+  margin: 12px 0 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,.1);
+  line-height: 0;
+}
+.vto-result__img-wrap img { width: 100%; display: block; }
+.vto-result__btns { display: flex; gap: 10px; }
+
+/* ── ERROR ── */
+.vto-error-wrap { text-align: center; padding: 40px 0; }
+.vto-error__emoji { font-size: 48px; margin-bottom: 16px; }
+.vto-error__title { margin: 0; font: 700 20px/1 var(--vto-ff); color: #111; }
+.vto-error__msg { margin: 8px 0 24px; font: 400 14px/1.4 var(--vto-ff); color: #999; }
+
+/* ── ANIMATIONS ── */
+@keyframes vto-spin { to { transform: rotate(360deg); } }
+@keyframes vto-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vto-scaleIn { from { opacity: 0; transform: scale(.92) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes vto-slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vto-shimmer { 0% { left: -100%; } 100% { left: 200%; } }
+@keyframes vto-load { 0% { width: 0%; } 30% { width: 40%; } 70% { width: 70%; } 100% { width: 95%; } }
+
+@media (max-width: 480px) {
+  .vto-modal { padding: 22px 18px; border-radius: 20px; }
+  .vto-title { font-size: 20px; }
+  .vto-result__btns { flex-direction: column; }
+}
+</style>
+
+<script>
+(function(){
+  const w=document.getElementById('vto');
+  if(!w)return;
+  const D=w.dataset,$=id=>document.getElementById(id);
+  const btn=$('vto-btn'),popup=$('vto-popup'),overlay=$('vto-overlay'),
+    dropzone=$('vto-dropzone')||$('vto-file')?.parentElement,
+    fileInput=$('vto-file'),submitBtn=$('vto-submit'),submitTxt=$('vto-submit-text'),
+    prevImg=$('vto-preview-img'),dzEmpty=$('vto-dz-empty'),dzPreview=$('vto-dz-preview'),
+    resultImg=$('vto-result-img'),errorMsg=$('vto-error-msg');
+  const states={upload:$('vto-s-upload'),loading:$('vto-s-loading'),result:$('vto-s-result'),error:$('vto-s-error')};
+  let file=null;
+  const show=k=>Object.entries(states).forEach(([n,el])=>el.style.display=n===k?'block':'none');
+  function openModal(){overlay.style.display='flex';document.body.style.overflow='hidden';show('upload');}
+  function closeModal(){overlay.style.display='none';document.body.style.overflow='';reset();}
+  function reset(){file=null;if(fileInput)fileInput.value='';if(dzEmpty)dzEmpty.style.display='block';if(dzPreview)dzPreview.style.display='none';if(submitBtn){submitBtn.disabled=true;submitTxt.textContent='Upload photo to try on';}}
+  function handleFile(f){
+    if(!f)return;
+    if(f.size>10*1024*1024){alert('Photo must be under 10 MB');return;}
+    if(!['image/jpeg','image/png','image/webp'].includes(f.type)){alert('Upload JPG, PNG or WebP');return;}
+    file=f;
+    const r=new FileReader();
+    r.onload=e=>{prevImg.src=e.target.result;dzEmpty.style.display='none';dzPreview.style.display='block';submitBtn.disabled=false;submitTxt.textContent='Try it on →';};
+    r.readAsDataURL(f);
+  }
+  btn.addEventListener('click',openModal);
+  $('vto-popup-cta')?.addEventListener('click',openModal);
+  $('vto-modal-close').addEventListener('click',closeModal);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.style.display!=='none')closeModal();});
+  $('vto-popup-close')?.addEventListener('click',e=>{e.stopPropagation();popup.style.display='none';sessionStorage.setItem('vto_dismissed','1');});
+  if(!sessionStorage.getItem('vto_dismissed')){setTimeout(()=>{if(!overlay.style.display||overlay.style.display==='none')popup.style.display='block';},{{ block.settings.popup_delay }}000);}
+  fileInput?.addEventListener('change',e=>handleFile(e.target.files[0]));
+  $('vto-change-photo')?.addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
+  const dz=fileInput?.parentElement;
+  if(dz){
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');handleFile(e.dataTransfer.files[0]);});
+  }
+  submitBtn?.addEventListener('click',async()=>{
+    if(!file)return;show('loading');
+    try{
+      const fd=new FormData();
+      fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);fd.append('product_image_url',D.pimg);fd.append('user_photo',file);
+      const res=await fetch('/apps/tryon',{method:'POST',body:fd});
+      const data=await res.json();
+      if(!res.ok||!data.success)throw new Error(data.error||'Try-on failed');
+      resultImg.src=data.result_url;show('result');
+    }catch(err){errorMsg.textContent=err.message||'Please try again.';show('error');}
+  });
+  $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});
+  $('vto-error-retry')?.addEventListener('click',()=>{reset();show('upload');});
+  $('vto-addtocart')?.addEventListener('click',async()=>{
+    const vid=document.querySelector('[name="id"]')?.value;
+    try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeModal();window.location.href='/cart';}catch(e){window.location.href='/cart';}
+  });
+})();
+</script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "TryFit – Virtual Try-On",
+  "target": "section",
+  "templates": ["product"],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Try On"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "button_radius",
+      "label": "Corner Radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Popup"
+    },
+    {
+      "type": "text",
+      "id": "popup_subtitle",
+      "label": "Popup Subtitle",
+      "default": "Upload a photo and try it instantly"
+    },
+    {
+      "type": "range",
+      "id": "popup_delay",
+      "label": "Popup Delay",
+      "min": 2,
+      "max": 15,
+      "step": 1,
+      "default": 4,
+      "unit": "s"
+    },
+    {
+      "type": "header",
+      "content": "Modal"
+    },
+    {
+      "type": "text",
+      "id": "modal_title",
+      "label": "Modal Title",
+      "default": "Try it before you buy"
+    },
+    {
+      "type": "text",
+      "id": "modal_subtitle",
+      "label": "Modal Subtitle",
+      "default": "Upload your photo and see this on you in seconds"
+    }
+  ]
+}
+{% endschema %}

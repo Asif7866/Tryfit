@@ -27,13 +27,14 @@ export const action = async ({ request }) => {
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
     // Create prediction via Replicate API directly
-    const createRes = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
+    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
         input: {
           human_img: userPhotoDataUri,
           garm_img: productImageUrl,

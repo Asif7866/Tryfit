@@ -5,15 +5,20 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Ensure HOST has https:// prefix for Shopify SDK validation
+const rawHost = process.env.HOST || "localhost";
+const appUrl = rawHost.startsWith("http") ? rawHost : `https://${rawHost}`;
+
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
   apiVersion: "2024-10",
   scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.HOST || "",
+  appUrl,
   authPathPrefix: "/auth",
-  sessionStorage: new SQLiteSessionStorage("./session.db"),
-  distribution: "appStore",
+  sessionStorage: new SQLiteSessionStorage("/tmp/session.db"),
+  distribution: "singleMerchant",
+  isEmbeddedApp: true,
   future: {
     unstable_newEmbeddedAuthStrategy: true,
   },

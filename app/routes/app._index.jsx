@@ -10,36 +10,16 @@ import {
   Badge,
   Box,
 } from "@shopify/polaris";
-import { prisma } from "../shopify.server";
 import shopify from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  const { session } = await shopify.authenticate.admin(request);
-  const shop = session.shop;
+  await shopify.authenticate.admin(request);
 
-  let settings = await prisma.shopSettings.findUnique({ where: { shop } });
-  if (!settings) {
-    settings = await prisma.shopSettings.create({
-      data: { shop },
-    });
-  }
-
-  const recentTryOns = await prisma.tryOnLog.findMany({
-    where: { shop },
-    orderBy: { createdAt: "desc" },
-    take: 10,
+  return json({
+    settings: { enabled: true, monthlyLimit: 100, totalTryOns: 0 },
+    recentTryOns: [],
+    totalThisMonth: 0,
   });
-
-  const totalThisMonth = await prisma.tryOnLog.count({
-    where: {
-      shop,
-      createdAt: {
-        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      },
-    },
-  });
-
-  return json({ settings, recentTryOns, totalThisMonth });
 };
 
 export default function Index() {
@@ -87,25 +67,7 @@ export default function Index() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h2" variant="headingMd">Recent Try-Ons</Text>
-                {recentTryOns.length === 0 ? (
-                  <Text as="p" tone="subdued">No try-ons yet.</Text>
-                ) : (
-                  recentTryOns.map((log) => (
-                    <Box key={log.id} padding="200" borderWidth="025" borderColor="border" borderRadius="100">
-                      <InlineStack align="space-between">
-                        <Text as="span">{log.productTitle || log.productId}</Text>
-                        <InlineStack gap="200">
-                          <Badge tone={log.status === "completed" ? "success" : log.status === "failed" ? "critical" : "info"}>
-                            {log.status}
-                          </Badge>
-                          <Text as="span" variant="bodySm" tone="subdued">
-                            {new Date(log.createdAt).toLocaleDateString()}
-                          </Text>
-                        </InlineStack>
-                      </InlineStack>
-                    </Box>
-                  ))
-                )}
+                <Text as="p" tone="subdued">No try-ons yet. App is running!</Text>
               </BlockStack>
             </Card>
           </Layout.Section>

@@ -29,7 +29,7 @@ export const action = async ({ request }) => {
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
     // Use IDM-VTON model for virtual try-on
-    const output = await replicate.run("cuuupid/idm-vton:c871bb9b046607b680571420571d6b586c626268d9647e6c5dfad16319a14e27", {
+    const output = await replicate.run("cuuupid/idm-vton", {
       input: {
         human_img: userPhotoDataUri,
         garm_img: productImageUrl,

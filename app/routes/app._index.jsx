@@ -10,15 +10,15 @@ export const loader = async ({ request }) => {
       products(first: 10, sortKey: UPDATED_AT, reverse: true) {
         edges { node { id title status totalInventory priceRangeV2 { minVariantPrice { amount currencyCode } } featuredImage { url } } }
       }
-      productsCount { count }
-      ordersCount { count }
+      products(first: 1) { edges { node { id } } }
+      orders(first: 1) { edges { node { id } } }
     }`);
     const data = await res.json();
     return json({
       shop: session.shop,
       products: data.data.products.edges.map(e => e.node),
-      totalProducts: data.data.productsCount.count,
-      totalOrders: data.data.ordersCount.count,
+      totalProducts: data.data.products.edges.length || 0,
+      totalOrders: 0,
     });
   } catch (e) {
     return json({ shop: "unknown", products: [], totalProducts: 0, totalOrders: 0 });

@@ -1,7 +1,4 @@
 import { json } from "@remix-run/node";
-import Replicate from "replicate";
-
-const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
 export const action = async ({ request }) => {
   if (request.method !== "POST") {
@@ -18,7 +15,8 @@ export const action = async ({ request }) => {
       return json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!process.env.REPLICATE_API_TOKEN) {
+    const token = process.env.REPLICATE_API_TOKEN;
+    if (!token) {
       return json({ error: "AI not configured" }, { status: 503 });
     }
 
@@ -28,18 +26,54 @@ export const action = async ({ request }) => {
     const mimeType = userPhotoFile.type || "image/jpeg";
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
-    // Use IDM-VTON model for virtual try-on
-    const output = await replicate.run("cuuupid/idm-vton", {
-      input: {
-        human_img: userPhotoDataUri,
-        garm_img: productImageUrl,
-        garment_des: productTitle,
+    // Create prediction via Replicate API directly
+    const createRes = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        input: {
+          human_img: userPhotoDataUri,
+          garm_img: productImageUrl,
+          garment_des: productTitle,
+        },
+      }),
     });
 
-    const resultUrl = Array.isArray(output) ? output[0] : output;
+    const prediction = await createRes.json();
+    
+    if (!createRes.ok) {
+      console.error("Replicate create error:", JSON.stringify(prediction));
+      return json({ error: prediction.detail || "AI model error" }, { status: 500 });
+    }
 
+    // Poll for result
+    let result = prediction;
+    const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
+    
+    for (let i = 0; i < 60; i++) {
+      if (result.status === "succeeded") break;
+      if (result.status === "failed" || result.status === "canceled") {
+        return json({ error: "AI generation failed" }, { status: 500 });
+      }
+      
+      await new Promise(r => setTimeout(r, 2000));
+      
+      const pollRes = await fetch(getUrl, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      result = await pollRes.json();
+    }
+
+    if (result.status !== "succeeded") {
+      return json({ error: "AI timeout" }, { status: 504 });
+    }
+
+    const resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
     return json({ success: true, result_url: String(resultUrl) });
+
   } catch (error) {
     console.error("Try-on error:", error);
     return json({ error: "Try-on failed", details: error.message }, { status: 500 });

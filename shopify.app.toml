@@ -22,4 +22,4 @@ api_version = "2024-10"
 [app_proxy]
 url = "https://tryfit-production.up.railway.app/app/proxy/tryon"
 subpath = "tryon"
-prefix = "/apps"
+prefix = "apps"

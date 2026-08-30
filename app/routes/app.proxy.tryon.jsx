@@ -11,6 +11,7 @@ export const action = async ({ request }) => {
   try {
     const formData = await request.formData();
     const productImageUrl = formData.get("product_image_url");
+    const productTitle = formData.get("product_title") || "garment";
     const userPhotoFile = formData.get("user_photo");
 
     if (!productImageUrl || !userPhotoFile) {
@@ -18,7 +19,7 @@ export const action = async ({ request }) => {
     }
 
     if (!process.env.REPLICATE_API_TOKEN) {
-      return json({ error: "AI not configured", mode: "client" }, { status: 503 });
+      return json({ error: "AI not configured" }, { status: 503 });
     }
 
     // Convert uploaded file to base64 data URI
@@ -27,16 +28,12 @@ export const action = async ({ request }) => {
     const mimeType = userPhotoFile.type || "image/jpeg";
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
-    // Call Replicate AI - fashn-ai/tryon
-    const output = await replicate.run("fashn-ai/tryon", {
+    // Use IDM-VTON model for virtual try-on
+    const output = await replicate.run("cuuupid/idm-vton:c871bb9b046607b680571420571d6b586c626268d9647e6c5dfad16319a14e27", {
       input: {
-        model_image: userPhotoDataUri,
-        garment_image: productImageUrl,
-        category: "auto",
-        flat_lay: false,
-        adjust_hands: true,
-        restore_background: true,
-        restore_clothes: true,
+        human_img: userPhotoDataUri,
+        garm_img: productImageUrl,
+        garment_des: productTitle,
       },
     });
 

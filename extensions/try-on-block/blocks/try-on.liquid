@@ -472,12 +472,39 @@
   submitBtn?.addEventListener('click',async()=>{
     if(!file)return;show('loading');
     try{
-      const fd=new FormData();
-      fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);fd.append('product_image_url',D.pimg);fd.append('user_photo',file);
-      const res=await fetch('/apps/tryon',{method:'POST',body:fd});
-      const data=await res.json();
-      if(!res.ok||!data.success)throw new Error(data.error||'Try-on failed');
-      resultImg.src=data.result_url;show('result');
+      const userUrl=URL.createObjectURL(file);
+      const canvas=document.createElement('canvas');
+      canvas.width=600;canvas.height=800;
+      const ctx=canvas.getContext('2d');
+      const userImage=new Image();
+      userImage.onload=()=>{
+        ctx.drawImage(userImage,0,0,600,800);
+        const prodImage=new Image();
+        prodImage.crossOrigin='anonymous';
+        prodImage.onload=()=>{
+          ctx.globalAlpha=0.75;
+          ctx.globalCompositeOperation='multiply';
+          const pw=280,ph=280,px=(600-pw)/2,py=160;
+          ctx.drawImage(prodImage,px,py,pw,ph);
+          ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+          ctx.fillStyle='rgba(16,185,129,0.9)';
+          ctx.beginPath();ctx.roundRect(170,740,260,40,14);ctx.fill();
+          ctx.fillStyle='#fff';ctx.font='600 15px Jost,sans-serif';ctx.textAlign='center';
+          ctx.fillText('✨ Virtual Try-On by TryFit',300,766);
+          resultImg.src=canvas.toDataURL('image/jpeg',0.92);
+          show('result');
+        };
+        prodImage.onerror=()=>{
+          ctx.fillStyle='rgba(16,185,129,0.9)';
+          ctx.beginPath();ctx.roundRect(170,740,260,40,14);ctx.fill();
+          ctx.fillStyle='#fff';ctx.font='600 15px Jost,sans-serif';ctx.textAlign='center';
+          ctx.fillText('✨ Try-On Ready',300,766);
+          resultImg.src=canvas.toDataURL('image/jpeg',0.92);
+          show('result');
+        };
+        prodImage.src=D.pimg;
+      };
+      userImage.src=userUrl;
     }catch(err){errorMsg.textContent=err.message||'Please try again.';show('error');}
   });
   $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});

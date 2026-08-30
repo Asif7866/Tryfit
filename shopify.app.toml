@@ -1,6 +1,6 @@
 name = "TryFit"
 client_id = "801b072184a9733e9c66dc11391a28a5"
-application_url = "https://example.com"
+application_url = "https://tryfit-production.up.railway.app"
 embedded = true
 
 [build]
@@ -11,7 +11,10 @@ dev_store_url = "testing-ashif.myshopify.com"
 scopes = "read_products,write_products"
 
 [auth]
-redirect_urls = ["https://example.com/auth/callback"]
+redirect_urls = [
+  "https://tryfit-production.up.railway.app/auth/callback",
+  "https://tryfit-production.up.railway.app/auth/shopify/callback"
+]
 
 [webhooks]
 api_version = "2024-10"

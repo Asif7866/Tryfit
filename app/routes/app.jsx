@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { PolarisProvider } from "@shopify/polaris";
+import { AppProvider as PolarisAppProvider } from "@shopify/polaris";
 import enTranslations from "@shopify/polaris/locales/en.json";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
@@ -12,9 +12,9 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   return (
-    <PolarisProvider i18n={enTranslations}>
+    <PolarisAppProvider i18n={enTranslations}>
       <Outlet />
-    </PolarisProvider>
+    </PolarisAppProvider>
   );
 }
 

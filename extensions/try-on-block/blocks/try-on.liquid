@@ -73,14 +73,21 @@
 
       <div id="vto-s-loading" class="vto-state" style="display:none;">
         <div class="vto-loading-wrap">
-          <div class="vto-orbit">
-            <div class="vto-orbit__ring"></div>
-            <div class="vto-orbit__dot"></div>
+          <div class="vto-loader-visual">
+            <div class="vto-loader-ring">
+              <div class="vto-loader-ring__inner"></div>
+            </div>
+            <div class="vto-loader-emoji">✨</div>
           </div>
-          <h3 class="vto-loading__title">Creating your look...</h3>
-          <p class="vto-loading__sub">AI is fitting the garment to your body</p>
+          <h3 class="vto-loading__title" id="vto-loading-title">Analyzing your photo...</h3>
+          <p class="vto-loading__sub" id="vto-loading-sub">This usually takes 15–30 seconds</p>
           <div class="vto-progress">
             <div class="vto-progress__bar"></div>
+          </div>
+          <div class="vto-loading-steps">
+            <div class="vto-lstep active" id="vto-ls1"><span class="vto-lstep__dot"></span> Detecting body pose</div>
+            <div class="vto-lstep" id="vto-ls2"><span class="vto-lstep__dot"></span> Mapping garment fit</div>
+            <div class="vto-lstep" id="vto-ls3"><span class="vto-lstep__dot"></span> Rendering final look</div>
           </div>
         </div>
       </div>
@@ -387,29 +394,57 @@
 .vto-privacy { text-align: center; margin: 10px 0 0; font: 400 11px/1.4 var(--vto-ff); color: #ccc; }
 
 /* ── LOADING ── */
-.vto-loading-wrap { text-align: center; padding: 52px 0 36px; }
-.vto-orbit { width: 68px; height: 68px; margin: 0 auto 28px; position: relative; }
-.vto-orbit__ring {
+.vto-loading-wrap { text-align: center; padding: 40px 0 28px; }
+.vto-loader-visual { position: relative; width: 80px; height: 80px; margin: 0 auto 28px; }
+.vto-loader-ring { width: 80px; height: 80px; position: relative; }
+.vto-loader-ring__inner {
   width: 100%; height: 100%;
   border: 3px solid #f5f3ff;
+  border-radius: 50%;
   border-top-color: #7c3aed;
-  border-radius: 50%;
-  animation: vto-spin .7s linear infinite;
+  border-right-color: #a78bfa;
+  animation: vto-spin .8s linear infinite;
+  box-shadow: 0 0 20px rgba(124,58,237,.1);
 }
-.vto-orbit__dot {
+.vto-loader-emoji {
   position: absolute;
-  top: -4px; left: 50%;
-  width: 10px; height: 10px;
-  margin-left: -5px;
-  background: #7c3aed;
-  border-radius: 50%;
-  animation: vto-spin .7s linear infinite;
-  box-shadow: 0 0 12px rgba(124,58,237,.4);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 28px;
+  animation: vto-pulse 1.5s ease infinite;
 }
-.vto-loading__title { margin: 0; font: 700 22px/1 var(--vto-ff); color: #111; letter-spacing: -0.3px; }
-.vto-loading__sub { margin: 10px 0 0; font: 400 13px/1 var(--vto-ff); color: #999; }
-.vto-progress { width: 75%; margin: 28px auto 0; height: 5px; background: #f5f3ff; border-radius: 5px; overflow: hidden; }
-.vto-progress__bar { width: 0%; height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 5px; animation: vto-load 25s ease-out forwards; }
+.vto-loading__title { margin: 0; font: 700 22px/1.2 var(--vto-ff); color: #111; letter-spacing: -0.3px; transition: opacity .3s; }
+.vto-loading__sub { margin: 8px 0 0; font: 400 13px/1 var(--vto-ff); color: #aaa; }
+.vto-progress { width: 70%; margin: 24px auto 0; height: 5px; background: #f5f3ff; border-radius: 5px; overflow: hidden; }
+.vto-progress__bar { width: 0%; height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa, #c4b5fd); border-radius: 5px; animation: vto-load 30s ease-out forwards; background-size: 200% 100%; }
+.vto-loading-steps {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 28px auto 0;
+  width: fit-content;
+}
+.vto-lstep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 13px/1 var(--vto-ff);
+  color: #ccc;
+  transition: all .4s ease;
+}
+.vto-lstep.active { color: #7c3aed; }
+.vto-lstep.done { color: #10b981; }
+.vto-lstep__dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  transition: all .4s ease;
+  flex-shrink: 0;
+}
+.vto-lstep.active .vto-lstep__dot { background: #7c3aed; box-shadow: 0 0 8px rgba(124,58,237,.4); animation: vto-pulse 1.2s ease infinite; }
+.vto-lstep.done .vto-lstep__dot { background: #10b981; }
+@keyframes vto-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.6; transform:scale(1.15); } }
 
 /* ── RESULT ── */
 .vto-result-wrap { text-align: center; }
@@ -493,7 +528,7 @@
     dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');handleFile(e.dataTransfer.files[0]);});
   }
   submitBtn?.addEventListener('click',async()=>{
-    if(!file)return;show('loading');
+    if(!file)return;show('loading');startLoadingAnim();
     try{
       // Try AI server first
       const fd=new FormData();
@@ -546,6 +581,31 @@
     const vid=document.querySelector('[name="id"]')?.value;
     try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeModal();window.location.href='/cart';}catch(e){window.location.href='/cart';}
   });
+
+  let loadTimer=null;
+  function startLoadingAnim(){
+    const title=$('vto-loading-title'),sub=$('vto-loading-sub');
+    const ls1=$('vto-ls1'),ls2=$('vto-ls2'),ls3=$('vto-ls3');
+    const msgs=[
+      {t:'Analyzing your photo...',s:'Detecting body shape & pose',step:1,ms:0},
+      {t:'Understanding your body...',s:'Mapping proportions for perfect fit',step:1,ms:3000},
+      {t:'Fitting the garment...',s:'Adjusting fabric drape & texture',step:2,ms:7000},
+      {t:'Perfecting the details...',s:'Fine-tuning colors & shadows',step:2,ms:12000},
+      {t:'Almost there...',s:'Adding final touches to your look',step:3,ms:18000},
+      {t:'Putting it all together...',s:'Your personalized look is nearly ready',step:3,ms:24000},
+    ];
+    if(ls1){ls1.className='vto-lstep active';ls2.className='vto-lstep';ls3.className='vto-lstep';}
+    const timers=[];
+    msgs.forEach(m=>{
+      timers.push(setTimeout(()=>{
+        if(title)title.textContent=m.t;
+        if(sub)sub.textContent=m.s;
+        if(m.step>=2&&ls1){ls1.className='vto-lstep done';ls2.className='vto-lstep active';}
+        if(m.step>=3&&ls2){ls2.className='vto-lstep done';ls3.className='vto-lstep active';}
+      },m.ms));
+    });
+    loadTimer=timers;
+  }
 })();
 </script>
 {% endif %}

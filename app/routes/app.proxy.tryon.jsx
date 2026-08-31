@@ -10,6 +10,7 @@ export const action = async ({ request }) => {
     const productImageUrl = formData.get("product_image_url");
     const productTitle = formData.get("product_title") || "garment";
     const userPhotoFile = formData.get("user_photo");
+    const category = formData.get("category") || "dresses";
 
     if (!productImageUrl || !userPhotoFile) {
       return json({ error: "Missing required fields" }, { status: 400 });
@@ -43,6 +44,7 @@ export const action = async ({ request }) => {
           human_img: userPhotoDataUri,
           garm_img: garmImg,
           garment_des: productTitle,
+          category: category,
         },
       }),
     });

@@ -1,4 +1,7 @@
 import { json } from "@remix-run/node";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const action = async ({ request }) => {
   if (request.method !== "POST") {
@@ -11,9 +14,18 @@ export const action = async ({ request }) => {
     const productTitle = formData.get("product_title") || "garment";
     const userPhotoFile = formData.get("user_photo");
     const category = formData.get("category") || "dresses";
+    const shop = formData.get("shop");
 
     if (!productImageUrl || !userPhotoFile) {
       return json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Check try-on limits
+    if (shop) {
+      const settings = await prisma.shopSettings.findUnique({ where: { shop } });
+      if (settings && settings.monthlyTryOns >= settings.monthlyLimit) {
+        return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429 });
+      }
     }
 
     const token = process.env.REPLICATE_API_TOKEN;
@@ -79,6 +91,27 @@ export const action = async ({ request }) => {
     }
 
     const resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+
+    // Increment usage counter
+    if (shop) {
+      await prisma.shopSettings.update({
+        where: { shop },
+        data: {
+          monthlyTryOns: { increment: 1 },
+          totalTryOns: { increment: 1 },
+        },
+      });
+      await prisma.tryOnLog.create({
+        data: {
+          shop,
+          productId: formData.get("product_id") || "",
+          productTitle,
+          resultUrl: String(resultUrl),
+          status: "completed",
+        },
+      });
+    }
+
     return json({ success: true, result_url: String(resultUrl) });
 
   } catch (error) {

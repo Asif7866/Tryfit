@@ -73,22 +73,37 @@
 
       <div id="vto-s-loading" class="vto-state" style="display:none;">
         <div class="vto-loading-wrap">
+          <div class="vto-loader-bg"></div>
           <div class="vto-loader-visual">
+            <div class="vto-loader-glow"></div>
             <div class="vto-loader-ring">
               <div class="vto-loader-ring__inner"></div>
             </div>
-            <div class="vto-loader-emoji">✨</div>
+            <div class="vto-loader-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#vto-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <defs><linearGradient id="vto-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs>
+                <path d="M20.38 3.46L16 2 12 5.5 8 2 3.62 3.46a2 2 0 01-.62 3.88v8a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 01-.62-3.88z"/>
+                <path d="M12 5.5v14.5"/>
+                <path d="M3 7h18"/>
+              </svg>
+            </div>
+            <div class="vto-loader-particles">
+              <span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span>
+              <span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span>
+            </div>
           </div>
           <h3 class="vto-loading__title" id="vto-loading-title">Analyzing your photo...</h3>
-          <p class="vto-loading__sub" id="vto-loading-sub">This usually takes 15–30 seconds</p>
+          <p class="vto-loading__sub" id="vto-loading-sub">Detecting body shape & pose</p>
           <div class="vto-progress">
             <div class="vto-progress__bar"></div>
+            <div class="vto-progress__shimmer"></div>
           </div>
           <div class="vto-loading-steps">
-            <div class="vto-lstep active" id="vto-ls1"><span class="vto-lstep__dot"></span> Detecting body pose</div>
-            <div class="vto-lstep" id="vto-ls2"><span class="vto-lstep__dot"></span> Mapping garment fit</div>
-            <div class="vto-lstep" id="vto-ls3"><span class="vto-lstep__dot"></span> Rendering final look</div>
+            <div class="vto-lstep active" id="vto-ls1"><span class="vto-lstep__icon">⏳</span> Detecting body pose</div>
+            <div class="vto-lstep" id="vto-ls2"><span class="vto-lstep__icon">👗</span> Mapping garment fit</div>
+            <div class="vto-lstep" id="vto-ls3"><span class="vto-lstep__icon">✨</span> Rendering final look</div>
           </div>
+          <p class="vto-loading__time">⚡ Usually takes 15–30 seconds</p>
         </div>
       </div>
 
@@ -394,56 +409,109 @@
 .vto-privacy { text-align: center; margin: 10px 0 0; font: 400 11px/1.4 var(--vto-ff); color: #ccc; }
 
 /* ── LOADING ── */
-.vto-loading-wrap { text-align: center; padding: 40px 0 28px; }
-.vto-loader-visual { position: relative; width: 80px; height: 80px; margin: 0 auto 28px; }
-.vto-loader-ring { width: 80px; height: 80px; position: relative; }
+.vto-loading-wrap { text-align: center; padding: 36px 0 24px; position: relative; overflow: hidden; }
+.vto-loader-bg {
+  position: absolute; inset: -40px; z-index: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(124,58,237,.04) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(236,72,153,.04) 0%, transparent 50%);
+  animation: vto-bgShift 4s ease infinite alternate;
+}
+@keyframes vto-bgShift { 0%{opacity:.5;transform:scale(1)} 100%{opacity:1;transform:scale(1.1)} }
+
+.vto-loader-visual { position: relative; width: 100px; height: 100px; margin: 0 auto 24px; z-index: 1; }
+.vto-loader-glow {
+  position: absolute; inset: -10px;
+  background: radial-gradient(circle, rgba(124,58,237,.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: vto-glowPulse 2s ease infinite;
+}
+@keyframes vto-glowPulse { 0%,100%{transform:scale(.9);opacity:.4} 50%{transform:scale(1.2);opacity:.8} }
+
+.vto-loader-ring { width: 100px; height: 100px; position: relative; }
 .vto-loader-ring__inner {
   width: 100%; height: 100%;
-  border: 3px solid #f5f3ff;
+  border: 3px solid rgba(124,58,237,.1);
   border-radius: 50%;
   border-top-color: #7c3aed;
   border-right-color: #a78bfa;
-  animation: vto-spin .8s linear infinite;
-  box-shadow: 0 0 20px rgba(124,58,237,.1);
+  border-bottom-color: #ec4899;
+  animation: vto-spin .9s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(124,58,237,.3));
 }
-.vto-loader-emoji {
+.vto-loader-icon {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%,-50%);
-  font-size: 28px;
-  animation: vto-pulse 1.5s ease infinite;
+  animation: vto-iconFloat 2s ease infinite;
 }
-.vto-loading__title { margin: 0; font: 700 22px/1.2 var(--vto-ff); color: #111; letter-spacing: -0.3px; transition: opacity .3s; }
-.vto-loading__sub { margin: 8px 0 0; font: 400 13px/1 var(--vto-ff); color: #aaa; }
-.vto-progress { width: 70%; margin: 24px auto 0; height: 5px; background: #f5f3ff; border-radius: 5px; overflow: hidden; }
-.vto-progress__bar { width: 0%; height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa, #c4b5fd); border-radius: 5px; animation: vto-load 30s ease-out forwards; background-size: 200% 100%; }
+@keyframes vto-iconFloat { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-55%) scale(1.08)} }
+
+.vto-loader-particles { position: absolute; inset: 0; }
+.vto-loader-particles span {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: #7c3aed;
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  animation: vto-particle 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.5s);
+  opacity: 0;
+}
+@keyframes vto-particle {
+  0% { transform: translate(0,0) scale(0); opacity: 0; }
+  20% { opacity: .8; }
+  100% { transform: translate(calc(cos(calc(var(--i)*60deg))*50px), calc(sin(calc(var(--i)*60deg))*50px)) scale(0); opacity: 0; }
+}
+.vto-loader-particles span:nth-child(2n) { background: #ec4899; width: 3px; height: 3px; }
+.vto-loader-particles span:nth-child(3n) { background: #a78bfa; width: 5px; height: 5px; }
+
+.vto-loading__title {
+  margin: 0; position: relative; z-index: 1;
+  font: 800 24px/1.2 var(--vto-ff); letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.vto-loading__sub { margin: 8px 0 0; font: 400 13px/1.4 var(--vto-ff); color: #aaa; position: relative; z-index: 1; }
+
+.vto-progress { width: 65%; margin: 22px auto 0; height: 6px; background: rgba(124,58,237,.08); border-radius: 6px; overflow: hidden; position: relative; z-index: 1; }
+.vto-progress__bar {
+  width: 0%; height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa, #ec4899);
+  border-radius: 6px;
+  animation: vto-load 30s ease-out forwards;
+  position: relative;
+}
+.vto-progress__shimmer {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+  animation: vto-shimmerBar 1.5s ease infinite;
+}
+@keyframes vto-shimmerBar { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
 .vto-loading-steps {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 28px auto 0;
-  width: fit-content;
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 12px; margin: 24px auto 0; width: fit-content;
+  position: relative; z-index: 1;
 }
 .vto-lstep {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font: 500 13px/1 var(--vto-ff);
-  color: #ccc;
-  transition: all .4s ease;
+  display: flex; align-items: center; gap: 10px;
+  font: 500 13px/1 var(--vto-ff); color: #d0d0d0;
+  transition: all .5s cubic-bezier(.16,1,.3,1);
+  transform: translateX(0);
 }
-.vto-lstep.active { color: #7c3aed; }
+.vto-lstep.active { color: #7c3aed; transform: translateX(4px); font-weight: 600; }
 .vto-lstep.done { color: #10b981; }
-.vto-lstep__dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #e5e5e5;
-  transition: all .4s ease;
-  flex-shrink: 0;
+.vto-lstep__icon { font-size: 15px; filter: grayscale(1) opacity(.3); transition: filter .5s; }
+.vto-lstep.active .vto-lstep__icon { filter: none; animation: vto-iconBounce .6s ease; }
+.vto-lstep.done .vto-lstep__icon { filter: none; }
+@keyframes vto-iconBounce { 0%{transform:scale(0.5)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+.vto-loading__time {
+  margin: 20px 0 0; font: 400 11px/1 var(--vto-ff); color: #ccc;
+  position: relative; z-index: 1; letter-spacing: 0.2px;
 }
-.vto-lstep.active .vto-lstep__dot { background: #7c3aed; box-shadow: 0 0 8px rgba(124,58,237,.4); animation: vto-pulse 1.2s ease infinite; }
-.vto-lstep.done .vto-lstep__dot { background: #10b981; }
+
 @keyframes vto-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.6; transform:scale(1.15); } }
 
 /* ── RESULT ── */

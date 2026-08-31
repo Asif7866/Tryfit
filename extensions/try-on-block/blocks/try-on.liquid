@@ -582,39 +582,7 @@
       }
       throw new Error(data.error||'AI unavailable');
     }catch(err){
-      // Fallback: client-side canvas compositing
-      try{
-        const userUrl=URL.createObjectURL(file);
-        const canvas=document.createElement('canvas');
-        canvas.width=600;canvas.height=800;
-        const ctx=canvas.getContext('2d');
-        const userImage=new Image();
-        userImage.onload=()=>{
-          ctx.drawImage(userImage,0,0,600,800);
-          const prodImage=new Image();prodImage.crossOrigin='anonymous';
-          prodImage.onload=()=>{
-            const tmp=document.createElement('canvas');
-            const tw=prodImage.naturalWidth,th=prodImage.naturalHeight;
-            tmp.width=tw;tmp.height=th;const tc=tmp.getContext('2d');
-            tc.drawImage(prodImage,0,0);
-            const imgData=tc.getImageData(0,0,tw,th);const dd=imgData.data;
-            for(let i=0;i<dd.length;i+=4){const br=(dd[i]+dd[i+1]+dd[i+2])/3;if(br>220&&Math.abs(dd[i]-dd[i+1])<25&&Math.abs(dd[i+1]-dd[i+2])<25)dd[i+3]=0;else if(br>200)dd[i+3]=Math.max(0,(255-br)*4);}
-            tc.putImageData(imgData,0,0);
-            const ratio=tw/th;let pw,ph,px,py;
-            if(ratio>1.5){pw=300;ph=pw/ratio;px=(600-pw)/2;py=480;}
-            else if(ratio>0.7){pw=240;ph=pw/ratio;px=(600-pw)/2;py=190;}
-            else{pw=340;ph=pw/ratio;px=(600-pw)/2;py=200;}
-            ctx.drawImage(tmp,px,py,pw,ph);
-            ctx.fillStyle='rgba(16,185,129,0.9)';ctx.beginPath();ctx.roundRect(170,740,260,40,14);ctx.fill();
-            ctx.fillStyle='#fff';ctx.font='600 14px Jost,sans-serif';ctx.textAlign='center';
-            ctx.fillText('✨ Virtual Try-On by TryFit',300,766);
-            resultImg.src=canvas.toDataURL('image/jpeg',0.92);show('result');
-          };
-          prodImage.onerror=()=>{errorMsg.textContent='Could not load product image';show('error');};
-          prodImage.src=D.pimg;
-        };
-        userImage.src=userUrl;
-      }catch(e2){errorMsg.textContent=e2.message||'Please try again.';show('error');}
+      errorMsg.textContent=err.message||'AI try-on failed. Please try again.';show('error');
     }
   });
   $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});

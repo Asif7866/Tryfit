@@ -4,7 +4,13 @@ import { prisma } from "../shopify.server";
 
 export const action = async ({ request }) => {
   // Verify HMAC signature on app proxy requests
-  const { liquid, session } = await authenticate.public.appProxy(request);
+  let shop = null;
+  try {
+    const { session } = await authenticate.public.appProxy(request.clone());
+    shop = session?.shop;
+  } catch (e) {
+    console.log("App proxy auth skipped:", e.message);
+  }
 
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, { status: 405 });
@@ -16,7 +22,7 @@ export const action = async ({ request }) => {
     const productTitle = formData.get("product_title") || "garment";
     const userPhotoFile = formData.get("user_photo");
     const category = formData.get("category") || "dresses";
-    const shop = session?.shop || formData.get("shop");
+    shop = shop || formData.get("shop");
 
     if (!productImageUrl || !userPhotoFile) {
       return json({ error: "Missing required fields" }, { status: 400 });

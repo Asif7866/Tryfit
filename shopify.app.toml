@@ -23,10 +23,10 @@ api_version = "2024-10"
   topics = ["app/uninstalled"]
   uri = "/webhooks"
 
-  [[webhooks.subscriptions]]
-  topics = ["customers/data_request", "customers/redact", "shop/redact"]
-  uri = "/webhooks"
-  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+[privacy_compliance]
+customer_data_request_url = "https://tryfit-production.up.railway.app/webhooks"
+customer_deletion_url = "https://tryfit-production.up.railway.app/webhooks"
+shop_deletion_url = "https://tryfit-production.up.railway.app/webhooks"
 
 [app_proxy]
 url = "https://tryfit-production.up.railway.app/app/proxy/tryon"

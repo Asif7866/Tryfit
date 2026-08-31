@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -16,20 +16,27 @@ model Session {
   expires       DateTime?
   accessToken   String
   userId        BigInt?
+
+  @@index([shop])
 }
 
 model ShopSettings {
   id              String   @id @default(uuid())
   shop            String   @unique
   enabled         Boolean  @default(true)
+  plan            String   @default("free")
   buttonText      String   @default("Try The Look")
   buttonColor     String   @default("#000000")
   buttonTextColor String   @default("#FFFFFF")
   modalTitle      String   @default("Ready to try this on?")
   totalTryOns     Int      @default(0)
-  monthlyLimit    Int      @default(500)
+  monthlyTryOns   Int      @default(0)
+  monthlyLimit    Int      @default(10)
+  billingId       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([shop])
 }
 
 model TryOnLog {
@@ -40,4 +47,7 @@ model TryOnLog {
   resultUrl     String?
   status        String   @default("pending")
   createdAt     DateTime @default(now())
+
+  @@index([shop])
+  @@index([createdAt])
 }

@@ -1,6 +1,6 @@
 import "@shopify/shopify-app-remix/adapters/node";
 import { shopifyApp } from "@shopify/shopify-app-remix/server";
-import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";
+import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -14,8 +14,8 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES?.split(","),
   appUrl,
   authPathPrefix: "/auth",
-  sessionStorage: new SQLiteSessionStorage("/tmp/session.db"),
-  distribution: "singleMerchant",
+  sessionStorage: new PrismaSessionStorage(prisma),
+  distribution: "appStore",
   isEmbeddedApp: true,
   future: {
     unstable_newEmbeddedAuthStrategy: true,

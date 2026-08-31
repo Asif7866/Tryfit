@@ -1,5 +1,5 @@
 import { redirect } from "@remix-run/node";
-import { authenticate } from "../shopify.server";
+import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
 const PLAN_LIMITS = {
@@ -10,27 +10,31 @@ const PLAN_LIMITS = {
 };
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
-  const url = new URL(request.url);
-  const plan = url.searchParams.get("plan")?.toLowerCase() || "free";
-  const chargeId = url.searchParams.get("charge_id");
+  try {
+    const { session } = await shopify.authenticate.admin(request);
+    const shop = session.shop;
+    const url = new URL(request.url);
+    const plan = url.searchParams.get("plan")?.toLowerCase() || "free";
+    const chargeId = url.searchParams.get("charge_id");
 
-  if (chargeId) {
-    await prisma.shopSettings.upsert({
-      where: { shop },
-      update: {
-        plan,
-        monthlyLimit: PLAN_LIMITS[plan] || 10,
-        billingId: chargeId,
-      },
-      create: {
-        shop,
-        plan,
-        monthlyLimit: PLAN_LIMITS[plan] || 10,
-        billingId: chargeId,
-      },
-    });
+    if (chargeId) {
+      await prisma.shopSettings.upsert({
+        where: { shop },
+        update: {
+          plan,
+          monthlyLimit: PLAN_LIMITS[plan] || 10,
+          billingId: chargeId,
+        },
+        create: {
+          shop,
+          plan,
+          monthlyLimit: PLAN_LIMITS[plan] || 10,
+          billingId: chargeId,
+        },
+      });
+    }
+  } catch (e) {
+    console.error("Billing callback error:", e);
   }
 
   return redirect("/app/pricing");

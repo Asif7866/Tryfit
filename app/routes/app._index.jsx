@@ -206,6 +206,7 @@ export default function Index() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
+              <a href="/app/pricing" className="btn btn-outline" style={{ textDecoration: "none" }}>💎 Plans</a>
               <button className="btn btn-outline" onClick={() => { setSetupDone(false); setStep("start"); }}>⚙ Settings</button>
               <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" className="btn btn-accent">💬 Support</a>
             </div>

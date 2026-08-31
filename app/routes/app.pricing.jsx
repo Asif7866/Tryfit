@@ -1,7 +1,7 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { Page } from "@shopify/polaris";
-import { authenticate } from "../shopify.server";
+import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
 const PLANS = [
@@ -12,17 +12,21 @@ const PLANS = [
 ];
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
-  let settings = await prisma.shopSettings.findUnique({ where: { shop } });
-  if (!settings) {
-    settings = await prisma.shopSettings.create({ data: { shop } });
+  try {
+    const { session } = await shopify.authenticate.admin(request);
+    const shop = session.shop;
+    let settings = await prisma.shopSettings.findUnique({ where: { shop } });
+    if (!settings) {
+      settings = await prisma.shopSettings.create({ data: { shop } });
+    }
+    return json({ plan: settings.plan || "free", monthlyTryOns: settings.monthlyTryOns || 0, monthlyLimit: settings.monthlyLimit || 10 });
+  } catch (e) {
+    return json({ plan: "free", monthlyTryOns: 0, monthlyLimit: 10 });
   }
-  return json({ plan: settings.plan, monthlyTryOns: settings.monthlyTryOns, monthlyLimit: settings.monthlyLimit });
 };
 
 export const action = async ({ request }) => {
-  const { admin, session } = await authenticate.admin(request);
+  const { admin, session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
   const formData = await request.formData();
   const planName = formData.get("plan");

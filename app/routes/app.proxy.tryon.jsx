@@ -26,7 +26,11 @@ export const action = async ({ request }) => {
     const mimeType = userPhotoFile.type || "image/jpeg";
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
-    // Create prediction via Replicate API directly
+    // Fix product image URL (Shopify returns protocol-relative URLs)
+    let garmImg = productImageUrl;
+    if (garmImg.startsWith("//")) garmImg = "https:" + garmImg;
+
+    // Create prediction via Replicate API
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -37,7 +41,7 @@ export const action = async ({ request }) => {
         version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
         input: {
           human_img: userPhotoDataUri,
-          garm_img: productImageUrl,
+          garm_img: garmImg,
           garment_des: productTitle,
         },
       }),

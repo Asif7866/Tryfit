@@ -26,7 +26,7 @@ api_version = "2024-10"
   [[webhooks.subscriptions]]
   topics = ["customers/data_request", "customers/redact", "shop/redact"]
   uri = "/webhooks"
-  compliance_topics = true
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
 
 [app_proxy]
 url = "https://tryfit-production.up.railway.app/app/proxy/tryon"

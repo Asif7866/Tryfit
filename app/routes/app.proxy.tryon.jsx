@@ -20,11 +20,15 @@ export const action = async ({ request }) => {
       return json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check try-on limits
+    // Check try-on limits (non-blocking)
     if (shop) {
-      const settings = await prisma.shopSettings.findUnique({ where: { shop } });
-      if (settings && settings.monthlyTryOns >= settings.monthlyLimit) {
-        return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429 });
+      try {
+        const settings = await prisma.shopSettings.findUnique({ where: { shop } });
+        if (settings && settings.monthlyTryOns >= settings.monthlyLimit) {
+          return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429 });
+        }
+      } catch (dbErr) {
+        console.error("DB check skipped:", dbErr.message);
       }
     }
 
@@ -92,24 +96,28 @@ export const action = async ({ request }) => {
 
     const resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
 
-    // Increment usage counter
+    // Increment usage counter (non-blocking)
     if (shop) {
-      await prisma.shopSettings.update({
-        where: { shop },
-        data: {
-          monthlyTryOns: { increment: 1 },
-          totalTryOns: { increment: 1 },
-        },
-      });
-      await prisma.tryOnLog.create({
-        data: {
-          shop,
-          productId: formData.get("product_id") || "",
-          productTitle,
-          resultUrl: String(resultUrl),
-          status: "completed",
-        },
-      });
+      try {
+        await prisma.shopSettings.update({
+          where: { shop },
+          data: {
+            monthlyTryOns: { increment: 1 },
+            totalTryOns: { increment: 1 },
+          },
+        });
+        await prisma.tryOnLog.create({
+          data: {
+            shop,
+            productId: formData.get("product_id") || "",
+            productTitle,
+            resultUrl: String(resultUrl),
+            status: "completed",
+          },
+        });
+      } catch (dbErr) {
+        console.error("DB log skipped:", dbErr.message);
+      }
     }
 
     return json({ success: true, result_url: String(resultUrl) });

@@ -66,7 +66,7 @@ export const action = async ({ request }) => {
         return json({ error: "AI generation failed" }, { status: 500 });
       }
       
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1000));
       
       const pollRes = await fetch(getUrl, {
         headers: { "Authorization": `Bearer ${token}` },

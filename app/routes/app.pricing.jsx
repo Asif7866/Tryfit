@@ -47,11 +47,12 @@ export const action = async ({ request }) => {
   // Paid plan - create Shopify subscription
   try {
     const response = await admin.graphql(`
-      mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!) {
+      mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
         appSubscriptionCreate(
           name: $name
           returnUrl: $returnUrl
           trialDays: 3
+          test: $test
           lineItems: $lineItems
         ) {
           appSubscription { id }
@@ -63,6 +64,7 @@ export const action = async ({ request }) => {
       variables: {
         name: `TryFit ${selectedPlan.name}`,
         returnUrl: `https://tryfit-production.up.railway.app/app/pricing/callback?plan=${planName}&shop=${shop}`,
+        test: true,
         lineItems: [
           {
             plan: {

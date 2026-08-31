@@ -1,9 +1,11 @@
 import { json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { authenticate } from "../shopify.server";
+import { prisma } from "../shopify.server";
 
 export const action = async ({ request }) => {
+  // Verify HMAC signature on app proxy requests
+  const { liquid, session } = await authenticate.public.appProxy(request);
+
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, { status: 405 });
   }
@@ -14,7 +16,7 @@ export const action = async ({ request }) => {
     const productTitle = formData.get("product_title") || "garment";
     const userPhotoFile = formData.get("user_photo");
     const category = formData.get("category") || "dresses";
-    const shop = formData.get("shop");
+    const shop = session?.shop || formData.get("shop");
 
     if (!productImageUrl || !userPhotoFile) {
       return json({ error: "Missing required fields" }, { status: 400 });
@@ -128,7 +130,10 @@ export const action = async ({ request }) => {
   }
 };
 
-export const loader = async () => {
+export const loader = async ({ request }) => {
+  // Verify HMAC signature on app proxy requests
+  await authenticate.public.appProxy(request);
+
   return json({
     enabled: true,
     buttonText: "Try On",

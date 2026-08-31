@@ -24,9 +24,9 @@ api_version = "2024-10"
   uri = "/webhooks"
 
 [webhooks.privacy_compliance]
-customer_data_request_url = "/webhooks"
-customer_deletion_url = "/webhooks"
-shop_deletion_url = "/webhooks"
+customer_data_request_url = "https://tryfit-production.up.railway.app/webhooks"
+customer_deletion_url = "https://tryfit-production.up.railway.app/webhooks"
+shop_deletion_url = "https://tryfit-production.up.railway.app/webhooks"
 
 [app_proxy]
 url = "https://tryfit-production.up.railway.app/app/proxy/tryon"

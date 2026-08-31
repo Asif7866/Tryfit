@@ -5,10 +5,10 @@ import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
 const PLANS = [
-  { name: "Free", price: 0, tryOns: 10, features: ["10 try-ons/month", "Basic support", "1 product type"], tag: "" },
-  { name: "Starter", price: 1999, tryOns: 200, features: ["200 try-ons/month", "Priority support", "All product types", "Analytics dashboard"], tag: "POPULAR" },
-  { name: "Growth", price: 3999, tryOns: 600, features: ["600 try-ons/month", "Priority support", "All product types", "Analytics dashboard", "Custom branding"], tag: "" },
-  { name: "Pro", price: 7999, tryOns: 2000, features: ["2,000 try-ons/month", "Dedicated support", "All product types", "Advanced analytics", "Custom branding", "API access"], tag: "BEST VALUE" },
+  { name: "Free", price: 0, usd: 0, tryOns: 10, features: ["10 try-ons/month", "Basic support", "1 product type"], tag: "" },
+  { name: "Starter", price: 1999, usd: 24.99, tryOns: 200, features: ["200 try-ons/month", "Priority support", "All product types", "Analytics dashboard"], tag: "POPULAR" },
+  { name: "Growth", price: 3999, usd: 49.99, tryOns: 600, features: ["600 try-ons/month", "Priority support", "All product types", "Analytics dashboard", "Custom branding"], tag: "" },
+  { name: "Pro", price: 7999, usd: 99.99, tryOns: 2000, features: ["2,000 try-ons/month", "Dedicated support", "All product types", "Advanced analytics", "Custom branding", "API access"], tag: "BEST VALUE" },
 ];
 
 export const loader = async ({ request }) => {
@@ -45,44 +45,52 @@ export const action = async ({ request }) => {
   }
 
   // Paid plan - create Shopify subscription
-  const response = await admin.graphql(`
-    mutation createSubscription($name: String!, $price: Decimal!, $returnUrl: URL!, $trialDays: Int) {
-      appSubscriptionCreate(
-        name: $name
-        returnUrl: $returnUrl
-        trialDays: $trialDays
+  try {
+    const response = await admin.graphql(`
+      mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!) {
+        appSubscriptionCreate(
+          name: $name
+          returnUrl: $returnUrl
+          trialDays: 3
+          lineItems: $lineItems
+        ) {
+          appSubscription { id }
+          confirmationUrl
+          userErrors { field message }
+        }
+      }
+    `, {
+      variables: {
+        name: `TryFit ${selectedPlan.name}`,
+        returnUrl: `https://tryfit-production.up.railway.app/app/pricing/callback?plan=${planName}&shop=${shop}`,
         lineItems: [
           {
             plan: {
               appRecurringPricingDetails: {
-                price: { amount: $price, currencyCode: INR }
-              }
-            }
-          }
-        ]
-      ) {
-        appSubscription { id }
-        confirmationUrl
-        userErrors { field message }
-      }
+                price: { amount: selectedPlan.usd, currencyCode: "USD" },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const data = await response.json();
+    const result = data.data?.appSubscriptionCreate;
+
+    if (result?.userErrors?.length > 0) {
+      return json({ error: result.userErrors[0].message }, { status: 400 });
     }
-  `, {
-    variables: {
-      name: `TryFit ${selectedPlan.name}`,
-      price: selectedPlan.price,
-      returnUrl: `https://tryfit-production.up.railway.app/app/pricing/callback?plan=${planName}&shop=${shop}`,
-      trialDays: 3,
-    },
-  });
 
-  const data = await response.json();
-  const { confirmationUrl, userErrors } = data.data.appSubscriptionCreate;
+    if (result?.confirmationUrl) {
+      return redirect(result.confirmationUrl);
+    }
 
-  if (userErrors?.length > 0) {
-    return json({ error: userErrors[0].message }, { status: 400 });
+    return json({ error: "Could not create subscription" }, { status: 500 });
+  } catch (e) {
+    console.error("Billing error:", e);
+    return json({ error: e.message }, { status: 500 });
   }
-
-  return redirect(confirmationUrl);
 };
 
 export default function Pricing() {

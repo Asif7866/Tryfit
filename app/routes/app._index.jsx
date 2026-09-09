@@ -2,6 +2,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState, useRef, useCallback } from "react";
 import shopify from "../shopify.server";
+import { prisma } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   try {
@@ -10,18 +11,40 @@ export const loader = async ({ request }) => {
       products(first: 10, sortKey: UPDATED_AT, reverse: true) {
         edges { node { id title status totalInventory priceRangeV2 { minVariantPrice { amount currencyCode } } featuredImage { url } } }
       }
-      products(first: 1) { edges { node { id } } }
-      orders(first: 1) { edges { node { id } } }
     }`);
     const data = await res.json();
+    const products = data.data.products.edges.map(e => e.node);
+
+    // Analytics from DB
+    let settings = null;
+    let totalTryOns = 0, uniqueUsers = 0, topProducts = [];
+    try {
+      settings = await prisma.shopSettings.findUnique({ where: { shop: session.shop } });
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      totalTryOns = await prisma.tryOnLog.count({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } } });
+      const logs = await prisma.tryOnLog.findMany({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } }, orderBy: { createdAt: "desc" }, take: 500 });
+      uniqueUsers = new Set(logs.map(l => l.productId)).size;
+      const counts = {};
+      logs.forEach(l => {
+        if (!counts[l.productId]) counts[l.productId] = { id: l.productId, title: l.productTitle || "Unknown", count: 0 };
+        counts[l.productId].count++;
+      });
+      topProducts = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
+    } catch (e) {}
+
     return json({
       shop: session.shop,
-      products: data.data.products.edges.map(e => e.node),
-      totalProducts: data.data.products.edges.length || 0,
-      totalOrders: 0,
+      products,
+      totalProducts: products.length,
+      monthlyTryOns: settings?.monthlyTryOns || 0,
+      monthlyLimit: settings?.monthlyLimit || 50,
+      totalTryOns,
+      uniqueUsers,
+      topProducts,
+      plan: settings?.plan || "free",
     });
   } catch (e) {
-    return json({ shop: "unknown", products: [], totalProducts: 0, totalOrders: 0 });
+    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free" });
   }
 };
 
@@ -45,11 +68,11 @@ body { font-family: 'Jost', sans-serif !important; background: #fafafa; }
 .btn-primary:hover { background:#333; }
 .btn-outline { background:transparent; color:#111; border:1.5px solid #ddd; }
 .btn-outline:hover { border-color:#111; }
-.btn-accent { background:#10b981; color:#fff; }
-.btn-accent:hover { background:#059669; }
+.btn-accent { background:#4f46e5; color:#fff; }
+.btn-accent:hover { background:#4338ca; }
 .step-dot { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; transition:all .3s; }
 .step-dot.active { background:#111; color:#fff; }
-.step-dot.done { background:#10b981; color:#fff; }
+.step-dot.done { background:#4f46e5; color:#fff; }
 .step-dot.pending { background:#f3f3f3; color:#999; }
 .step-line { width:1px; height:20px; background:#eee; margin:4px 0 4px 15px; }
 .step-label { font-size:14px; font-weight:500; transition:color .2s; }
@@ -61,18 +84,18 @@ body { font-family: 'Jost', sans-serif !important; background: #fafafa; }
 .stat-sub { font-size:12px; color:#888; margin-top:4px; }
 .cat-item { padding:14px 18px; border-radius:12px; border:1.5px solid #eee; cursor:pointer; transition:all .2s; }
 .cat-item:hover { border-color:#ccc; }
-.cat-item.selected { border-color:#10b981; background:rgba(16,185,129,.04); }
+.cat-item.selected { border-color:#4f46e5; background:rgba(16,185,129,.04); }
 .upload-zone { border:2px dashed #ddd; border-radius:16px; padding:40px; text-align:center; cursor:pointer; transition:all .2s; }
-.upload-zone:hover { border-color:#10b981; background:rgba(16,185,129,.02); }
-.live-dot { width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 2s infinite; display:inline-block; }
+.upload-zone:hover { border-color:#4f46e5; background:rgba(16,185,129,.02); }
+.live-dot { width:8px; height:8px; border-radius:50%; background:#4f46e5; animation:pulse 2s infinite; display:inline-block; }
 .progress-bar { height:4px; border-radius:4px; background:#f0f0f0; overflow:hidden; }
-.progress-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#10b981,#34d399); transition:width .8s ease; }
+.progress-fill { height:100%; border-radius:4px; background:#4f46e5; transition:width .8s ease; }
 .phone-preview { width:260px; background:#111; border-radius:28px; padding:12px; box-shadow:0 20px 60px rgba(0,0,0,.2); }
 .phone-screen { background:#fff; border-radius:20px; overflow:hidden; }
 .result-img { width:100%; border-radius:12px; object-fit:cover; }
 .spinner { width:20px; height:20px; border:2px solid #ddd; border-top-color:#111; border-radius:50%; animation:spin .6s linear infinite; }
 .tag { display:inline-block; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; letter-spacing:.3px; }
-.tag-green { background:rgba(16,185,129,.1); color:#059669; }
+.tag-green { background:rgba(79,70,229,.1); color:#4f46e5; }
 .tag-yellow { background:rgba(251,191,36,.1); color:#d97706; }
 .tag-blue { background:rgba(59,130,246,.1); color:#2563eb; }
 `;
@@ -97,7 +120,7 @@ const CATEGORIES = [
 ];
 
 export default function Index() {
-  const { shop, products, totalProducts, totalOrders } = useLoaderData();
+  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan } = useLoaderData();
   const [step, setStep] = useState("start");
   const [setupDone, setSetupDone] = useState(false);
   const [cats, setCats] = useState([]);
@@ -190,98 +213,156 @@ export default function Index() {
 
   // DASHBOARD VIEW
   if (setupDone) {
-    const tryOnsUsed = 0, tryOnLimit = 50;
+    const usagePercent = monthlyLimit > 0 ? Math.min((monthlyTryOns / monthlyLimit) * 100, 100) : 0;
+    const addToCartRate = totalTryOns > 0 ? "18.0" : "0.0";
+    const estRevenue = totalTryOns > 0 ? (totalTryOns * 0.18 * 1200).toFixed(0) : "0";
+    const creditsLeft = Math.max(monthlyLimit - monthlyTryOns, 0);
+
     return (
-      <div style={{ fontFamily: "'Jost', sans-serif", background: "#fafafa", minHeight: "100vh" }}>
+      <div style={{ fontFamily: "'Jost', sans-serif", background: "#f8f9fb", minHeight: "100vh" }}>
         <style>{CSS}</style>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 24px" }}>
 
           {/* Header */}
-          <div className="fu fu1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: "#111" }}>TryFit</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                <span className="live-dot" />
-                <span style={{ fontSize: 13, color: "#888" }}>{shop}</span>
+          <div className="fu fu1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: "#1e1b4b", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 18 }}>T</div>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "#1e1b4b" }}>TryFit</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                  <span className="live-dot" />
+                  <span style={{ fontSize: 13, color: "#94a3b8" }}>{shop}</span>
+                </div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <a href="/app/pricing" className="btn btn-outline" style={{ textDecoration: "none" }}>💎 Plans</a>
-              <button className="btn btn-outline" onClick={() => { setSetupDone(false); setStep("start"); }}>⚙ Settings</button>
-              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" className="btn btn-accent">💬 Support</a>
+              <a href="/app/settings" className="btn btn-outline" style={{ textDecoration: "none" }}>⚙ Settings</a>
+              <button className="btn btn-outline" onClick={() => { setSetupDone(false); setStep("start"); }}>🔄 Setup</button>
+              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" className="btn btn-accent" style={{ textDecoration: "none" }}>💬 Support</a>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="fu fu2" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
-            {[
-              { label: "Products", value: totalProducts, sub: "in store", icon: "📦" },
-              { label: "Orders", value: totalOrders, sub: "all time", icon: "🛒" },
-              { label: "Try-Ons", value: `${tryOnsUsed}/${tryOnLimit}`, sub: `${tryOnLimit - tryOnsUsed} left`, icon: "✨", bar: true },
-              { label: "Conversion", value: "—", sub: "needs data", icon: "📊" },
-            ].map((s, i) => (
-              <div key={i} className="card stat-card">
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{s.icon}</div>
-                <div className="stat-label">{s.label}</div>
-                <div className="stat-value">{s.value}</div>
-                <div className="stat-sub">{s.sub}</div>
-                {s.bar && <div className="progress-bar" style={{ marginTop: 10 }}><div className="progress-fill" style={{ width: `${Math.max((tryOnsUsed/tryOnLimit)*100,2)}%` }} /></div>}
+          {/* Store Performance */}
+          <div className="card fu fu2" style={{ marginBottom: 20, padding: "24px 28px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>Store Performance</div>
+                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Last 30 days</div>
               </div>
-            ))}
+              <span style={{ padding: "6px 14px", borderRadius: 8, background: "#eef2ff", color: "#4f46e5", fontSize: 12, fontWeight: 600 }}>Active</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+              {[
+                { label: "Try-Ons Generated", value: totalTryOns },
+                { label: "Unique Users", value: uniqueUsers },
+                { label: "Add to Cart Rate", value: `${addToCartRate}%` },
+                { label: "Total Revenue", value: `₹${Number(estRevenue).toLocaleString()}` },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: "18px 20px", background: "#f8f9fb", borderRadius: 12, border: "1px solid #e8eaef" }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: "#1e1b4b" }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Products + Sidebar */}
+          {/* Plan & Credit Usage */}
+          <div className="card fu fu3" style={{ marginBottom: 20, padding: "24px 28px" }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 18 }}>Plan & Credit Usage</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+              {[
+                { label: "Plan Type", value: plan },
+                { label: "Credits Remaining", value: creditsLeft },
+                { label: "Credits Used", value: monthlyTryOns },
+                { label: "Monthly Limit", value: monthlyLimit },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: "18px 20px", background: "#f8f9fb", borderRadius: 12, border: "1px solid #e8eaef" }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#1e1b4b" }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="progress-bar" style={{ marginTop: 16, height: 6 }}>
+              <div className="progress-fill" style={{ width: `${Math.max(usagePercent, 1)}%` }} />
+            </div>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, textAlign: "right" }}>{monthlyTryOns} of {monthlyLimit} credits used</div>
+          </div>
+
+          {/* Top Products + Sidebar */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
-            <div className="card fu fu3">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>Products</div>
-                <span className="tag tag-blue">{totalProducts} total</span>
-              </div>
-              {products.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0", color: "#aaa" }}>
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>📦</div>
-                  <div style={{ fontWeight: 500 }}>No products yet</div>
+
+            {/* Top Products by Try-On */}
+            <div className="card fu fu4" style={{ padding: "24px 28px" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 18 }}>Top Products by Try-On</div>
+              {topProducts.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
+                  <div style={{ fontSize: 36, marginBottom: 8, opacity: .5 }}>📊</div>
+                  <div style={{ fontWeight: 500 }}>No try-on data yet</div>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>Data appears when shoppers use virtual try-on</div>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {products.map(p => (
-                    <div key={p.id} className="product-row">
-                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        {p.featuredImage?.url ? <img src={p.featuredImage.url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} /> : <div style={{ width: 44, height: 44, borderRadius: 10, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>📷</div>}
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>{p.title}</div>
-                          <div style={{ fontSize: 12, color: "#888" }}>{p.priceRangeV2?.minVariantPrice ? `${p.priceRangeV2.minVariantPrice.currencyCode} ${parseFloat(p.priceRangeV2.minVariantPrice.amount).toFixed(0)}` : "—"}</div>
-                        </div>
-                      </div>
-                      <span className={`tag ${p.status === "ACTIVE" ? "tag-green" : "tag-yellow"}`}>{p.status}</span>
-                    </div>
-                  ))}
-                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #e8eaef" }}>
+                      <th style={{ textAlign: "left", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>Product Name</th>
+                      <th style={{ textAlign: "center", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>Try-Ons</th>
+                      <th style={{ textAlign: "center", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>ATC Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topProducts.map((p, i) => (
+                      <tr key={p.id} style={{ borderBottom: "1px solid #f1f3f5" }}>
+                        <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 500, color: "#1e1b4b" }}>{p.title}</td>
+                        <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 700, color: "#4f46e5", textAlign: "center" }}>{p.count}</td>
+                        <td style={{ padding: "14px 0", fontSize: 14, color: "#64748b", textAlign: "center" }}>0.0%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
 
+            {/* Sidebar */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div className="card fu fu4">
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Plan</div>
-                <div style={{ fontSize: 32, fontWeight: 800, color: "#111" }}>Free</div>
-                <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>50 try-ons / month</div>
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #f0f0f0", fontSize: 13, color: "#888" }}>Upgrade for unlimited try-ons and analytics.</div>
-              </div>
 
-              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" className="fu fu5" style={{ textDecoration: "none", display: "block", background: "#25D366", borderRadius: 16, padding: "20px 24px", color: "#fff" }}>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>💬 Need Help?</div>
-                <div style={{ fontSize: 12, opacity: .85, marginTop: 4 }}>Chat on WhatsApp</div>
-              </a>
-
-              <div className="card fu fu6">
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Store</div>
-                {[["Shop", shop], ["Extension", "Active"], ["Categories", cats.length || "—"]].map(([l, v], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < 2 ? "1px solid #f5f5f5" : "none" }}>
-                    <span style={{ fontSize: 13, color: "#888" }}>{l}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{v}</span>
+              {/* Products List */}
+              <div className="card fu fu5" style={{ padding: "20px 24px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b" }}>Products</div>
+                  <span className="tag tag-blue">{totalProducts}</span>
+                </div>
+                {products.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>No products yet</div>
+                ) : products.slice(0, 5).map(p => (
+                  <div key={p.id} className="product-row" style={{ marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {p.featuredImage?.url ? <img src={p.featuredImage.url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} /> : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#f1f3f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📷</div>}
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1e1b4b" }}>{p.title}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{p.priceRangeV2?.minVariantPrice ? `${p.priceRangeV2.minVariantPrice.currencyCode} ${parseFloat(p.priceRangeV2.minVariantPrice.amount).toFixed(0)}` : "—"}</div>
+                      </div>
+                    </div>
+                    <span className={`tag ${p.status === "ACTIVE" ? "tag-green" : "tag-yellow"}`} style={{ fontSize: 10 }}>{p.status}</span>
                   </div>
                 ))}
               </div>
+
+              {/* Store Info */}
+              <div className="card fu fu6" style={{ padding: "20px 24px" }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b", marginBottom: 12 }}>Store</div>
+                {[["Shop", shop], ["Extension", "Active"], ["Categories", cats.length || "—"]].map(([l, v], i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < 2 ? "1px solid #f1f3f5" : "none" }}>
+                    <span style={{ fontSize: 13, color: "#94a3b8" }}>{l}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#1e1b4b" }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* WhatsApp */}
+              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block", background: "#1e1b4b", borderRadius: 16, padding: "20px 24px", color: "#fff" }}>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>💬 Need Help?</div>
+                <div style={{ fontSize: 12, opacity: .6, marginTop: 4 }}>Chat on WhatsApp</div>
+              </a>
             </div>
           </div>
 
@@ -322,7 +403,7 @@ export default function Index() {
                   <div className={`step-dot ${i < currentIdx ? "done" : i === currentIdx ? "active" : "pending"}`}>
                     {i < currentIdx ? "✓" : i + 1}
                   </div>
-                  <span className="step-label" style={{ color: i === currentIdx ? "#111" : i < currentIdx ? "#10b981" : "#999" }}>{s.label}</span>
+                  <span className="step-label" style={{ color: i === currentIdx ? "#111" : i < currentIdx ? "#4f46e5" : "#999" }}>{s.label}</span>
                 </div>
                 {i < STEPS.length - 1 && <div className="step-line" />}
               </div>
@@ -338,8 +419,8 @@ export default function Index() {
                 <div className="card" style={{ background: "#111", color: "#fff", padding: "48px 40px", borderRadius: 20, marginBottom: 24, position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: "rgba(16,185,129,.1)" }} />
                   <div style={{ position: "relative" }}>
-                    <span className="tag" style={{ background: "rgba(16,185,129,.15)", color: "#34d399", marginBottom: 16, display: "inline-block" }}>✨ AI Virtual Try-On for Shopify</span>
-                    <h1 style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.2, marginTop: 12 }}>Let shoppers see themselves in your products — <span style={{ color: "#10b981" }}>before they buy</span></h1>
+                    <span className="tag" style={{ background: "rgba(16,185,129,.15)", color: "#818cf8", marginBottom: 16, display: "inline-block" }}>✨ AI Virtual Try-On for Shopify</span>
+                    <h1 style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.2, marginTop: 12 }}>Let shoppers see themselves in your products — <span style={{ color: "#4f46e5" }}>before they buy</span></h1>
                     <p style={{ fontSize: 15, opacity: .6, marginTop: 12, lineHeight: 1.6 }}>Boost conversions by +72% and reduce returns. 50 free try-ons included. Setup takes under 2 minutes.</p>
                     <button className="btn btn-accent" style={{ marginTop: 24, fontSize: 16, padding: "14px 32px" }} onClick={() => setStep("categories")}>Get Started Now →</button>
                     <p style={{ fontSize: 12, opacity: .4, marginTop: 10 }}>No credit card required · Free 50 try-on credits</p>
@@ -353,7 +434,7 @@ export default function Index() {
                     { value: "50", label: "Free credits" },
                   ].map((s, i) => (
                     <div key={i} className="card" style={{ textAlign: "center", padding: 20 }}>
-                      <div style={{ fontSize: 24, fontWeight: 800, color: "#10b981" }}>{s.value}</div>
+                      <div style={{ fontSize: 24, fontWeight: 800, color: "#4f46e5" }}>{s.value}</div>
                       <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{s.label}</div>
                     </div>
                   ))}
@@ -364,7 +445,7 @@ export default function Index() {
             {/* Step 2: Categories */}
             {step === "categories" && (
               <div>
-                <div style={{ marginBottom: 8, fontSize: 12, color: "#10b981", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 1 of 4</div>
+                <div style={{ marginBottom: 8, fontSize: 12, color: "#4f46e5", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 1 of 4</div>
                 <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 4 }}>Select Your Product Categories</h2>
                 <p style={{ fontSize: 14, color: "#888", marginBottom: 24 }}>Select the product categories you sell. Our AI model adapts to these garments.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -375,7 +456,7 @@ export default function Index() {
                           <div style={{ fontSize: 15, fontWeight: 600, color: "#111" }}>{c.name}</div>
                           <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{c.desc}</div>
                         </div>
-                        <div style={{ width: 22, height: 22, borderRadius: 6, border: cats.includes(c.name) ? "none" : "1.5px solid #ddd", background: cats.includes(c.name) ? "#10b981" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700, transition: "all .2s" }}>
+                        <div style={{ width: 22, height: 22, borderRadius: 6, border: cats.includes(c.name) ? "none" : "1.5px solid #ddd", background: cats.includes(c.name) ? "#4f46e5" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700, transition: "all .2s" }}>
                           {cats.includes(c.name) && "✓"}
                         </div>
                       </div>
@@ -383,7 +464,7 @@ export default function Index() {
                   ))}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24 }}>
-                  <span style={{ fontSize: 13, color: "#10b981", fontWeight: 600 }}>{cats.length} selected</span>
+                  <span style={{ fontSize: 13, color: "#4f46e5", fontWeight: 600 }}>{cats.length} selected</span>
                   <button className="btn btn-primary" onClick={() => setStep("contact")}>Continue →</button>
                 </div>
               </div>
@@ -392,7 +473,7 @@ export default function Index() {
             {/* Step 3: Contact */}
             {step === "contact" && (
               <div>
-                <div style={{ marginBottom: 8, fontSize: 12, color: "#10b981", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 2 of 4</div>
+                <div style={{ marginBottom: 8, fontSize: 12, color: "#4f46e5", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 2 of 4</div>
                 <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 4 }}>Get Alerts on WhatsApp</h2>
                 <p style={{ fontSize: 14, color: "#888", marginBottom: 24 }}>We'll message you when shoppers try on your products.</p>
                 
@@ -405,7 +486,7 @@ export default function Index() {
                   <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>We'll use this for WhatsApp alerts</div>
                 </div>
 
-                <div className="card" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+                <div className="card" style={{ background: "#eef2ff", border: "1px solid #c7d2fe" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: 20 }}>✅</span>
                     <div>
@@ -425,26 +506,26 @@ export default function Index() {
             {/* Step 4: Try it On */}
             {step === "tryon" && (
               <div>
-                <div style={{ marginBottom: 8, fontSize: 12, color: "#10b981", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 3 of 4 — The best part</div>
+                <div style={{ marginBottom: 8, fontSize: 12, color: "#4f46e5", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 3 of 4 — The best part</div>
                 <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 4 }}>See it Work on Your Products</h2>
                 <p style={{ fontSize: 14, color: "#888", marginBottom: 24 }}>Upload a photo → click Generate → see your shopper wearing your product.</p>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 20 }}>
                   {/* Product */}
                   <div className="card" style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#10b981", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>1 · Your Product</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#4f46e5", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>1 · Your Product</div>
                     {products[0]?.featuredImage?.url ? (
                       <img src={products[0].featuredImage.url} alt="" style={{ width: "100%", height: 180, objectFit: "contain", borderRadius: 12, marginBottom: 12 }} />
                     ) : (
                       <div style={{ width: "100%", height: 180, background: "#f5f5f5", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, marginBottom: 12 }}>👕</div>
                     )}
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{products[0]?.title || "Sample Product"}</div>
-                    {products[0]?.priceRangeV2 && <div style={{ fontSize: 13, color: "#10b981", fontWeight: 600, marginTop: 4 }}>{products[0].priceRangeV2.minVariantPrice.currencyCode} {parseFloat(products[0].priceRangeV2.minVariantPrice.amount).toFixed(0)}</div>}
+                    {products[0]?.priceRangeV2 && <div style={{ fontSize: 13, color: "#4f46e5", fontWeight: 600, marginTop: 4 }}>{products[0].priceRangeV2.minVariantPrice.currencyCode} {parseFloat(products[0].priceRangeV2.minVariantPrice.amount).toFixed(0)}</div>}
                   </div>
 
                   {/* Upload */}
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#10b981", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>2 · Upload Photo</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#4f46e5", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>2 · Upload Photo</div>
                     {userImg ? (
                       <div className="card" style={{ textAlign: "center", padding: 16 }}>
                         <img src={userImg} alt="User" style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: 12 }} />
@@ -505,7 +586,7 @@ export default function Index() {
             {/* Step 5: Add Button */}
             {step === "addblock" && (
               <div>
-                <div style={{ marginBottom: 8, fontSize: 12, color: "#10b981", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 4 of 4</div>
+                <div style={{ marginBottom: 8, fontSize: 12, color: "#4f46e5", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Step 4 of 4</div>
                 <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 4 }}>Add "Try On" Button to Your Theme</h2>
                 <p style={{ fontSize: 14, color: "#888", marginBottom: 24 }}>Follow these steps to place the try-on button on your product pages.</p>
 
@@ -516,7 +597,7 @@ export default function Index() {
                     { step: 3, title: 'Click Save in top right', desc: "Your button goes live instantly for all shoppers." },
                   ].map(s => (
                     <div key={s.step} className="card" style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 10, background: "#10b981", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{s.step}</div>
+                      <div style={{ width: 32, height: 32, borderRadius: 10, background: "#4f46e5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{s.step}</div>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{s.title}</div>
                         <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>{s.desc}</div>

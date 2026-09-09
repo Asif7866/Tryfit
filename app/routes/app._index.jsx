@@ -1,4 +1,4 @@
-import { json, createCookie } from "@remix-run/node";
+import { json, redirect, createCookie } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState, useRef, useCallback } from "react";
 import shopify from "../shopify.server";
@@ -23,6 +23,28 @@ export const loader = async ({ request }) => {
   const fromCookie = cookieVal === "done";
   try {
     const { admin, session } = await shopify.authenticate.admin(request);
+
+    // Check active Shopify App Pricing subscription
+    const billingRes = await admin.graphql(`{
+      appInstallation {
+        activeSubscriptions {
+          id
+          name
+          status
+          test
+        }
+      }
+    }`);
+    const billingData = await billingRes.json();
+    const activeSubs = billingData.data?.appInstallation?.activeSubscriptions || [];
+    const hasActiveSub = activeSubs.some(s => s.status === "ACTIVE");
+
+    // If no active subscription, redirect to Shopify's hosted plan selection
+    if (!hasActiveSub) {
+      const planSelectionUrl = `shopify://admin/charges/tryfit-5/pricing_plans`;
+      return redirect(planSelectionUrl);
+    }
+
     const res = await admin.graphql(`{
       products(first: 10, sortKey: UPDATED_AT, reverse: true) {
         edges { node { id title status totalInventory priceRangeV2 { minVariantPrice { amount currencyCode } } featuredImage { url } } }
@@ -31,11 +53,16 @@ export const loader = async ({ request }) => {
     const data = await res.json();
     const products = data.data.products.edges.map(e => e.node);
 
-    // Analytics from DB
+    // Analytics from DB + sync plan from subscription
+    const activePlanName = activeSubs.find(s => s.status === "ACTIVE")?.name?.toLowerCase() || "free";
     let settings = null;
     let totalTryOns = 0, uniqueUsers = 0, topProducts = [];
     try {
-      settings = await prisma.shopSettings.findUnique({ where: { shop: session.shop } });
+      settings = await prisma.shopSettings.upsert({
+        where: { shop: session.shop },
+        update: { plan: activePlanName, enabled: true },
+        create: { shop: session.shop, plan: activePlanName, enabled: true },
+      });
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       totalTryOns = await prisma.tryOnLog.count({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } } });
       const logs = await prisma.tryOnLog.findMany({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } }, orderBy: { createdAt: "desc" }, take: 500 });

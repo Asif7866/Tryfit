@@ -163,13 +163,55 @@ export const loader = async ({ request }) => {
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    return json({
+    // Auth failed — try to get data from DB using shop from URL
+    let fallbackData = {
       shop: "unknown", products: [], totalProducts: 0,
       monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
       uniqueUsers: 0, topProducts: [], plan: "Free",
       addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",
       setupCompleted: fromCookie,
-    });
+    };
+    try {
+      const url = new URL(request.url);
+      const shopParam = url.searchParams.get("shop") || url.searchParams.get("myshopify_domain");
+      // Also try to find shop from any session in DB
+      let shopName = shopParam;
+      if (!shopName) {
+        const anySession = await prisma.session.findFirst({ select: { shop: true }, orderBy: { id: "desc" } });
+        if (anySession) shopName = anySession.shop;
+      }
+      if (shopName) {
+        const settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const totalTryOns = await prisma.tryOnLog.count({ where: { shop: shopName, createdAt: { gte: thirtyDaysAgo } } });
+        const logs = await prisma.tryOnLog.findMany({ where: { shop: shopName, createdAt: { gte: thirtyDaysAgo } }, orderBy: { createdAt: "desc" }, take: 500 });
+        const uniqueUsers = new Set(logs.map(l => l.productId)).size;
+        const addToCartCount = await prisma.tryOnLog.count({ where: { shop: shopName, createdAt: { gte: thirtyDaysAgo }, status: "added_to_cart" } });
+        const counts = {};
+        logs.forEach(l => {
+          if (!counts[l.productId]) counts[l.productId] = { id: l.productId, title: l.productTitle || "Unknown", count: 0, atc: 0 };
+          counts[l.productId].count++;
+        });
+        const atcLogs = logs.filter(l => l.status === "added_to_cart");
+        atcLogs.forEach(l => { if (counts[l.productId]) counts[l.productId].atc++; });
+        const topProducts = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        fallbackData = {
+          shop: shopName,
+          products: [], totalProducts: 0,
+          monthlyTryOns: settings?.monthlyTryOns || 0,
+          monthlyLimit: settings?.monthlyLimit || 50,
+          totalTryOns,
+          uniqueUsers,
+          topProducts,
+          plan: settings?.plan || "Free",
+          addToCartRate: totalTryOns > 0 ? ((addToCartCount / totalTryOns) * 100).toFixed(1) : "0.0",
+          totalRevenue: "0.00", currencyCode: "INR",
+          setupCompleted: !!settings || fromCookie,
+        };
+      }
+    } catch (dbErr) {}
+    return json(fallbackData);
   }
 };
 

@@ -1,8 +1,22 @@
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState, useRef, useCallback } from "react";
 import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
+
+export const action = async ({ request }) => {
+  try {
+    const { session } = await shopify.authenticate.admin(request);
+    await prisma.shopSettings.upsert({
+      where: { shop: session.shop },
+      update: { enabled: true },
+      create: { shop: session.shop, enabled: true },
+    });
+    return json({ ok: true });
+  } catch (e) {
+    return json({ ok: false });
+  }
+};
 
 export const loader = async ({ request }) => {
   try {
@@ -42,9 +56,10 @@ export const loader = async ({ request }) => {
       uniqueUsers,
       topProducts,
       plan: settings?.plan || "free",
+      setupCompleted: !!settings,
     });
   } catch (e) {
-    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free" });
+    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free", setupCompleted: false });
   }
 };
 
@@ -120,9 +135,10 @@ const CATEGORIES = [
 ];
 
 export default function Index() {
-  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan } = useLoaderData();
+  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted } = useLoaderData();
+  const submit = useSubmit();
   const [step, setStep] = useState("start");
-  const [setupDone, setSetupDone] = useState(false);
+  const [setupDone, setSetupDone] = useState(setupCompleted);
   const [cats, setCats] = useState([]);
   const [phone, setPhone] = useState("7002073054");
   const [userImg, setUserImg] = useState(null);
@@ -608,7 +624,7 @@ export default function Index() {
 
                 <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
                   <a href={`https://${shop}/admin/themes/current/editor?template=product`} target="_blank" rel="noopener noreferrer" className="btn btn-outline">Open Theme Editor</a>
-                  <button className="btn btn-accent" onClick={() => setSetupDone(true)}>✓ I've Added the Block</button>
+                  <button className="btn btn-accent" onClick={() => { setSetupDone(true); submit({}, { method: "post" }); }}>✓ I've Added the Block</button>
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 16 }}>

@@ -16,6 +16,22 @@ export const action = async ({ request }) => {
     const category = formData.get("category") || "dresses";
     const shop = formData.get("shop");
 
+    // Log-only mode: just record the try-on event (for client-side fallback tracking)
+    const logOnly = formData.get("log_only");
+    if (logOnly === "1" && shop) {
+      try {
+        await prisma.shopSettings.upsert({
+          where: { shop },
+          update: { monthlyTryOns: { increment: 1 }, totalTryOns: { increment: 1 } },
+          create: { shop, monthlyTryOns: 1, totalTryOns: 1, enabled: true },
+        });
+        await prisma.tryOnLog.create({
+          data: { shop, productId: formData.get("product_id") || "", productTitle: formData.get("product_title") || "", resultUrl: "client-fallback", status: "completed" },
+        });
+      } catch (e) {}
+      return json({ success: true, logged: true });
+    }
+
     if (!productImageUrl || !userPhotoFile) {
       return json({ error: "Missing required fields" }, { status: 400 });
     }

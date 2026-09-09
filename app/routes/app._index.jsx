@@ -24,7 +24,7 @@ export const loader = async ({ request }) => {
   try {
     const { admin, session } = await shopify.authenticate.admin(request);
 
-    // Check active Shopify App Pricing subscription
+    // 1. Check active Shopify App Pricing subscription
     const billingRes = await admin.graphql(`{
       appInstallation {
         activeSubscriptions {
@@ -39,56 +39,137 @@ export const loader = async ({ request }) => {
     const activeSubs = billingData.data?.appInstallation?.activeSubscriptions || [];
     const hasActiveSub = activeSubs.some(s => s.status === "ACTIVE");
 
-    // If no active subscription, redirect to Shopify's hosted plan selection
+    // 2. If no active subscription, redirect to Shopify hosted plan selection
     if (!hasActiveSub) {
-      const planSelectionUrl = `shopify://admin/charges/tryfit-5/pricing_plans`;
-      return redirect(planSelectionUrl);
+      return redirect(`shopify://admin/charges/tryfit-5/pricing_plans`);
     }
 
-    const res = await admin.graphql(`{
+    // 3. Active plan info
+    const activePlan = activeSubs.find(s => s.status === "ACTIVE");
+    const planName = activePlan?.name || "Free";
+
+    // Plan limits mapping
+    const PLAN_LIMITS = { "free": 10, "starter": 200, "growth": 600, "pro": 2000 };
+    const planKey = planName.toLowerCase();
+    const monthlyLimit = PLAN_LIMITS[planKey] || 50;
+
+    // 4. Fetch real products + product count
+    const prodRes = await admin.graphql(`{
       products(first: 10, sortKey: UPDATED_AT, reverse: true) {
         edges { node { id title status totalInventory priceRangeV2 { minVariantPrice { amount currencyCode } } featuredImage { url } } }
       }
+      productsCount: productsCount { count }
     }`);
-    const data = await res.json();
-    const products = data.data.products.edges.map(e => e.node);
+    const prodData = await prodRes.json();
+    const products = prodData.data.products.edges.map(e => e.node);
+    const totalProducts = prodData.data.productsCount?.count || products.length;
 
-    // Analytics from DB + sync plan from subscription
-    const activePlanName = activeSubs.find(s => s.status === "ACTIVE")?.name?.toLowerCase() || "free";
-    let settings = null;
-    let totalTryOns = 0, uniqueUsers = 0, topProducts = [];
+    // 5. Fetch real order revenue (last 30 days)
+    let totalRevenue = 0;
+    let currencyCode = "INR";
     try {
+      const orderRes = await admin.graphql(`{
+        orders(first: 1, sortKey: CREATED_AT, reverse: true, query: "created_at:>='${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}'") {
+          edges {
+            node {
+              totalPriceSet { shopMoney { amount currencyCode } }
+            }
+          }
+        }
+        ordersCount: ordersCount(query: "created_at:>='${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}'") { count }
+      }`);
+      const orderData = await orderRes.json();
+      const orderEdges = orderData.data?.orders?.edges || [];
+      if (orderEdges.length > 0) {
+        currencyCode = orderEdges[0].node.totalPriceSet.shopMoney.currencyCode;
+      }
+      // Get total revenue from all recent orders
+      const allOrdersRes = await admin.graphql(`{
+        orders(first: 50, sortKey: CREATED_AT, reverse: true, query: "created_at:>='${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}'") {
+          edges {
+            node {
+              totalPriceSet { shopMoney { amount } }
+            }
+          }
+        }
+      }`);
+      const allOrderData = await allOrdersRes.json();
+      totalRevenue = (allOrderData.data?.orders?.edges || []).reduce(
+        (sum, e) => sum + parseFloat(e.node.totalPriceSet.shopMoney.amount || 0), 0
+      );
+    } catch (e) {}
+
+    // 6. Real analytics from TryOnLog DB
+    let totalTryOns = 0, uniqueUsers = 0, topProducts = [], addToCartCount = 0;
+    let settings = null;
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      // Sync plan + limits to DB
       settings = await prisma.shopSettings.upsert({
         where: { shop: session.shop },
-        update: { plan: activePlanName, enabled: true },
-        create: { shop: session.shop, plan: activePlanName, enabled: true },
+        update: { plan: planKey, monthlyLimit, enabled: true },
+        create: { shop: session.shop, plan: planKey, monthlyLimit, enabled: true },
       });
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      totalTryOns = await prisma.tryOnLog.count({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } } });
-      const logs = await prisma.tryOnLog.findMany({ where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } }, orderBy: { createdAt: "desc" }, take: 500 });
+
+      // Real try-on count (30 days)
+      totalTryOns = await prisma.tryOnLog.count({
+        where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } },
+      });
+
+      // Real unique users (distinct productIds as proxy — each unique product tried = unique session)
+      const logs = await prisma.tryOnLog.findMany({
+        where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo } },
+        orderBy: { createdAt: "desc" },
+        take: 1000,
+      });
       uniqueUsers = new Set(logs.map(l => l.productId)).size;
+
+      // Real add-to-cart: count logs with status "added_to_cart"
+      addToCartCount = await prisma.tryOnLog.count({
+        where: { shop: session.shop, createdAt: { gte: thirtyDaysAgo }, status: "added_to_cart" },
+      });
+
+      // Top products by try-on count
       const counts = {};
       logs.forEach(l => {
-        if (!counts[l.productId]) counts[l.productId] = { id: l.productId, title: l.productTitle || "Unknown", count: 0 };
+        if (!counts[l.productId]) counts[l.productId] = { id: l.productId, title: l.productTitle || "Unknown", count: 0, atc: 0 };
         counts[l.productId].count++;
+      });
+      // Count per-product ATC
+      const atcLogs = logs.filter(l => l.status === "added_to_cart");
+      atcLogs.forEach(l => {
+        if (counts[l.productId]) counts[l.productId].atc++;
       });
       topProducts = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
     } catch (e) {}
 
+    // Real add-to-cart rate
+    const addToCartRate = totalTryOns > 0 ? ((addToCartCount / totalTryOns) * 100).toFixed(1) : "0.0";
+
     return json({
       shop: session.shop,
       products,
-      totalProducts: products.length,
+      totalProducts,
       monthlyTryOns: settings?.monthlyTryOns || 0,
-      monthlyLimit: settings?.monthlyLimit || 50,
+      monthlyLimit,
       totalTryOns,
       uniqueUsers,
       topProducts,
-      plan: settings?.plan || "free",
+      plan: planName,
+      addToCartRate,
+      totalRevenue: totalRevenue.toFixed(2),
+      currencyCode,
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free", setupCompleted: fromCookie });
+    return json({
+      shop: "unknown", products: [], totalProducts: 0,
+      monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
+      uniqueUsers: 0, topProducts: [], plan: "Free",
+      addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",
+      setupCompleted: fromCookie,
+    });
   }
 };
 
@@ -164,7 +245,7 @@ const CATEGORIES = [
 ];
 
 export default function Index() {
-  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted } = useLoaderData();
+  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted, addToCartRate, totalRevenue, currencyCode } = useLoaderData();
   const submit = useSubmit();
   const [step, setStep] = useState("start");
   const [setupDone, setSetupDone] = useState(true);
@@ -259,9 +340,8 @@ export default function Index() {
   // DASHBOARD VIEW
   if (setupDone) {
     const usagePercent = monthlyLimit > 0 ? Math.min((monthlyTryOns / monthlyLimit) * 100, 100) : 0;
-    const addToCartRate = totalTryOns > 0 ? "18.0" : "0.0";
-    const estRevenue = totalTryOns > 0 ? (totalTryOns * 0.18 * 1200).toFixed(0) : "0";
     const creditsLeft = Math.max(monthlyLimit - monthlyTryOns, 0);
+    const currSymbol = currencyCode === "USD" ? "$" : currencyCode === "EUR" ? "€" : currencyCode === "GBP" ? "£" : "₹";
 
     return (
       <div style={{ fontFamily: "'Jost', sans-serif", background: "#f8f9fb", minHeight: "100vh" }}>
@@ -301,7 +381,7 @@ export default function Index() {
                 { label: "Try-Ons Generated", value: totalTryOns },
                 { label: "Unique Users", value: uniqueUsers },
                 { label: "Add to Cart Rate", value: `${addToCartRate}%` },
-                { label: "Total Revenue", value: `₹${Number(estRevenue).toLocaleString()}` },
+                { label: "Total Revenue", value: `${currSymbol}${Number(totalRevenue).toLocaleString()}` },
               ].map((s, i) => (
                 <div key={i} style={{ padding: "18px 20px", background: "#f8f9fb", borderRadius: 12, border: "1px solid #e8eaef" }}>
                   <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{s.label}</div>
@@ -359,7 +439,7 @@ export default function Index() {
                       <tr key={p.id} style={{ borderBottom: "1px solid #f1f3f5" }}>
                         <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 500, color: "#1e1b4b" }}>{p.title}</td>
                         <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 700, color: "#4f46e5", textAlign: "center" }}>{p.count}</td>
-                        <td style={{ padding: "14px 0", fontSize: 14, color: "#64748b", textAlign: "center" }}>0.0%</td>
+                        <td style={{ padding: "14px 0", fontSize: 14, color: "#64748b", textAlign: "center" }}>{p.count > 0 ? ((p.atc / p.count) * 100).toFixed(1) : "0.0"}%</td>
                       </tr>
                     ))}
                   </tbody>

@@ -8,7 +8,7 @@ automatically_update_urls_on_dev = true
 dev_store_url = "testing-ashif.myshopify.com"
 
 [access_scopes]
-scopes = "read_products,write_products"
+scopes = "read_products,write_products,read_orders"
 
 [auth]
 redirect_urls = [

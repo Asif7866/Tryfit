@@ -140,7 +140,7 @@ export default function Index() {
   const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted } = useLoaderData();
   const submit = useSubmit();
   const [step, setStep] = useState("start");
-  const [setupDone, setSetupDone] = useState(setupCompleted);
+  const [setupDone, setSetupDone] = useState(true);
   const [cats, setCats] = useState([]);
   const [phone, setPhone] = useState("7002073054");
   const [userImg, setUserImg] = useState(null);

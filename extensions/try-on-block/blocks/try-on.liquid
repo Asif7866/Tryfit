@@ -370,7 +370,9 @@
       const res=await fetch('/apps/tryon',{method:'POST',body:fd});
       const data=await res.json();
       if(res.ok&&data.success&&data.result_url){
-        resultImg.src=data.result_url;show('result');return;
+        resultImg.src=data.result_url;show('result');
+        try{const lf=new FormData();lf.append('shop',D.shop);lf.append('product_id',D.pid);lf.append('product_title',D.ptitle);fetch('https://tryfit-production.up.railway.app/log-tryon',{method:'POST',body:lf,mode:'cors'}).catch(()=>{});}catch(le){}
+        return;
       }
       throw new Error(data.error||'AI unavailable');
     }catch(err){
@@ -400,8 +402,8 @@
             ctx.fillStyle='#fff';ctx.font='600 14px Inter,sans-serif';ctx.textAlign='center';
             ctx.fillText('✨ Virtual Try-On by TryFit',300,766);
             resultImg.src=canvas.toDataURL('image/jpeg',0.92);show('result');
-            // Log fallback try-on to server for dashboard tracking
-            try{const lf=new FormData();lf.append('shop',D.shop);lf.append('product_id',D.pid);lf.append('product_title',D.ptitle);lf.append('log_only','1');fetch('/apps/tryon',{method:'POST',body:lf}).catch(()=>{});}catch(le){}
+            // Log try-on to server for dashboard tracking
+            try{const lf=new FormData();lf.append('shop',D.shop);lf.append('product_id',D.pid);lf.append('product_title',D.ptitle);fetch('https://tryfit-production.up.railway.app/log-tryon',{method:'POST',body:lf,mode:'cors'}).catch(()=>{});}catch(le){}
           };
           prodImage.onerror=()=>{errorMsg.textContent='Could not load product image';show('error');};
           prodImage.src=D.pimg;

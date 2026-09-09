@@ -174,11 +174,26 @@ export const loader = async ({ request }) => {
     try {
       const url = new URL(request.url);
       const shopParam = url.searchParams.get("shop") || url.searchParams.get("myshopify_domain");
-      // Also try to find shop from any session in DB
       let shopName = shopParam;
+      // Try decode Shopify host param (base64 encoded shop/admin path)
+      if (!shopName) {
+        const host = url.searchParams.get("host");
+        if (host) { try { const decoded = atob(host); const match = decoded.match(/([^/]+\.myshopify\.com)/); if (match) shopName = match[1]; } catch(e){} }
+      }
+      // Try from ShopSettings
+      if (!shopName) {
+        const anySetting = await prisma.shopSettings.findFirst({ select: { shop: true }, orderBy: { updatedAt: "desc" } });
+        if (anySetting) shopName = anySetting.shop;
+      }
+      // Try from Session
       if (!shopName) {
         const anySession = await prisma.session.findFirst({ select: { shop: true }, orderBy: { id: "desc" } });
         if (anySession) shopName = anySession.shop;
+      }
+      // Try from TryOnLog
+      if (!shopName) {
+        const anyLog = await prisma.tryOnLog.findFirst({ select: { shop: true }, orderBy: { createdAt: "desc" } });
+        if (anyLog) shopName = anyLog.shop;
       }
       if (shopName) {
         const settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });

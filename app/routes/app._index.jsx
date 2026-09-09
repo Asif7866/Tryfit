@@ -1,8 +1,10 @@
-import { json } from "@remix-run/node";
+import { json, createCookie } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState, useRef, useCallback } from "react";
 import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
+
+const setupCookie = createCookie("tryfit_setup", { maxAge: 365 * 24 * 60 * 60 });
 
 export const action = async ({ request }) => {
   try {
@@ -12,13 +14,13 @@ export const action = async ({ request }) => {
       update: { enabled: true },
       create: { shop: session.shop, enabled: true },
     });
-    return json({ ok: true });
-  } catch (e) {
-    return json({ ok: false });
-  }
+  } catch (e) {}
+  return json({ ok: true }, { headers: { "Set-Cookie": await setupCookie.serialize("done") } });
 };
 
 export const loader = async ({ request }) => {
+  const cookieVal = await setupCookie.parse(request.headers.get("Cookie"));
+  const fromCookie = cookieVal === "done";
   try {
     const { admin, session } = await shopify.authenticate.admin(request);
     const res = await admin.graphql(`{
@@ -56,10 +58,10 @@ export const loader = async ({ request }) => {
       uniqueUsers,
       topProducts,
       plan: settings?.plan || "free",
-      setupCompleted: !!settings,
+      setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free", setupCompleted: false });
+    return json({ shop: "unknown", products: [], totalProducts: 0, monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0, uniqueUsers: 0, topProducts: [], plan: "free", setupCompleted: fromCookie });
   }
 };
 

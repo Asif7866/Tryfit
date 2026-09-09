@@ -450,7 +450,10 @@ export default function Index() {
 
           {/* Plan & Credit Usage */}
           <div className="card fu fu3" style={{ marginBottom: 20, padding: "24px 28px" }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 18 }}>Plan & Credit Usage</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>Plan & Credit Usage</div>
+              <a href="shopify://admin/charges/tryfit-5/pricing_plans" style={{ padding: "8px 20px", borderRadius: 10, background: "#4f46e5", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'Jost',sans-serif" }}>💎 Manage Plan</a>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
               {[
                 { label: "Plan Type", value: plan },
@@ -467,7 +470,10 @@ export default function Index() {
             <div className="progress-bar" style={{ marginTop: 16, height: 6 }}>
               <div className="progress-fill" style={{ width: `${Math.max(usagePercent, 1)}%` }} />
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, textAlign: "right" }}>{monthlyTryOns} of {monthlyLimit} credits used</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>{monthlyTryOns} of {monthlyLimit} credits used</div>
+              {usagePercent >= 80 && <a href="shopify://admin/charges/tryfit-5/pricing_plans" style={{ fontSize: 12, color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>⚡ Upgrade for more credits</a>}
+            </div>
           </div>
 
           {/* Top Products + Sidebar */}

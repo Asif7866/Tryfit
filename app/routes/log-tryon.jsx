@@ -25,9 +25,18 @@ export const action = async ({ request }) => {
     const shop = formData.get("shop");
     const productId = formData.get("product_id") || "";
     const productTitle = formData.get("product_title") || "";
+    const event = formData.get("event");
 
     if (!shop) {
       return json({ error: "Missing shop" }, { status: 400, headers });
+    }
+
+    if (event === "atc") {
+      // Log add-to-cart event
+      await prisma.tryOnLog.create({
+        data: { shop, productId, productTitle, resultUrl: "", status: "added_to_cart" },
+      });
+      return json({ success: true, event: "atc" }, { headers });
     }
 
     await prisma.shopSettings.upsert({

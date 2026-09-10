@@ -415,6 +415,8 @@
   $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});
   $('vto-error-retry')?.addEventListener('click',()=>{reset();show('upload');});
   $('vto-addtocart')?.addEventListener('click',async()=>{
+    // Log add-to-cart event
+    try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');fetch('https://tryfit-production.up.railway.app/log-tryon',{method:'POST',body:af,mode:'cors'}).catch(()=>{});}catch(e){}
     const vid=document.querySelector('[name="id"]')?.value;
     try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeModal();window.location.href='/cart';}catch(e){window.location.href='/cart';}
   });

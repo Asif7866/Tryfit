@@ -42,7 +42,9 @@ export const loader = async ({ request }) => {
     // 2. If no active subscription, redirect to Shopify hosted plan selection
     if (!hasActiveSub) {
       const shopSlug = session.shop.replace(".myshopify.com", "");
-      return redirect(`https://admin.shopify.com/store/${shopSlug}/charges/tryfit-5/pricing_plans`);
+      // For embedded apps, redirect via exitiframe to Shopify's pricing page
+      const pricingUrl = `https://admin.shopify.com/store/${shopSlug}/charges/tryfit-5/pricing_plans`;
+      throw new Response(null, { status: 302, headers: { Location: pricingUrl } });
     }
 
     // 3. Active plan info
@@ -453,7 +455,7 @@ export default function Index() {
           <div className="card fu fu3" style={{ marginBottom: 20, padding: "24px 28px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>Plan & Credit Usage</div>
-              <button onClick={() => { const s=shop.replace('.myshopify.com',''); window.open(`https://admin.shopify.com/store/${s}/charges/tryfit-5/pricing_plans`, '_top'); }} style={{ padding: "8px 20px", borderRadius: 10, background: "#4f46e5", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'Jost',sans-serif" }}>💎 Manage Plan</button>
+              <button onClick={() => { if(window.shopify?.navigate){window.shopify.navigate('/charges/tryfit-5/pricing_plans');}else{window.top.location.href=`https://admin.shopify.com/store/${shop.replace('.myshopify.com','')}/charges/tryfit-5/pricing_plans`;} }} style={{ padding: "8px 20px", borderRadius: 10, background: "#4f46e5", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'Jost',sans-serif" }}>💎 Manage Plan</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
               {[
@@ -473,7 +475,7 @@ export default function Index() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
               <div style={{ fontSize: 11, color: "#94a3b8" }}>{monthlyTryOns} of {monthlyLimit} credits used</div>
-              {usagePercent >= 80 && <button onClick={() => { const s=shop.replace('.myshopify.com',''); window.open(`https://admin.shopify.com/store/${s}/charges/tryfit-5/pricing_plans`, '_top'); }} style={{ fontSize: 12, color: "#4f46e5", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>⚡ Upgrade for more credits</button>}
+              {usagePercent >= 80 && <button onClick={() => { if(window.shopify?.navigate){window.shopify.navigate('/charges/tryfit-5/pricing_plans');}else{window.top.location.href=`https://admin.shopify.com/store/${shop.replace('.myshopify.com','')}/charges/tryfit-5/pricing_plans`;} }} style={{ fontSize: 12, color: "#4f46e5", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>⚡ Upgrade for more credits</button>}
             </div>
           </div>
 

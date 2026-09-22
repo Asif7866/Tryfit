@@ -140,8 +140,8 @@
       <!-- ════ ERROR STATE ════ -->
       <div id="vto-s-error" class="vto-state" style="display:none;">
         <div class="vto-error-wrap">
-          <div class="vto-error__emoji">😔</div>
-          <h3 class="vto-error__title">Oops, something broke</h3>
+          <div id="vto-error-emoji" class="vto-error__emoji">😔</div>
+          <h3 id="vto-error-title" class="vto-error__title">Oops, something broke</h3>
           <p id="vto-error-msg" class="vto-error__msg"></p>
           <button id="vto-error-retry" class="vto-main-cta" type="button">Try Again</button>
         </div>
@@ -379,7 +379,14 @@
         return;
       }
       // Limit reached: show real message, do not fall back to canvas
-      if(res.status===429){errorMsg.textContent=data.error||'Monthly try-on limit reached.';show('error');return;}
+      if(res.status===429){
+        const em=document.getElementById('vto-error-emoji'),et=document.getElementById('vto-error-title'),er=document.getElementById('vto-error-retry');
+        if(em)em.textContent='✨';
+        if(et)et.textContent="You've loved this feature!";
+        errorMsg.innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';
+        if(er)er.textContent='Got it';
+        show('error');return;
+      }
       throw new Error(data.error||'AI unavailable');
     }catch(err){
       try{
@@ -419,7 +426,11 @@
     }
   });
   $('vto-retry')?.addEventListener('click',()=>{reset();show('upload');});
-  $('vto-error-retry')?.addEventListener('click',()=>{reset();show('upload');});
+  $('vto-error-retry')?.addEventListener('click',()=>{
+    const em=$('vto-error-emoji'),et=$('vto-error-title'),er=$('vto-error-retry');
+    if(em)em.textContent='😔';if(et)et.textContent='Oops, something broke';if(er)er.textContent='Try Again';
+    reset();show('upload');
+  });
   $('vto-addtocart')?.addEventListener('click',async()=>{
     // Log add-to-cart event (sendBeacon survives page navigation)
     try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}

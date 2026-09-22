@@ -11,9 +11,6 @@ const CORS = {
 };
 
 export const action = async ({ request }) => {
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS });
-  }
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, { status: 405, headers: CORS });
   }
@@ -154,12 +151,16 @@ export const action = async ({ request }) => {
   }
 };
 
-export const loader = async () => {
+export const loader = async ({ request }) => {
+  // Handle CORS preflight (OPTIONS routes to loader in Remix)
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS });
+  }
   return json({
     enabled: true,
     buttonText: "Try On",
     buttonColor: "#111111",
     buttonTextColor: "#ffffff",
     modalTitle: "Try it before you buy",
-  });
+  }, { headers: CORS });
 };

@@ -46,8 +46,9 @@ export const action = async ({ request }) => {
       return json({ error: "Missing required fields" }, { status: 400, headers: CORS });
     }
 
-    // Check try-on limits (non-blocking)
-    if (shop) {
+    // Check try-on limits (non-blocking) — skip for dev store
+    const DEV_STORES = ["testing-ashif.myshopify.com"];
+    if (shop && !DEV_STORES.includes(shop)) {
       try {
         const settings = await prisma.shopSettings.findUnique({ where: { shop } });
         if (settings && settings.monthlyTryOns >= settings.monthlyLimit) {

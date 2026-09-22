@@ -119,6 +119,8 @@
 <style>
 :root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
 *,*::before,*::after{box-sizing:border-box;}
+/* Force ALL page elements below our overlay */
+.vto-ov ~ *,.vto-ov ~ * *{z-index:auto!important;}
 
 /* BTN */
 .vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
@@ -128,7 +130,7 @@
 .vto-btn__badge{padding:3px 8px;background:rgba(255,255,255,.2);border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;}
 
 /* OVERLAY — max z-index */
-.vto-ov{position:fixed!important;inset:0!important;z-index:2147483646!important;background:rgba(0,0,0,.55)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;animation:vF .2s;isolation:isolate!important;}
+.vto-ov{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;z-index:2147483646!important;background:rgba(0,0,0,.55)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;animation:vF .2s;isolation:isolate!important;contain:layout style!important;}
 
 /* CARD */
 .vto-card{background:#fff;border-radius:22px;max-width:500px;width:100%;max-height:92vh;overflow:hidden;overflow-y:auto;position:relative;animation:vS .3s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;box-shadow:0 25px 60px rgba(0,0,0,.2);isolation:isolate;}
@@ -239,8 +241,10 @@ let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;
 
 const show=s=>['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'+x);if(e)e.style.display=x===s?'block':'none';});
-const openModal=s=>{modal.style.display='flex';show(s||'upload');if(s==='upload')loadPrev();};
-const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;processing=false;};
+const lockBody=()=>{document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';};
+const unlockBody=()=>{document.body.style.overflow='';document.documentElement.style.overflow='';};
+const openModal=s=>{modal.style.display='flex';lockBody();show(s||'upload');if(s==='upload')loadPrev();};
+const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;processing=false;unlockBody();};
 const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';};
 const setSub=t=>{$('vto-sub').textContent=t;};
 
@@ -278,8 +282,8 @@ const updateBar=()=>{
 };
 
 // Mini
-const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';};
-const toModal=()=>{minimized=false;mini.style.display='none';modal.style.display='flex';};
+const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';unlockBody();};
+const toModal=()=>{minimized=false;mini.style.display='none';modal.style.display='flex';lockBody();};
 
 // Previous results
 const savePrev=url=>{

@@ -3,9 +3,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// CORS: allow direct storefront calls (bypasses Shopify proxy 30s timeout)
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 export const action = async ({ request }) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS });
+  }
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, { status: 405 });
+    return json({ error: "Method not allowed" }, { status: 405, headers: CORS });
   }
 
   try {
@@ -29,11 +39,11 @@ export const action = async ({ request }) => {
           data: { shop, productId: formData.get("product_id") || "", productTitle: formData.get("product_title") || "", resultUrl: "client-fallback", status: "completed" },
         });
       } catch (e) {}
-      return json({ success: true, logged: true });
+      return json({ success: true, logged: true }, { headers: CORS });
     }
 
     if (!productImageUrl || !userPhotoFile) {
-      return json({ error: "Missing required fields" }, { status: 400 });
+      return json({ error: "Missing required fields" }, { status: 400, headers: CORS });
     }
 
     // Check try-on limits (non-blocking)
@@ -41,7 +51,7 @@ export const action = async ({ request }) => {
       try {
         const settings = await prisma.shopSettings.findUnique({ where: { shop } });
         if (settings && settings.monthlyTryOns >= settings.monthlyLimit) {
-          return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429 });
+          return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429, headers: CORS });
         }
       } catch (dbErr) {
         console.error("DB check skipped:", dbErr.message);
@@ -50,7 +60,7 @@ export const action = async ({ request }) => {
 
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token) {
-      return json({ error: "AI not configured" }, { status: 503 });
+      return json({ error: "AI not configured" }, { status: 503, headers: CORS });
     }
 
     // Convert uploaded file to base64 data URI
@@ -85,7 +95,7 @@ export const action = async ({ request }) => {
     
     if (!createRes.ok) {
       console.error("Replicate create error:", JSON.stringify(prediction));
-      return json({ error: prediction.detail || "AI model error" }, { status: 500 });
+      return json({ error: prediction.detail || "AI model error" }, { status: 500, headers: CORS });
     }
 
     // Poll for result
@@ -95,7 +105,7 @@ export const action = async ({ request }) => {
     for (let i = 0; i < 60; i++) {
       if (result.status === "succeeded") break;
       if (result.status === "failed" || result.status === "canceled") {
-        return json({ error: "AI generation failed" }, { status: 500 });
+        return json({ error: "AI generation failed" }, { status: 500, headers: CORS });
       }
       
       await new Promise(r => setTimeout(r, 1000));
@@ -107,7 +117,7 @@ export const action = async ({ request }) => {
     }
 
     if (result.status !== "succeeded") {
-      return json({ error: "AI timeout" }, { status: 504 });
+      return json({ error: "AI timeout" }, { status: 504, headers: CORS });
     }
 
     const resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
@@ -136,11 +146,11 @@ export const action = async ({ request }) => {
       }
     }
 
-    return json({ success: true, result_url: String(resultUrl) });
+    return json({ success: true, result_url: String(resultUrl) }, { headers: CORS });
 
   } catch (error) {
     console.error("Try-on error:", error);
-    return json({ error: "Try-on failed", details: error.message }, { status: 500 });
+    return json({ error: "Try-on failed", details: error.message }, { status: 500, headers: CORS });
   }
 };
 

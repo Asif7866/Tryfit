@@ -28,7 +28,7 @@ export const loader = async ({ request }) => {
     const { session } = await shopify.authenticate.admin(request);
     return json({ shop: session.shop, settings: defaults, error: null });
   } catch (e) {
-    return json({ shop: "unknown", settings: defaults, error: e.message });
+    return json({ shop: "", settings: defaults, error: e.message });
   }
 };
 

@@ -166,9 +166,11 @@ export const loader = async ({ request }) => {
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    // Auth failed — try to get data from DB using shop from URL
+    // Re-throw Response objects (e.g. billing redirects) — let Remix handle them
+    if (e instanceof Response) throw e;
+    // Auth genuinely failed — try to resolve shop from URL
     let fallbackData = {
-      shop: "unknown", products: [], totalProducts: 0,
+      shop: "", products: [], totalProducts: 0,
       monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
       uniqueUsers: 0, topProducts: [], plan: "Free",
       addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",

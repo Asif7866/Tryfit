@@ -22,6 +22,16 @@ export const loader = async ({ request }) => {
   const cookieVal = await setupCookie.parse(request.headers.get("Cookie"));
   const fromCookie = cookieVal === "done";
   let authenticatedShop = null;
+  // Pre-extract shop from request URL params or host param (survives into catch block)
+  try {
+    const reqUrl = new URL(request.url);
+    const sp = reqUrl.searchParams.get("shop") || reqUrl.searchParams.get("myshopify_domain");
+    if (sp) authenticatedShop = sp;
+    if (!authenticatedShop) {
+      const h = reqUrl.searchParams.get("host");
+      if (h) { const d = atob(h); const m = d.match(/([^/]+\.myshopify\.com)/); if (m) authenticatedShop = m[1]; }
+    }
+  } catch(_){}
   try {
     const { admin, session } = await shopify.authenticate.admin(request);
     authenticatedShop = session.shop;

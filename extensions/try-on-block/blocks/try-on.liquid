@@ -7,420 +7,239 @@
   data-shop="{{ shop.permanent_domain }}"
   data-category="{{ block.settings.garment_category }}"
   data-vid="{{ product.selected_or_first_available_variant.id }}"
+  data-pimg-sm="{{ product.featured_image | image_url: width: 120 }}"
+  data-pimg-md="{{ product.featured_image | image_url: width: 600 }}"
+  data-btn-color="{{ block.settings.button_color }}"
+  data-btn-text-color="{{ block.settings.button_text_color }}"
+  data-btn-radius="{{ block.settings.button_radius }}"
+  data-btn-label="{{ block.settings.button_text }}"
 >
-  <button id="vto-btn" class="vto-btn" type="button">
-    <svg class="vto-btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>
+  <!-- Only button stays in theme DOM -->
+  <button id="vto-btn" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:{{ block.settings.button_color }};color:{{ block.settings.button_text_color }};border:none;border-radius:{{ block.settings.button_radius }}px;font:600 15px/1 system-ui,-apple-system,sans-serif;cursor:pointer;" type="button">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>
     <span>{{ block.settings.button_text }}</span>
-    <span class="vto-btn__badge">AI</span>
+    <span style="padding:3px 8px;background:rgba(255,255,255,.2);border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;">AI</span>
   </button>
-
-  <!-- ═══ MODAL ═══ -->
-  <div id="vto-modal" class="vto-ov" style="display:none;">
-    <div class="vto-card">
-      <div class="vto-card__head">
-        <div>
-          <h2 class="vto-card__title">See it on you</h2>
-          <p class="vto-card__sub" id="vto-sub">Best results come from a photo in the same pose as the product shot</p>
-        </div>
-        <div id="vto-close-slot"></div>
-      </div>
-
-      <!-- UPLOAD -->
-      <div id="vto-s-upload" class="vto-s">
-        <div id="vto-dropzone" class="vto-drop">
-          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" title="" />
-          <div id="vto-dz-empty">
-            <button class="vto-choose" type="button" tabindex="-1">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Choose photo
-            </button>
-            <p class="vto-drop__hint">Your photo is deleted after your try-on is generated</p>
-          </div>
-        </div>
-        <div id="vto-prev-wrap" class="vto-prev" style="display:none;">
-          <p class="vto-prev__label">Previous results</p>
-          <div id="vto-prev-grid" class="vto-prev__grid"></div>
-        </div>
-      </div>
-
-      <!-- PROCESSING -->
-      <div id="vto-s-proc" class="vto-s" style="display:none;">
-        <div class="vto-proc">
-          <div class="vto-proc__imgs">
-            <div class="vto-proc__img vto-float-l"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
-            <div class="vto-proc__spin">
-              <svg class="vto-ring" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#f0f0f0" stroke-width="2.5"/><circle cx="20" cy="20" r="17" fill="none" stroke="url(#vto-grad)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="80 107" class="vto-spinner"/><defs><linearGradient id="vto-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#111"/><stop offset="100%" stop-color="#666"/></linearGradient></defs></svg>
-            </div>
-            <div class="vto-proc__img vto-float-r"><img id="vto-proc-u" alt="" /></div>
-          </div>
-          <!-- Progress bar -->
-          <div class="vto-pbar"><div class="vto-pbar__fill" id="vto-pbar-fill"></div></div>
-          <p class="vto-proc__status" id="vto-status">Starting your try-on</p>
-          <p class="vto-proc__time" id="vto-timer">0 sec</p>
-        </div>
-      </div>
-
-      <!-- RESULT -->
-      <div id="vto-s-result" class="vto-s" style="display:none;">
-        <div class="vto-res__btns">
-          <button id="vto-regen" class="vto-btn-o" type="button">Regenerate</button>
-          <button id="vto-dl" class="vto-btn-o" type="button">Download</button>
-        </div>
-        <button id="vto-buy" class="vto-btn-f" type="button">Buy</button>
-        <div class="vto-res__pic" id="vto-res-wrap">
-          <img id="vto-res-img" alt="Try-on result" />
-          <div class="vto-res__zoom">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-          </div>
-        </div>
-        <p class="vto-res__disc">Colors and fit may vary slightly from the actual product.</p>
-        <div class="vto-powered">Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener">TryFit</a></div>
-      </div>
-
-      <!-- ERROR -->
-      <div id="vto-s-error" class="vto-s" style="display:none;">
-        <div class="vto-err">
-          <p class="vto-err__icon" id="vto-err-icon">😔</p>
-          <h3 id="vto-err-title">Something went wrong</h3>
-          <p id="vto-err-msg"></p>
-          <button id="vto-err-retry" class="vto-btn-f" type="button">Try Again</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ MINIBAR ═══ -->
-  <div id="vto-mini" class="vto-mini" style="display:none;">
-    <div class="vto-mini__thumbs">
-      <img id="vto-m-p" src="{{ product.featured_image | image_url: width: 120 }}" alt="" />
-      <div class="vto-mini__sp">
-        <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#ddd" stroke-width="3"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spinner"/></svg>
-      </div>
-      <img id="vto-m-u" alt="" />
-    </div>
-    <div class="vto-mini__body">
-      <strong id="vto-m-status">Starting your try-on</strong>
-      <span id="vto-m-time">0 sec · You can keep browsing</span>
-    </div>
-    <button id="vto-m-expand" class="vto-mini__arrow" type="button" aria-label="Expand">›</button>
-  </div>
-
-  <!-- ═══ ZOOM ═══ -->
-  <div id="vto-zoom" class="vto-zoom" style="display:none;">
-    <button id="vto-z-close" class="vto-zoom__x" type="button" aria-label="Close">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <img id="vto-z-img" alt="Zoomed" />
-  </div>
+  <!-- Shadow DOM host for all overlays -->
+  <div id="vto-shadow-host"></div>
 </div>
-
-<style>
-:root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
-*,*::before,*::after{box-sizing:border-box;}
-/* When modal is active, kill ALL page stacking contexts */
-body.vto-active>*:not(.vto-ov):not(.vto-mini):not(.vto-zoom){position:relative!important;z-index:-1!important;}
-body.vto-active>header,body.vto-active>footer,body.vto-active>main,body.vto-active>section,body.vto-active>div:not(.vto-ov):not(.vto-mini):not(.vto-zoom){z-index:-1!important;}
-
-/* BTN */
-.vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
-.vto-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.1);}
-.vto-btn:active{transform:translateY(0);}
-.vto-btn__icon{flex-shrink:0;}
-.vto-btn__badge{padding:3px 8px;background:rgba(255,255,255,.2);border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;}
-
-/* OVERLAY — max z-index */
-.vto-ov{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;z-index:2147483646!important;background:rgba(0,0,0,.55)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;animation:vF .2s;isolation:isolate!important;contain:layout style!important;}
-
-/* CARD */
-.vto-card{background:#fff;border-radius:22px;max-width:500px;width:100%;max-height:92vh;overflow:hidden;overflow-y:auto;position:relative;animation:vS .3s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;box-shadow:0 25px 60px rgba(0,0,0,.2);isolation:isolate;}
-.vto-card__head{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:12px;}
-.vto-card__title{margin:0;font:800 24px/1.15 var(--vf);color:#111;letter-spacing:-.3px;}
-.vto-card__sub{margin:6px 0 0;font:400 13px/1.5 var(--vf);color:#888;}
-
-.vto-s{padding:18px 24px 24px;}
-
-/* UPLOAD */
-.vto-drop{border:2px dashed #d4d4d4;border-radius:18px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;cursor:pointer;transition:border-color .2s,background .2s;}
-.vto-drop:hover{border-color:#999;background:#fafafa;}
-.vto-drop input[type=file]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important;z-index:2!important;font-size:0!important;-webkit-appearance:none!important;}
-.vto-choose{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#1a1a2e;color:#fff;border:none;border-radius:14px;font:600 14px/1 var(--vf);cursor:pointer;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,46,.2);transition:transform .15s;}
-.vto-drop__hint{margin:16px 0 0;font:400 12px/1.4 var(--vf);color:#aaa;text-align:center;padding:0 20px;}
-
-/* PREVIOUS RESULTS */
-.vto-prev{padding:0 0 4px;}
-.vto-prev__label{font:600 13px/1 var(--vf);color:#444;margin:18px 0 10px;}
-.vto-prev__grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
-.vto-prev__grid img{width:72px;height:72px;border-radius:12px;object-fit:cover;cursor:pointer;border:2px solid #f0f0f0;transition:border-color .15s,transform .15s;}
-.vto-prev__grid img:hover{border-color:#111;transform:scale(1.05);}
-
-/* PROCESSING */
-.vto-proc{text-align:center;padding:28px 0 12px;}
-.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:24px;}
-.vto-proc__img{width:44%;aspect-ratio:3/4;border-radius:16px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.1);border:3px solid #fff;}
-.vto-proc__img img{width:100%;height:100%;object-fit:cover;display:block;}
-.vto-proc__spin{width:12%;display:flex;align-items:center;justify-content:center;z-index:1;}
-
-/* Floating animation on images */
-.vto-float-l{animation:vFloatL 3s ease-in-out infinite;}
-.vto-float-r{animation:vFloatR 3s ease-in-out infinite;}
-@keyframes vFloatL{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(-1deg)}}
-@keyframes vFloatR{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-8px) rotate(1deg)}}
-
-/* Progress bar */
-.vto-pbar{width:80%;margin:0 auto 16px;height:3px;background:#f0f0f0;border-radius:3px;overflow:hidden;}
-.vto-pbar__fill{height:100%;width:0%;background:linear-gradient(90deg,#111,#555);border-radius:3px;transition:width .5s ease;}
-
-.vto-proc__status{font:600 15px/1 var(--vf);color:#333;margin:0 0 4px;}
-.vto-proc__time{font:400 13px/1 var(--vf);color:#aaa;margin:0;}
-.vto-spinner{animation:vR 1s linear infinite;transform-origin:center;}
-@keyframes vR{to{transform:rotate(360deg)}}
-
-/* RESULT — 20% bigger image */
-.vto-res__btns{display:flex;gap:10px;margin-bottom:10px;}
-.vto-btn-o{flex:1;padding:14px;background:#f3f3f3;color:#222;border:none;border-radius:var(--vr);font:600 14px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;}
-.vto-btn-o:hover{background:#e5e5e5;transform:translateY(-1px);}
-.vto-btn-f{width:100%;padding:15px;background:#1a1a2e;color:#fff;border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
-.vto-btn-f:hover{background:#2a2a3e;transform:translateY(-1px);}
-.vto-res__pic{position:relative;border-radius:18px;overflow:hidden;cursor:zoom-in;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid #eee;animation:vReveal .6s cubic-bezier(.16,1,.3,1);max-height:60vh;}
-.vto-res__pic img{width:100%;height:100%;object-fit:contain;display:block;}
-.vto-res__zoom{position:absolute;top:14px;right:14px;width:38px;height:38px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.1);pointer-events:none;}
-@keyframes vReveal{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.vto-res__disc{text-align:center;margin:10px 0 0;font:400 10px/1.4 var(--vf);color:#ccc;}
-.vto-powered{text-align:center;padding:6px 0 0;font:400 11px/1 var(--vf);color:#ccc;}
-.vto-powered a{color:#999;text-decoration:none;font-weight:600;}
-
-/* ERROR */
-.vto-err{text-align:center;padding:32px 0 12px;}
-.vto-err__icon{font-size:44px;margin:0 0 10px;}
-.vto-err h3{font:700 18px/1 var(--vf);color:#111;margin:0 0 6px;}
-.vto-err p{font:400 13px/1.4 var(--vf);color:#999;margin:0 0 18px;}
-
-/* MINIBAR */
-.vto-mini{position:fixed!important;bottom:16px!important;right:16px!important;z-index:2147483645!important;background:#fff!important;border-radius:16px!important;padding:14px 18px!important;display:flex!important;align-items:center!important;gap:12px!important;box-shadow:0 8px 36px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04)!important;max-width:380px!important;width:auto!important;animation:vU .3s ease;}
-.vto-mini__thumbs{display:flex;align-items:center;flex-shrink:0;}
-.vto-mini__thumbs img{width:56px;height:56px;border-radius:12px;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.1);}
-.vto-mini__thumbs img:nth-child(3){margin-left:-12px;}
-.vto-mini__sp{margin:0 -10px;z-index:1;background:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.1);}
-.vto-mini__body{flex:1;min-width:0;}
-.vto-mini__body strong{display:block;font:600 15px/1.3 var(--vf);color:#111;}
-.vto-mini__body span{font:400 12px/1.3 var(--vf);color:#999;}
-.vto-mini__arrow{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;font:600 18px/1 var(--vf);color:#555;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s;}
-.vto-mini__arrow:hover{background:#e5e5e5;transform:scale(1.05);}
-
-/* ZOOM */
-.vto-zoom{position:fixed!important;inset:0!important;z-index:2147483647!important;background:rgba(0,0,0,.94)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;animation:vF .2s;cursor:zoom-out;}
-.vto-zoom img{max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;animation:vReveal .4s ease;}
-.vto-zoom__x{position:absolute;top:16px;right:16px;width:48px;height:48px;background:rgba(255,255,255,.12);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;transition:background .15s;}
-.vto-zoom__x:hover{background:rgba(255,255,255,.25);}
-
-/* ANIMS */
-@keyframes vF{from{opacity:0}to{opacity:1}}
-@keyframes vS{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes vU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-
-/* MOBILE */
-@media(max-width:500px){
-  .vto-ov{padding:0!important;align-items:flex-end!important;}
-  .vto-card{max-width:100%;border-radius:22px 22px 0 0;max-height:94vh;}
-  .vto-drop{min-height:220px;}
-  .vto-mini{right:8px!important;bottom:8px!important;left:8px!important;max-width:none!important;}
-  .vto-proc__img{width:42%;}
-}
-</style>
 
 <script>
 (function(){
-const $=id=>document.getElementById(id);
-const el=$('vto');if(!el)return;
+const el=document.getElementById('vto');if(!el)return;
 const D=el.dataset;
-const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
-// Move overlays to body — escapes ALL theme stacking contexts
-document.body.appendChild(modal);
-document.body.appendChild(mini);
-document.body.appendChild(zoom);
+const host=document.getElementById('vto-shadow-host');
+document.body.appendChild(host);
+const shadow=host.attachShadow({mode:'open'});
 
-// Create close button inside Shadow DOM — theme CSS CANNOT penetrate
-const closeBtnHost=document.createElement('div');
-closeBtnHost.id='vto-close';
-closeBtnHost.style.cssText='flex-shrink:0;margin:2px 0 0;';
-const shadow=closeBtnHost.attachShadow({mode:'closed'});
-shadow.innerHTML=`<style>
-:host{display:block;width:36px;height:36px;}
-.x{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;transition:background .15s,transform .15s;}
+// ═══ ALL HTML + CSS inside Shadow DOM ═══
+shadow.innerHTML=`
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:host{all:initial;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+
+/* OVERLAY */
+.ov{position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;z-index:2147483646;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:16px;animation:vF .2s;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+
+/* CARD */
+.card{background:#fff;border-radius:22px;max-width:500px;width:100%;max-height:92vh;overflow:hidden;overflow-y:auto;position:relative;animation:vS .3s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;box-shadow:0 25px 60px rgba(0,0,0,.2);}
+.head{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:12px;}
+.title{margin:0;font:800 24px/1.15 system-ui,sans-serif;color:#111;letter-spacing:-.3px;}
+.sub{margin:6px 0 0;font:400 13px/1.5 system-ui,sans-serif;color:#888;}
+.x{width:36px;height:36px;min-width:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;color:#888;transition:background .15s,transform .15s;flex-shrink:0;margin-top:2px;}
 .x:hover{background:#e5e5e5;transform:scale(1.05);}
-</style><div class="x"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>`;
-$('vto-close-slot').replaceWith(closeBtnHost);
-const fileInput=$('vto-file');
-let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
+.sec{padding:18px 24px 24px;}
+
+/* UPLOAD */
+.drop{border:2px dashed #d4d4d4;border-radius:18px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;cursor:pointer;transition:border-color .2s,background .2s;}
+.drop:hover{border-color:#999;background:#fafafa;}
+.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;font-size:0;}
+.choose{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#1a1a2e;color:#fff;border:none;border-radius:14px;font:600 14px/1 system-ui,sans-serif;cursor:pointer;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,46,.2);}
+.hint{margin:16px 0 0;font:400 12px/1.4 system-ui,sans-serif;color:#aaa;text-align:center;padding:0 20px;}
+
+/* PREV */
+.prev-label{font:600 13px/1 system-ui,sans-serif;color:#444;margin:18px 0 10px;}
+.prev-grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.prev-grid img{width:72px;height:72px;border-radius:12px;object-fit:cover;cursor:pointer;border:2px solid #f0f0f0;transition:border-color .15s,transform .15s;}
+.prev-grid img:hover{border-color:#111;transform:scale(1.05);}
+
+/* PROCESSING */
+.proc{text-align:center;padding:28px 0 12px;}
+.proc-imgs{display:flex;align-items:center;justify-content:center;margin-bottom:24px;}
+.proc-img{width:44%;aspect-ratio:3/4;border-radius:16px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.1);border:3px solid #fff;}
+.proc-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.proc-spin{width:12%;display:flex;align-items:center;justify-content:center;z-index:1;}
+.float-l{animation:vFL 3s ease-in-out infinite;}
+.float-r{animation:vFR 3s ease-in-out infinite;}
+@keyframes vFL{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(-1deg)}}
+@keyframes vFR{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+.pbar{width:80%;margin:0 auto 16px;height:3px;background:#f0f0f0;border-radius:3px;overflow:hidden;}
+.pbar-fill{height:100%;width:0%;background:linear-gradient(90deg,#111,#555);border-radius:3px;transition:width .5s ease;}
+.proc-status{font:600 15px/1 system-ui,sans-serif;color:#333;margin:0 0 4px;}
+.proc-time{font:400 13px/1 system-ui,sans-serif;color:#aaa;margin:0;}
+.spinner{animation:vR 1s linear infinite;transform-origin:center;}
+@keyframes vR{to{transform:rotate(360deg)}}
+
+/* RESULT */
+.res-btns{display:flex;gap:10px;margin-bottom:10px;}
+.btn-o{flex:1;padding:14px;background:#f3f3f3;color:#222;border:none;border-radius:14px;font:600 14px/1 system-ui,sans-serif;cursor:pointer;transition:background .15s,transform .1s;}
+.btn-o:hover{background:#e5e5e5;transform:translateY(-1px);}
+.btn-f{width:100%;padding:15px;background:#1a1a2e;color:#fff;border:none;border-radius:14px;font:600 15px/1 system-ui,sans-serif;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
+.btn-f:hover{background:#2a2a3e;transform:translateY(-1px);}
+.res-pic{position:relative;border-radius:18px;overflow:hidden;cursor:zoom-in;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid #eee;animation:vRev .6s cubic-bezier(.16,1,.3,1);max-height:60vh;}
+.res-pic img{width:100%;height:100%;object-fit:contain;display:block;}
+.res-zoom{position:absolute;top:14px;right:14px;width:38px;height:38px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.1);pointer-events:none;}
+@keyframes vRev{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.disc{text-align:center;margin:10px 0 0;font:400 10px/1.4 system-ui,sans-serif;color:#ccc;}
+.pw{text-align:center;padding:6px 0 0;font:400 11px/1 system-ui,sans-serif;color:#ccc;}
+.pw a{color:#999;text-decoration:none;font-weight:600;}
+
+/* ERROR */
+.err{text-align:center;padding:32px 0 12px;}
+.err-icon{font-size:44px;margin:0 0 10px;}
+.err h3{font:700 18px/1 system-ui,sans-serif;color:#111;margin:0 0 6px;}
+.err p{font:400 13px/1.4 system-ui,sans-serif;color:#999;margin:0 0 18px;}
+
+/* MINIBAR */
+.mini{position:fixed;bottom:16px;right:16px;z-index:2147483645;background:#fff;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 36px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04);max-width:380px;width:auto;animation:vU .3s ease;font-family:system-ui,sans-serif;}
+.mini-thumbs{display:flex;align-items:center;flex-shrink:0;}
+.mini-thumbs img{width:56px;height:56px;border-radius:12px;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.1);}
+.mini-thumbs img:nth-child(3){margin-left:-12px;}
+.mini-sp{margin:0 -10px;z-index:1;background:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.1);}
+.mini-body{flex:1;min-width:0;}
+.mini-body strong{display:block;font:600 15px/1.3 system-ui,sans-serif;color:#111;}
+.mini-body span{font:400 12px/1.3 system-ui,sans-serif;color:#999;}
+.mini-arrow{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;font:600 18px/1 system-ui,sans-serif;color:#555;cursor:pointer;flex-shrink:0;transition:background .15s;}
+.mini-arrow:hover{background:#e5e5e5;}
+
+/* ZOOM */
+.zm{position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:20px;animation:vF .2s;cursor:zoom-out;}
+.zm img{max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;animation:vRev .4s ease;}
+.zm-x{position:absolute;top:16px;right:16px;width:48px;height:48px;background:rgba(255,255,255,.12);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;transition:background .15s;}
+.zm-x:hover{background:rgba(255,255,255,.25);}
+
+.hide{display:none!important;}
+@keyframes vF{from{opacity:0}to{opacity:1}}
+@keyframes vS{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes vU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:500px){
+  .ov{padding:0;align-items:flex-end;}
+  .card{max-width:100%;border-radius:22px 22px 0 0;max-height:94vh;}
+  .drop{min-height:220px;}
+  .mini{right:8px;bottom:8px;left:8px;max-width:none;}
+}
+</style>
+
+<!-- MODAL -->
+<div class="ov hide" id="modal">
+  <div class="card">
+    <div class="head">
+      <div><h2 class="title">See it on you</h2><p class="sub" id="sub">Best results come from a photo in the same pose as the product shot</p></div>
+      <div class="x" id="close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    </div>
+    <div class="sec" id="s-upload">
+      <div class="drop" id="dropzone">
+        <input type="file" id="file" accept="image/jpeg,image/png,image/webp" title="" />
+        <div id="dz-empty"><div class="choose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Choose photo</div><p class="hint">Your photo is deleted after your try-on is generated</p></div>
+      </div>
+      <div id="prev-wrap" class="hide"><p class="prev-label">Previous results</p><div id="prev-grid" class="prev-grid"></div></div>
+    </div>
+    <div class="sec hide" id="s-proc">
+      <div class="proc">
+        <div class="proc-imgs"><div class="proc-img float-l"><img id="proc-p" alt="" /></div><div class="proc-spin"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#f0f0f0" stroke-width="2.5"/><circle cx="20" cy="20" r="17" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="80 107" class="spinner"/></svg></div><div class="proc-img float-r"><img id="proc-u" alt="" /></div></div>
+        <div class="pbar"><div class="pbar-fill" id="pbar"></div></div>
+        <p class="proc-status" id="status">Starting your try-on</p>
+        <p class="proc-time" id="timer">0 sec</p>
+      </div>
+    </div>
+    <div class="sec hide" id="s-result">
+      <div class="res-btns"><button class="btn-o" id="regen">Regenerate</button><button class="btn-o" id="dl">Download</button></div>
+      <button class="btn-f" id="buy">Buy</button>
+      <div class="res-pic" id="res-wrap"><img id="res-img" alt="Try-on result" /><div class="res-zoom"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div></div>
+      <p class="disc">Colors and fit may vary slightly from the actual product.</p>
+      <div class="pw">Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener">TryFit</a></div>
+    </div>
+    <div class="sec hide" id="s-error">
+      <div class="err"><p class="err-icon" id="err-icon">😔</p><h3 id="err-title">Something went wrong</h3><p id="err-msg"></p><button class="btn-f" id="err-retry">Try Again</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MINIBAR -->
+<div class="mini hide" id="mini">
+  <div class="mini-thumbs"><img id="m-p" alt="" /><div class="mini-sp"><svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#ddd" stroke-width="3"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-dasharray="70 88" class="spinner"/></svg></div><img id="m-u" alt="" /></div>
+  <div class="mini-body"><strong id="m-status">Starting your try-on</strong><span id="m-time">0 sec · You can keep browsing</span></div>
+  <div class="mini-arrow" id="m-expand">›</div>
+</div>
+
+<!-- ZOOM -->
+<div class="zm hide" id="zoom">
+  <div class="zm-x" id="z-close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+  <img id="z-img" alt="Zoomed" />
+</div>
+`;
+
+// ═══ REFS from Shadow DOM ═══
+const q=id=>shadow.getElementById(id);
+const modal=q('modal'),mini=q('mini'),zm=q('zoom');
+const fileInput=q('file');
+let file=null,resultUrl=null,tmr=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;
 
-const show=s=>['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'+x);if(e)e.style.display=x===s?'block':'none';});
+// Set product images
+q('proc-p').src=D.pimgMd||D.pimg;
+q('m-p').src=D.pimgSm||D.pimg;
+
+const show=s=>['upload','proc','result','error'].forEach(x=>{const e=q('s-'+x);if(e){e.classList.toggle('hide',x!==s);}});
 const lockBody=()=>{document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';document.body.classList.add('vto-active');};
 const unlockBody=()=>{document.body.style.overflow='';document.documentElement.style.overflow='';document.body.classList.remove('vto-active');};
-const openModal=s=>{modal.style.display='flex';lockBody();show(s||'upload');if(s==='upload')loadPrev();};
-const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;processing=false;unlockBody();};
+const openModal=s=>{modal.classList.remove('hide');lockBody();show(s||'upload');if(s==='upload')loadPrev();};
+const closeAll=()=>{modal.classList.add('hide');mini.classList.add('hide');stopTimer();minimized=false;processing=false;unlockBody();};
 const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';};
-const setSub=t=>{$('vto-sub').textContent=t;};
+const setSub=t=>{q('sub').textContent=t;};
+const tryClose=()=>{if(processing){if(confirm('Are you sure you want to close? Your current progress will be lost.')){closeAll();resetUpload();}}else{closeAll();resetUpload();}};
 
-// Confirm close during processing
-const tryClose=()=>{
-  if(processing){
-    if(confirm('Are you sure you want to close? Your current progress will be lost.')){closeAll();resetUpload();}
-  }else{closeAll();resetUpload();}
-};
+const startTimer=()=>{sec=0;tick();tmr=setInterval(()=>{sec++;tick();updateStatus();updateBar();},1000);};
+const stopTimer=()=>{if(tmr){clearInterval(tmr);tmr=null;}};
+const tick=()=>{q('timer').textContent=sec+' sec';q('m-time').textContent=sec+' sec · You can keep browsing';};
+const updateStatus=()=>{let m='Starting your try-on';if(sec>=3)m='Reading your photo';if(sec>=8)m='Fitting it on you';if(sec>=18)m='Refining the details';if(sec>=28)m='Almost ready';q('status').textContent=m;q('m-status').textContent=m;};
+const updateBar=()=>{let p=0;if(sec<=5)p=sec*4;else if(sec<=15)p=20+(sec-5)*3;else if(sec<=25)p=50+(sec-15)*3;else p=Math.min(95,80+sec*0.3);q('pbar').style.width=Math.min(p,95)+'%';};
 
-// Timer + progress bar
-const startTimer=()=>{sec=0;tick();timer=setInterval(()=>{sec++;tick();updateStatus();updateBar();},1000);};
-const stopTimer=()=>{if(timer){clearInterval(timer);timer=null;}};
-const tick=()=>{
-  $('vto-timer').textContent=sec+' sec';
-  $('vto-m-time').textContent=sec+' sec · You can keep browsing';
-};
-const updateStatus=()=>{
-  let m='Starting your try-on';
-  if(sec>=3)m='Reading your photo';
-  if(sec>=8)m='Fitting it on you';
-  if(sec>=18)m='Refining the details';
-  if(sec>=28)m='Almost ready';
-  $('vto-status').textContent=m;
-  $('vto-m-status').textContent=m;
-};
-const updateBar=()=>{
-  let pct=0;
-  if(sec<=5)pct=sec*4;
-  else if(sec<=15)pct=20+(sec-5)*3;
-  else if(sec<=25)pct=50+(sec-15)*3;
-  else if(sec<=35)pct=80+(sec-25)*1.5;
-  else pct=Math.min(95,80+sec*0.3);
-  $('vto-pbar-fill').style.width=Math.min(pct,95)+'%';
-};
+const toMini=()=>{minimized=true;modal.classList.add('hide');mini.classList.remove('hide');unlockBody();};
+const toModal=()=>{minimized=false;mini.classList.add('hide');modal.classList.remove('hide');lockBody();};
 
-// Mini
-const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';unlockBody();};
-const toModal=()=>{minimized=false;mini.style.display='none';modal.style.display='flex';lockBody();};
-
-// Previous results
-const savePrev=url=>{
-  try{let a=JSON.parse(sessionStorage.getItem(PK)||'[]');a.unshift(url);if(a.length>8)a=a.slice(0,8);sessionStorage.setItem(PK,JSON.stringify(a));}catch(e){}
-};
-const loadPrev=()=>{
-  try{
-    const a=JSON.parse(sessionStorage.getItem(PK)||'[]');
-    const w=$('vto-prev-wrap'),g=$('vto-prev-grid');
-    if(a.length>0){
-      w.style.display='block';
-      g.innerHTML=a.map(u=>'<img src="'+u+'" alt="Previous" />').join('');
-      g.querySelectorAll('img').forEach(img=>{
-        img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});
-      });
-    }else{w.style.display='none';}
-  }catch(e){}
-};
-
-const showResult=url=>{
-  setSub("Here's your look! Tap the image to zoom in.");
-  $('vto-res-img').src=url;$('vto-z-img').src=url;
-  $('vto-pbar-fill').style.width='100%';
-  show('result');
-};
+const savePrev=url=>{try{let a=JSON.parse(sessionStorage.getItem(PK)||'[]');a.unshift(url);if(a.length>8)a=a.slice(0,8);sessionStorage.setItem(PK,JSON.stringify(a));}catch(e){}};
+const loadPrev=()=>{try{const a=JSON.parse(sessionStorage.getItem(PK)||'[]');const w=q('prev-wrap'),g=q('prev-grid');if(a.length>0){w.classList.remove('hide');g.innerHTML=a.map(u=>'<img src="'+u+'" alt="Previous" />').join('');g.querySelectorAll('img').forEach(img=>{img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});});}else{w.classList.add('hide');}}catch(e){}};
+const showResult=url=>{setSub("Here's your look! Tap the image to zoom in.");q('res-img').src=url;q('z-img').src=url;q('pbar').style.width='100%';show('result');};
 
 // Events
-$('vto-btn').addEventListener('click',()=>openModal('upload'));
-closeBtnHost.addEventListener('click',()=>{
-  if(processing){toMini();}
-  else{tryClose();}
-});
-modal.addEventListener('click',e=>{if(e.target===modal){
-  if(processing){toMini();}
-  else{tryClose();}
-}});
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    if(zoom.style.display!=='none')zoom.style.display='none';
-    else if(minimized)toModal();
-    else tryClose();
-  }
-});
-$('vto-m-expand').addEventListener('click',toModal);
+document.getElementById('vto-btn').addEventListener('click',()=>openModal('upload'));
+q('close').addEventListener('click',()=>{if(processing)toMini();else tryClose();});
+modal.addEventListener('click',e=>{if(e.target===modal){if(processing)toMini();else tryClose();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!zm.classList.contains('hide'))zm.classList.add('hide');else if(minimized)toModal();else tryClose();}});
+q('m-expand').addEventListener('click',toModal);
 
-// File → auto-start, auto-minimize
-fileInput?.addEventListener('change',e=>{
-  const f=e.target.files[0];
-  if(!f||!f.type.startsWith('image/'))return;
-  if(f.size>10*1024*1024){alert('Max 10 MB');return;}
-  file=f;
-  const r=new FileReader();
-  r.onload=ev=>{
-    $('vto-proc-u').src=ev.target.result;
-    $('vto-m-u').src=ev.target.result;
-    processing=true;
-    $('vto-pbar-fill').style.width='0%';
-    toMini();show('proc');startTimer();runAI();
-  };
-  r.readAsDataURL(f);
-});
+fileInput?.addEventListener('change',e=>{const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;if(f.size>10*1024*1024){alert('Max 10 MB');return;}file=f;const r=new FileReader();r.onload=ev=>{q('proc-u').src=ev.target.result;q('m-u').src=ev.target.result;processing=true;q('pbar').style.width='0%';toMini();show('proc');startTimer();runAI();};r.readAsDataURL(f);});
 
-// Drag-drop
-const dz=$('vto-dropzone');
-if(dz){
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='#666';dz.style.background='#f8f8f8';});
-  dz.addEventListener('dragleave',()=>{dz.style.borderColor='#d4d4d4';dz.style.background='';});
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='#d4d4d4';dz.style.background='';
-    const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fileInput.files=dt.files;fileInput.dispatchEvent(new Event('change'));}
-  });
-}
+const dz=q('dropzone');
+if(dz){dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='#666';dz.style.background='#f8f8f8';});dz.addEventListener('dragleave',()=>{dz.style.borderColor='#d4d4d4';dz.style.background='';});dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='#d4d4d4';dz.style.background='';const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fileInput.files=dt.files;fileInput.dispatchEvent(new Event('change'));}});}
 
-// AI — NO canvas fallback ever
 async function runAI(){
-  try{
-    const fd=new FormData();
-    fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);
-    fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
-    const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
-    const data=await res.json();
-    stopTimer();processing=false;
-
-    if(res.ok&&data.success&&data.result_url){
-      resultUrl=data.result_url;
-      savePrev(resultUrl);
-      toModal();showResult(resultUrl);
-      return;
-    }
-    if(res.status===429){
-      $('vto-err-icon').textContent='✨';
-      $('vto-err-title').textContent="You've loved this feature!";
-      $('vto-err-msg').innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';
-      $('vto-err-retry').textContent='Got it';
-      toModal();show('error');mini.style.display='none';return;
-    }
-    throw new Error(data.error||'AI generation failed');
-  }catch(err){
-    stopTimer();processing=false;
-    $('vto-err-icon').textContent='😔';
-    $('vto-err-title').textContent='Something went wrong';
-    $('vto-err-msg').textContent=err.message||'Please try again in a moment.';
-    $('vto-err-retry').textContent='Try Again';
-    toModal();show('error');mini.style.display='none';
-  }
+  try{const fd=new FormData();fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
+  const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});const data=await res.json();stopTimer();processing=false;
+  if(res.ok&&data.success&&data.result_url){resultUrl=data.result_url;savePrev(resultUrl);toModal();showResult(resultUrl);return;}
+  if(res.status===429){q('err-icon').textContent='✨';q('err-title').textContent="You've loved this feature!";q('err-msg').innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';q('err-retry').textContent='Got it';toModal();show('error');mini.classList.add('hide');return;}
+  throw new Error(data.error||'AI generation failed');}
+  catch(err){stopTimer();processing=false;q('err-icon').textContent='😔';q('err-title').textContent='Something went wrong';q('err-msg').textContent=err.message||'Please try again.';q('err-retry').textContent='Try Again';toModal();show('error');mini.classList.add('hide');}
 }
 
-// Actions
-$('vto-regen')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
-$('vto-err-retry')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
-$('vto-buy')?.addEventListener('click',async()=>{
-  try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}
-  const vid=D.vid||document.querySelector('[name="id"]')?.value;
-  try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeAll();window.location.href='/cart';}catch(e){window.location.href='/cart';}
-});
-$('vto-dl')?.addEventListener('click',async()=>{
-  if(!resultUrl)return;
-  try{const r=await fetch(resultUrl);const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='tryfit-look.jpg';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}catch(e){window.open(resultUrl,'_blank');}
-});
-
-// Zoom
-$('vto-res-wrap')?.addEventListener('click',()=>{if(resultUrl)zoom.style.display='flex';});
-$('vto-z-close')?.addEventListener('click',()=>{zoom.style.display='none';});
-zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';});
+q('regen')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
+q('err-retry')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
+q('buy')?.addEventListener('click',async()=>{try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}const vid=D.vid||document.querySelector('[name="id"]')?.value;try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeAll();window.location.href='/cart';}catch(e){window.location.href='/cart';}});
+q('dl')?.addEventListener('click',async()=>{if(!resultUrl)return;try{const r=await fetch(resultUrl);const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='tryfit-look.jpg';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}catch(e){window.open(resultUrl,'_blank');}});
+q('res-wrap')?.addEventListener('click',()=>{if(resultUrl)zm.classList.remove('hide');});
+q('z-close')?.addEventListener('click',()=>{zm.classList.add('hide');});
+zm?.addEventListener('click',e=>{if(e.target===zm)zm.classList.add('hide');});
 })();
 </script>
 {% endif %}

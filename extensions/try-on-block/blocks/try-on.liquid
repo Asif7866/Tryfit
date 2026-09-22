@@ -318,7 +318,11 @@ const showResult=url=>{
 
 // Events
 $('vto-btn').addEventListener('click',()=>openModal('upload'));
-$('vto-close').addEventListener('click',()=>{
+// Close button hover - force styles via JS (immune to theme CSS)
+const closeBtn=$('vto-close');
+closeBtn.addEventListener('mouseenter',()=>{closeBtn.style.background='#e5e5e5';closeBtn.style.transform='scale(1.05)';});
+closeBtn.addEventListener('mouseleave',()=>{closeBtn.style.background='#f3f3f3';closeBtn.style.transform='';});
+closeBtn.addEventListener('click',()=>{
   if(processing){toMini();}
   else{tryClose();}
 });

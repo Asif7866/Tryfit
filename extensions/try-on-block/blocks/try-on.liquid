@@ -119,6 +119,9 @@
 <style>
 :root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
 *,*::before,*::after{box-sizing:border-box;}
+/* When modal is active, kill ALL page stacking contexts */
+body.vto-active>*:not(.vto-ov):not(.vto-mini):not(.vto-zoom){position:relative!important;z-index:-1!important;}
+body.vto-active>header,body.vto-active>footer,body.vto-active>main,body.vto-active>section,body.vto-active>div:not(.vto-ov):not(.vto-mini):not(.vto-zoom){z-index:-1!important;}
 
 /* BTN */
 .vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
@@ -243,8 +246,8 @@ let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;
 
 const show=s=>['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'+x);if(e)e.style.display=x===s?'block':'none';});
-const lockBody=()=>{document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';};
-const unlockBody=()=>{document.body.style.overflow='';document.documentElement.style.overflow='';};
+const lockBody=()=>{document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';document.body.classList.add('vto-active');};
+const unlockBody=()=>{document.body.style.overflow='';document.documentElement.style.overflow='';document.body.classList.remove('vto-active');};
 const openModal=s=>{modal.style.display='flex';lockBody();show(s||'upload');if(s==='upload')loadPrev();};
 const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;processing=false;unlockBody();};
 const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';};

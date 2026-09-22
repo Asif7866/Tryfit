@@ -183,10 +183,20 @@ export const loader = async ({ request }) => {
         const host = url.searchParams.get("host");
         if (host) { try { const decoded = atob(host); const match = decoded.match(/([^/]+\.myshopify\.com)/); if (match) shopName = match[1]; } catch(e){} }
       }
-      // SECURITY FIX: Removed findFirst fallbacks from ShopSettings/Session/TryOnLog
-      // Those were returning the most recent record from ANY store, causing cross-store data leaks
+      // Try from ShopSettings
       if (!shopName) {
-        console.error("TryFit: Cannot determine shop from URL params - no shop/host available");
+        const anySetting = await prisma.shopSettings.findFirst({ select: { shop: true }, orderBy: { updatedAt: "desc" } });
+        if (anySetting) shopName = anySetting.shop;
+      }
+      // Try from Session
+      if (!shopName) {
+        const anySession = await prisma.session.findFirst({ select: { shop: true }, orderBy: { id: "desc" } });
+        if (anySession) shopName = anySession.shop;
+      }
+      // Try from TryOnLog
+      if (!shopName) {
+        const anyLog = await prisma.tryOnLog.findFirst({ select: { shop: true }, orderBy: { createdAt: "desc" } });
+        if (anyLog) shopName = anyLog.shop;
       }
       if (shopName) {
         const settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });

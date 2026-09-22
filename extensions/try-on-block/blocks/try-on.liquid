@@ -22,81 +22,87 @@
     <div class="vto-popup__inner">
       <img src="{{ product.featured_image | image_url: width: 80 }}" class="vto-popup__thumb" width="44" height="44" alt="" />
       <div class="vto-popup__text">
-        <strong>See it on you ✨</strong>
+        <strong>See it on you</strong>
         <span>{{ block.settings.popup_subtitle }}</span>
       </div>
       <button id="vto-popup-cta" class="vto-popup__cta" type="button">Try</button>
-      <button id="vto-popup-close" class="vto-popup__x" type="button" aria-label="Close">✕</button>
+      <button id="vto-popup-close" class="vto-popup__x" type="button" aria-label="Close">&#10005;</button>
     </div>
   </div>
 
   <div id="vto-overlay" class="vto-overlay" style="display:none;">
-    <div class="vto-modal" role="dialog" aria-modal="true">
-      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close" onclick="document.getElementById('vto-overlay').style.display='none';document.body.style.overflow='';">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <div class="vto-modal" role="dialog" aria-modal="true" aria-labelledby="vto-title">
+      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close try-on" onclick="document.getElementById('vto-overlay').style.display='none';document.body.style.overflow='';">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
 
-      <!-- ════ UPLOAD STATE ════ -->
+      <!-- UPLOAD STATE -->
       <div id="vto-s-upload" class="vto-state">
-        <div class="vto-modal__top">
-          <div class="vto-badge">✨ Virtual Try-On</div>
-          <h2 class="vto-title">{{ block.settings.modal_title }}</h2>
+        <header class="vto-head">
+          <span class="vto-eyebrow">Virtual Try-On</span>
+          <h2 id="vto-title" class="vto-title">{{ block.settings.modal_title }}</h2>
           <p class="vto-sub">{{ block.settings.modal_subtitle }}</p>
-        </div>
+        </header>
 
         <div class="vto-split">
-          <div class="vto-split__product">
-            <div class="vto-split__label">The Product</div>
-            <div class="vto-split__img-wrap">
-              <img src="{{ product.featured_image | image_url: width: 600 }}" class="vto-split__img" alt="{{ product.title | escape }}" />
+          <div class="vto-split__col vto-split__product">
+            <span class="vto-split__label">The Product</span>
+            <div class="vto-split__frame">
+              <img src="{{ product.featured_image | image_url: width: 800 }}" class="vto-split__img" alt="{{ product.title | escape }}" />
             </div>
-            <div class="vto-split__name">{{ product.title }}</div>
-            <div class="vto-split__price">{{ product.price | money }}</div>
-          </div>
-
-          <div class="vto-split__divider">
-            <div class="vto-split__plus">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <div class="vto-split__meta">
+              <span class="vto-split__name">{{ product.title }}</span>
+              <span class="vto-split__price">{{ product.price | money }}</span>
             </div>
           </div>
 
-          <div class="vto-split__user">
-            <div class="vto-split__label">You</div>
-            <div id="vto-user-zone" class="vto-split__img-wrap vto-split__drop">
-              <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
-              <div id="vto-dz-empty" class="vto-split__empty">
-                <div class="vto-split__upload-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <div class="vto-split__divider" aria-hidden="true">
+            <span class="vto-split__plus">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </span>
+          </div>
+
+          <div class="vto-split__col vto-split__user">
+            <span class="vto-split__label">Your Photo</span>
+            <div id="vto-user-zone" class="vto-split__frame vto-drop" tabindex="0" role="button" aria-label="Upload your photo">
+              <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" aria-label="Choose photo" />
+              <div id="vto-dz-empty" class="vto-drop__empty">
+                <span class="vto-drop__icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="17 8 12 3 7 8"/>
                     <line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
-                </div>
-                <p class="vto-split__upload-text">Upload your photo</p>
-                <p class="vto-split__upload-hint">JPG, PNG or WebP</p>
+                </span>
+                <span class="vto-drop__text">Upload your photo</span>
+                <span class="vto-drop__hint">JPG, PNG or WebP · Max 10 MB</span>
+                <span class="vto-drop__tip">Full-body photo works best</span>
               </div>
-              <div id="vto-dz-preview" style="display:none;">
+              <div id="vto-dz-preview" class="vto-drop__preview" style="display:none;">
                 <img id="vto-preview-img" class="vto-split__img" alt="Your photo" />
-                <button id="vto-change-photo" class="vto-split__change" type="button">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  Change Photo
+                <button id="vto-change-photo" class="vto-drop__change" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Change
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <button id="vto-submit" class="vto-main-cta" type="button" disabled>
-          <span id="vto-submit-text">Upload photo to try on</span>
+        <button id="vto-submit" class="vto-cta" type="button" disabled>
+          <span id="vto-submit-text">Upload a photo to continue</span>
         </button>
-        <p class="vto-privacy">🔒 Your photo is never stored</p>
+        <p class="vto-privacy">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Your photo is processed securely and never stored
+        </p>
       </div>
 
-      <!-- ════ MERGE ANIMATION STATE ════ -->
+      <!-- MERGE STATE -->
       <div id="vto-s-merge" class="vto-state" style="display:none;">
-        <div class="vto-merge-wrap">
-          <div class="vto-merge-title">Creating your look...</div>
-          <div class="vto-merge-canvas">
+        <div class="vto-merge">
+          <p class="vto-merge__title">Preparing your look</p>
+          <div class="vto-merge__stage">
             <img id="vto-merge-product" class="vto-merge__img vto-merge__left" src="{{ product.featured_image | image_url: width: 400 }}" alt="" />
             <div class="vto-merge__glow"></div>
             <img id="vto-merge-user" class="vto-merge__img vto-merge__right" alt="" />
@@ -104,56 +110,59 @@
         </div>
       </div>
 
-      <!-- ════ LOADING STATE ════ -->
+      <!-- LOADING STATE -->
       <div id="vto-s-loading" class="vto-state" style="display:none;">
-        <div class="vto-loading-wrap">
-          <div class="vto-loader-circle">
-            <svg width="72" height="72" viewBox="0 0 72 72">
-              <circle cx="36" cy="36" r="32" fill="none" stroke="#f0f4f8" stroke-width="2"/>
-              <circle cx="36" cy="36" r="32" fill="none" stroke="url(#vto-grad)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="160 200" class="vto-spinner-arc"/>
-              <defs><linearGradient id="vto-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs>
-            </svg>
+        <div class="vto-loading">
+          <div class="vto-loading__orb">
+            <div class="vto-loading__ring"></div>
+            <div class="vto-loading__ring vto-loading__ring--2"></div>
+            <div class="vto-loading__core"></div>
           </div>
-          <h3 class="vto-loading__title" id="vto-loading-title">Analyzing your photo</h3>
-          <p class="vto-loading__sub" id="vto-loading-sub">Detecting body shape & pose</p>
+          <h3 class="vto-loading__title" id="vto-loading-title">Creating your virtual try-on</h3>
+          <p class="vto-loading__sub" id="vto-loading-sub">Analysing your photo</p>
           <div class="vto-progress"><div class="vto-progress__bar"></div></div>
-          <div class="vto-loading-steps">
-            <div class="vto-lstep active" id="vto-ls1"><span class="vto-lstep__check"></span>Detecting body pose</div>
-            <div class="vto-lstep" id="vto-ls2"><span class="vto-lstep__check"></span>Mapping garment fit</div>
-            <div class="vto-lstep" id="vto-ls3"><span class="vto-lstep__check"></span>Rendering final look</div>
-          </div>
-          <p class="vto-loading__time">Usually takes 15–30 seconds</p>
+          <ul class="vto-steps">
+            <li class="vto-step active" id="vto-ls1"><span class="vto-step__dot"></span>Detecting body & pose</li>
+            <li class="vto-step" id="vto-ls2"><span class="vto-step__dot"></span>Fitting the garment</li>
+            <li class="vto-step" id="vto-ls3"><span class="vto-step__dot"></span>Rendering your look</li>
+          </ul>
+          <p class="vto-loading__eta">Usually 15–30 seconds</p>
         </div>
       </div>
 
-      <!-- ════ RESULT STATE ════ -->
+      <!-- RESULT STATE -->
       <div id="vto-s-result" class="vto-state" style="display:none;">
-        <div class="vto-result-wrap">
-          <div class="vto-badge vto-badge--gold">🎉 Your Look is Ready</div>
-          <div class="vto-result__img-wrap">
-            <img id="vto-result-img" alt="Try-on result" />
+        <div class="vto-result">
+          <span class="vto-eyebrow vto-eyebrow--success">Your look is ready</span>
+          <div class="vto-result__hero">
+            <img id="vto-result-img" alt="Your virtual try-on result" />
             <div class="vto-result__shine"></div>
           </div>
-          <div class="vto-result__product-tag">
-            <img src="{{ product.featured_image | image_url: width: 80 }}" width="32" height="32" alt="" />
-            <span>{{ product.title }}</span>
+          <div class="vto-result__tag">
+            <img src="{{ product.featured_image | image_url: width: 80 }}" width="36" height="36" alt="" />
+            <div class="vto-result__tag-text">
+              <span class="vto-result__tag-name">{{ product.title }}</span>
+              <span class="vto-result__tag-price">{{ product.price | money }}</span>
+            </div>
           </div>
-          <div class="vto-result__btns">
-            <button id="vto-retry" class="vto-btn-ghost" type="button">↻ Try Another</button>
-            <button id="vto-addtocart" class="vto-main-cta vto-main-cta--sm" type="button">Add to Cart 🛒</button>
+          <div class="vto-result__actions">
+            <button id="vto-retry" class="vto-btn-ghost" type="button">Try another photo</button>
+            <button id="vto-addtocart" class="vto-cta vto-cta--inline" type="button">Add to Cart</button>
           </div>
-          <p class="vto-disclaimer">Colors and fit shown in AI-generated previews may vary slightly from the actual product.</p>
-          <div class="vto-powered">Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer">Futuretechiez.in</a></div>
+          <p class="vto-disclaimer">AI-generated preview. Colour and fit may vary slightly from the actual garment.</p>
+          <p class="vto-powered">Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer">Futuretechiez</a></p>
         </div>
       </div>
 
-      <!-- ════ ERROR STATE ════ -->
+      <!-- ERROR STATE -->
       <div id="vto-s-error" class="vto-state" style="display:none;">
-        <div class="vto-error-wrap">
-          <div class="vto-error__emoji">😔</div>
-          <h3 class="vto-error__title">Oops, something broke</h3>
+        <div class="vto-error">
+          <span class="vto-error__icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <h3 class="vto-error__title">Something went wrong</h3>
           <p id="vto-error-msg" class="vto-error__msg"></p>
-          <button id="vto-error-retry" class="vto-main-cta" type="button">Try Again</button>
+          <button id="vto-error-retry" class="vto-cta" type="button">Try again</button>
         </div>
       </div>
     </div>
@@ -161,239 +170,313 @@
 </div>
 
 <style>
-/* ── RESET & VARS ── */
-#vto, #vto *, #vto *::before, #vto *::after { box-sizing: border-box !important; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+/* ═══════════════════════════════════════════════════
+   TryFit Premium — scoped reset & tokens
+   ═══════════════════════════════════════════════════ */
+#vto, #vto *, #vto *::before, #vto *::after { box-sizing: border-box !important; margin: 0; padding: 0; }
 #vto {
   --vto-primary: {{ block.settings.button_color }};
   --vto-primary-text: {{ block.settings.button_text_color }};
   --vto-r: {{ block.settings.button_radius }}px;
-  --vto-ff: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --vto-accent: #7c3aed;
-  --vto-accent2: #ec4899;
+  --vto-ff: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, system-ui, sans-serif;
+  --vto-ink: #0f0f10;
+  --vto-ink-2: #3a3a3d;
+  --vto-ink-3: #77777c;
+  --vto-ink-4: #a9a9ad;
+  --vto-line: #e8e8ea;
+  --vto-line-2: #f0f0f2;
+  --vto-surface: #fafafa;
+  --vto-accent: #6d5dfc;
+  --vto-accent-ink: #5647d9;
+  --vto-accent-soft: #f2f0ff;
+  --vto-ease: cubic-bezier(.2,.8,.2,1);
   font-family: var(--vto-ff) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── BUTTON ── */
+/* ── Trigger button ── */
 .vto-btn {
-  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 15px 24px; margin-top: 10px;
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 16px 24px; margin-top: 12px;
   background: var(--vto-primary) !important; color: var(--vto-primary-text) !important;
   border: none !important; border-radius: var(--vto-r) !important;
-  font: 600 14px/1 var(--vto-ff) !important; cursor: pointer; overflow: hidden;
-  transition: all .3s cubic-bezier(.4,0,.2,1); letter-spacing: 0.3px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  font: 600 14px/1 var(--vto-ff) !important; letter-spacing: .02em; cursor: pointer; overflow: hidden;
+  transition: transform .25s var(--vto-ease), box-shadow .25s var(--vto-ease);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.06);
 }
-.vto-btn::before {
-  content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
-  animation: vto-btnShimmer 3s ease infinite;
-}
-@keyframes vto-btnShimmer { 0%{left:-100%} 100%{left:200%} }
-.vto-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15) !important; }
-.vto-btn:active { transform: translateY(0) !important; }
+.vto-btn::before { content: ''; position: absolute; inset: 0; left: -100%; width: 50%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); animation: vto-shimmer 3.2s ease-in-out infinite; }
+@keyframes vto-shimmer { 0%{left:-100%} 100%{left:200%} }
+.vto-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.12) !important; }
+.vto-btn:active { transform: translateY(0); }
 .vto-btn__shimmer { display: none; }
-.vto-btn__icon { display: flex; align-items: center; opacity: .85; }
+.vto-btn__icon { display: flex; opacity: .9; }
 .vto-btn__label { position: relative; z-index: 1; }
-.vto-btn__tag { position: relative; z-index: 1; padding: 3px 8px; background: rgba(255,255,255,.2); backdrop-filter: blur(4px); border-radius: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; }
+.vto-btn__tag { position: relative; z-index: 1; padding: 4px 8px; background: rgba(255,255,255,.18); border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: .1em; }
 
-/* ── POPUP ── */
-.vto-popup { margin-top: 10px; animation: vto-slideUp .4s ease; }
-.vto-popup__inner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #111 !important; border-radius: 14px; position: relative; }
+/* ── Nudge popup ── */
+.vto-popup { margin-top: 12px; animation: vto-rise .4s var(--vto-ease); }
+.vto-popup__inner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--vto-ink) !important; border-radius: 14px; position: relative; }
 .vto-popup__thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; }
-.vto-popup__text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.vto-popup__text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .vto-popup__text strong { color: #fff !important; font: 600 13px/1.3 var(--vto-ff) !important; }
-.vto-popup__text span { color: #888 !important; font: 400 11px/1.3 var(--vto-ff) !important; }
-.vto-popup__cta { padding: 7px 16px; background: #fff !important; color: #111 !important; border: none !important; border-radius: 8px; font: 700 12px/1 var(--vto-ff) !important; cursor: pointer; }
-.vto-popup__x { position: absolute; top: -6px; right: -4px; background: #333 !important; border: none !important; border-radius: 50%; width: 20px; height: 20px; color: #aaa !important; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.vto-popup__text span { color: rgba(255,255,255,.55) !important; font: 400 11px/1.3 var(--vto-ff) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vto-popup__cta { padding: 8px 16px; background: #fff !important; color: var(--vto-ink) !important; border: none !important; border-radius: 8px; font: 700 12px/1 var(--vto-ff) !important; cursor: pointer; }
+.vto-popup__x { position: absolute; top: -8px; right: -6px; width: 22px; height: 22px; background: #2a2a2d !important; border: 2px solid #fff !important; border-radius: 50%; color: #aaa !important; font-size: 10px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-/* ── OVERLAY ── */
-.vto-overlay { position: fixed !important; inset: 0 !important; z-index: 2147483647 !important; background: rgba(0,0,0,.6) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex !important; align-items: center; justify-content: center; padding: 16px; animation: vto-fadeIn .2s; }
-
-/* ── MODAL ── */
-.vto-modal { background: #fff !important; border-radius: 24px !important; max-width: 500px; width: 100%; max-height: 92vh; overflow-y: auto; padding: 28px 24px !important; position: relative; box-shadow: 0 32px 80px rgba(0,0,0,.25) !important; animation: vto-scaleIn .35s cubic-bezier(.16,1,.3,1); }
-.vto-modal::-webkit-scrollbar { width: 0; }
-
-/* ── CLOSE BUTTON (theme-proof) ── */
-.vto-close {
-  position: absolute !important; top: 14px !important; right: 14px !important;
-  width: 36px !important; height: 36px !important;
-  background: #f3f4f6 !important; border: none !important; border-radius: 50% !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  cursor: pointer !important; color: #6b7280 !important; z-index: 2147483647 !important;
-  transition: all .2s ease; padding: 0 !important; margin: 0 !important;
-  line-height: 1 !important; min-width: 0 !important; min-height: 0 !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
-  pointer-events: auto !important; opacity: 1 !important; visibility: visible !important;
-  -webkit-appearance: none !important; appearance: none !important;
+/* ── Overlay ── */
+.vto-overlay {
+  position: fixed !important; inset: 0 !important; z-index: 2147483647 !important;
+  background: rgba(10,10,12,.55) !important;
+  backdrop-filter: blur(14px) saturate(120%); -webkit-backdrop-filter: blur(14px) saturate(120%);
+  display: flex !important; align-items: center; justify-content: center;
+  padding: 24px; animation: vto-fade .22s ease;
+  overscroll-behavior: contain;
 }
-.vto-close:hover { background: #e5e7eb !important; color: #111 !important; transform: rotate(90deg); }
+
+/* ── Modal ── */
+.vto-modal {
+  position: relative; width: 100%; max-width: 680px; max-height: calc(100vh - 48px);
+  background: #fff !important; border-radius: 28px !important;
+  padding: 48px 44px 36px !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 30px 90px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.04) !important;
+  overflow-y: auto; overflow-x: hidden;
+  animation: vto-pop .38s var(--vto-ease);
+  scrollbar-width: none;
+}
+.vto-modal::-webkit-scrollbar { display: none; }
+
+/* ── Close (48px hit area, always inside) ── */
+.vto-close {
+  position: absolute !important; top: 16px !important; right: 16px !important;
+  width: 48px !important; height: 48px !important; padding: 0 !important; margin: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  background: rgba(255,255,255,.72) !important;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,.06) !important; border-radius: 50% !important;
+  color: var(--vto-ink-2) !important; cursor: pointer !important;
+  z-index: 20 !important; line-height: 1 !important; min-width: 0 !important; min-height: 0 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.08) !important;
+  transition: transform .2s var(--vto-ease), background .2s, box-shadow .2s;
+  -webkit-appearance: none !important; appearance: none !important;
+  pointer-events: auto !important; opacity: 1 !important; visibility: visible !important;
+}
+.vto-close:hover { background: #fff !important; transform: scale(1.05); box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.12) !important; }
+.vto-close:active { transform: scale(.96); }
+.vto-close:focus-visible { outline: 2px solid var(--vto-accent) !important; outline-offset: 2px; }
 .vto-close svg { display: block !important; pointer-events: none !important; }
 
-/* ── BADGE ── */
-.vto-badge { display: inline-block; padding: 6px 14px; background: linear-gradient(135deg, #f5f3ff, #fdf2f8) !important; border: 1px solid rgba(139,92,246,.1); border-radius: 20px; font: 600 11px/1 var(--vto-ff) !important; color: var(--vto-accent) !important; margin-bottom: 12px; letter-spacing: 0.3px; }
-.vto-badge--gold { background: linear-gradient(135deg, #fef9c3, #fde68a) !important; border-color: rgba(234,179,8,.15); color: #92400e !important; }
-.vto-modal__top { text-align: center; margin-bottom: 20px; }
-.vto-title { margin: 0 !important; font: 800 24px/1.15 var(--vto-ff) !important; color: #111 !important; letter-spacing: -0.5px; }
-.vto-sub { margin: 6px 0 0 !important; font: 400 13px/1.5 var(--vto-ff) !important; color: #9ca3af !important; }
-
-/* ── SPLIT VIEW ── */
-.vto-split { display: flex; gap: 0; align-items: stretch; margin-bottom: 18px; }
-.vto-split__product, .vto-split__user { flex: 1; text-align: center; }
-.vto-split__label { font: 700 9px/1 var(--vto-ff) !important; text-transform: uppercase; letter-spacing: 1.8px; color: #c4c4c4 !important; margin-bottom: 8px; }
-.vto-split__img-wrap {
-  width: 100%; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden;
-  background: #f9fafb !important; border: 2px solid #f0f0f0 !important;
-  display: flex; align-items: center; justify-content: center; position: relative;
-  transition: all .3s cubic-bezier(.4,0,.2,1);
+/* ── Header ── */
+.vto-head { text-align: center; margin-bottom: 32px; padding: 0 40px; }
+.vto-eyebrow {
+  display: inline-block; padding: 6px 14px; margin-bottom: 14px;
+  background: var(--vto-accent-soft) !important; color: var(--vto-accent-ink) !important;
+  border-radius: 100px; font: 600 11px/1 var(--vto-ff) !important; letter-spacing: .12em; text-transform: uppercase;
 }
-.vto-split__img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
-.vto-split__name { font: 600 12px/1.3 var(--vto-ff) !important; color: #111 !important; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
-.vto-split__price { font: 600 11px/1 var(--vto-ff) !important; color: var(--vto-accent) !important; margin-top: 2px; }
-.vto-split__divider { display: flex; align-items: center; justify-content: center; width: 40px; flex-shrink: 0; }
+.vto-eyebrow--success { background: #ecfdf3 !important; color: #15803d !important; }
+.vto-title { margin: 0 !important; font: 700 30px/1.15 var(--vto-ff) !important; letter-spacing: -.02em; color: var(--vto-ink) !important; }
+.vto-sub { margin: 10px 0 0 !important; font: 400 15px/1.5 var(--vto-ff) !important; color: var(--vto-ink-3) !important; }
+
+/* ── Split ── */
+.vto-split { display: flex; align-items: stretch; gap: 0; margin-bottom: 28px; }
+.vto-split__col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.vto-split__label {
+  display: block; text-align: center; margin-bottom: 12px;
+  font: 600 10px/1 var(--vto-ff) !important; letter-spacing: .18em; text-transform: uppercase; color: var(--vto-ink-4) !important;
+}
+.vto-split__frame {
+  position: relative; width: 100%; aspect-ratio: 3 / 4;
+  border-radius: 20px; overflow: hidden;
+  background: var(--vto-surface) !important; border: 1px solid var(--vto-line) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  transition: box-shadow .25s var(--vto-ease), border-color .25s;
+}
+.vto-split__img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
+.vto-split__meta { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 14px; text-align: center; padding: 0 6px; }
+.vto-split__name { font: 600 14px/1.3 var(--vto-ff) !important; color: var(--vto-ink) !important; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vto-split__price { font: 500 13px/1 var(--vto-ff) !important; color: var(--vto-ink-3) !important; }
+.vto-split__divider { width: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding-top: 22px; }
 .vto-split__plus {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--vto-accent), var(--vto-accent2)) !important;
-  color: #fff !important; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 14px rgba(124,58,237,.3);
-  animation: vto-plusPulse 2s ease infinite;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--vto-ink) !important; color: #fff !important;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
 }
-@keyframes vto-plusPulse { 0%,100%{box-shadow:0 4px 14px rgba(124,58,237,.3)} 50%{box-shadow:0 4px 20px rgba(124,58,237,.5)} }
 
-/* ── DROP ZONE ── */
-.vto-split__drop { cursor: pointer; border: 2px dashed #d1d5db !important; background: #fafafa !important; transition: all .3s ease; }
-.vto-split__drop:hover, .vto-split__drop.dragover { border-color: var(--vto-accent) !important; background: #faf5ff !important; }
-.vto-split__drop input[type="file"] { position: absolute !important; inset: 0 !important; opacity: 0 !important; cursor: pointer !important; z-index: 2; width: 100% !important; height: 100% !important; }
-.vto-split__empty { padding: 20px 8px; }
-.vto-split__upload-icon {
-  width: 48px; height: 48px; margin: 0 auto 10px;
-  background: linear-gradient(135deg, #f5f3ff, #fdf2f8) !important;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--vto-accent) !important;
-  animation: vto-floatIcon 3s ease-in-out infinite;
+/* ── Drop zone (primary interaction) ── */
+.vto-drop {
+  cursor: pointer; border: 1.5px dashed #cfcfd4 !important; background: #fcfcfd !important;
+  display: flex; align-items: center; justify-content: center; outline: none;
 }
-@keyframes vto-floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-.vto-split__upload-text { font: 600 12px/1 var(--vto-ff) !important; color: #374151 !important; margin: 0 !important; }
-.vto-split__upload-hint { font: 400 10px/1 var(--vto-ff) !important; color: #c4c4c4 !important; margin: 5px 0 0 !important; }
-
-/* ── CHANGE PHOTO BUTTON (fixed) ── */
-.vto-split__change {
-  position: absolute !important; bottom: 8px !important; left: 50% !important; transform: translateX(-50%) !important;
-  background: rgba(0,0,0,.65) !important; color: #fff !important;
-  border: none !important; border-radius: 8px !important;
-  padding: 6px 12px !important; font: 600 10px/1 var(--vto-ff) !important;
-  cursor: pointer; z-index: 5 !important;
-  display: inline-flex !important; align-items: center !important; gap: 4px !important;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  transition: all .2s ease; white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,.15) !important;
-  text-transform: none !important; letter-spacing: 0 !important;
+.vto-drop:hover, .vto-drop.dragover { border-color: var(--vto-accent) !important; background: var(--vto-accent-soft) !important; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(109,93,252,.14); }
+.vto-drop:focus-visible { border-color: var(--vto-accent) !important; box-shadow: 0 0 0 4px rgba(109,93,252,.2); }
+.vto-drop input[type="file"] { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; opacity: 0 !important; cursor: pointer !important; z-index: 3; font-size: 0; }
+.vto-drop__empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px 16px; text-align: center; pointer-events: none; }
+.vto-drop__icon {
+  width: 72px; height: 72px; margin-bottom: 10px; border-radius: 50%;
+  background: #fff !important; color: var(--vto-accent) !important;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--vto-line) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 20px rgba(0,0,0,.06);
+  transition: transform .3s var(--vto-ease);
 }
-.vto-split__change:hover { background: rgba(0,0,0,.85) !important; transform: translateX(-50%) translateY(-1px) !important; }
-.vto-split__change svg { display: block !important; }
-#vto-dz-preview { width: 100%; height: 100%; position: relative; }
-#vto-dz-preview .vto-split__img { position: absolute !important; inset: 0 !important; }
-
-/* ── CTA ── */
-.vto-main-cta {
-  width: 100%; padding: 16px; border: none !important; border-radius: var(--vto-r) !important;
-  font: 700 14px/1 var(--vto-ff) !important; cursor: pointer;
-  transition: all .3s cubic-bezier(.16,1,.3,1); position: relative; overflow: hidden;
-  letter-spacing: 0.3px; background: var(--vto-accent) !important; color: #fff !important;
-  margin-top: 6px;
+.vto-drop:hover .vto-drop__icon { transform: translateY(-3px); }
+.vto-drop__text { font: 600 15px/1.2 var(--vto-ff) !important; color: var(--vto-ink) !important; }
+.vto-drop__hint { font: 400 12px/1.3 var(--vto-ff) !important; color: var(--vto-ink-4) !important; }
+.vto-drop__tip { margin-top: 6px; font: 500 11px/1 var(--vto-ff) !important; color: var(--vto-accent-ink) !important; }
+.vto-drop__preview { position: absolute; inset: 0; }
+.vto-drop__change {
+  position: absolute !important; bottom: 14px !important; left: 50% !important; transform: translateX(-50%) !important;
+  display: inline-flex !important; align-items: center !important; gap: 6px !important;
+  padding: 10px 16px !important; min-height: 40px;
+  background: rgba(15,15,16,.78) !important; color: #fff !important;
+  border: 1px solid rgba(255,255,255,.14) !important; border-radius: 100px !important;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font: 600 12px/1 var(--vto-ff) !important; letter-spacing: .01em; white-space: nowrap; cursor: pointer; z-index: 5 !important;
+  transition: background .2s, transform .2s var(--vto-ease);
 }
-.vto-main-cta:disabled { opacity: .3 !important; cursor: default !important; background: #e5e7eb !important; color: #9ca3af !important; }
-.vto-main-cta:not(:disabled) { background: linear-gradient(135deg, var(--vto-accent), #6d28d9) !important; box-shadow: 0 4px 14px rgba(124,58,237,.25) !important; }
-.vto-main-cta:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,.35) !important; }
-.vto-main-cta:not(:disabled):active { transform: translateY(0) !important; }
-.vto-main-cta--sm { flex: 1.4; }
-.vto-btn-ghost { flex: 1; padding: 14px; background: #f3f4f6 !important; color: #374151 !important; border: none !important; border-radius: var(--vto-r) !important; font: 600 13px/1 var(--vto-ff) !important; cursor: pointer; transition: background .15s; }
-.vto-btn-ghost:hover { background: #e5e7eb !important; }
-.vto-privacy { text-align: center; margin: 10px 0 0; font: 400 10px/1.4 var(--vto-ff) !important; color: #d1d5db !important; }
+.vto-drop__change:hover { background: rgba(15,15,16,.92) !important; transform: translateX(-50%) translateY(-1px) !important; }
+.vto-drop__change svg { display: block !important; }
 
-/* ── MERGE ANIMATION ── */
-.vto-merge-wrap { text-align: center; padding: 20px 0; }
-.vto-merge-title { font: 700 20px/1 var(--vto-ff) !important; color: #111 !important; margin-bottom: 24px; animation: vto-pulse 1.5s ease infinite; }
-.vto-merge-canvas { position: relative; height: 300px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 20px; background: linear-gradient(135deg, #f8f8ff, #fdf2f8) !important; }
-.vto-merge__img { width: 140px; height: 210px; object-fit: cover; border-radius: 14px; position: absolute; transition: all 1.2s cubic-bezier(.16,1,.3,1); box-shadow: 0 12px 40px rgba(0,0,0,.12); }
+/* ── Primary CTA ── */
+.vto-cta {
+  width: 100%; min-height: 56px; padding: 18px 24px;
+  background: var(--vto-ink) !important; color: #fff !important;
+  border: none !important; border-radius: 14px !important;
+  font: 600 15px/1 var(--vto-ff) !important; letter-spacing: .01em; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.1), 0 10px 24px rgba(0,0,0,.14);
+  transition: transform .2s var(--vto-ease), box-shadow .2s, background .2s, opacity .2s;
+}
+.vto-cta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,.12), 0 16px 32px rgba(0,0,0,.18); }
+.vto-cta:active:not(:disabled) { transform: translateY(0); }
+.vto-cta:focus-visible { outline: 2px solid var(--vto-accent) !important; outline-offset: 3px; }
+.vto-cta:disabled { background: #f0f0f2 !important; color: var(--vto-ink-4) !important; box-shadow: none; cursor: not-allowed; }
+.vto-cta--inline { flex: 1.3; }
+.vto-cta.is-loading { pointer-events: none; opacity: .7; }
+.vto-btn-ghost {
+  flex: 1; min-height: 56px; padding: 18px 20px;
+  background: #fff !important; color: var(--vto-ink) !important;
+  border: 1px solid var(--vto-line) !important; border-radius: 14px !important;
+  font: 600 14px/1 var(--vto-ff) !important; cursor: pointer;
+  transition: background .2s, border-color .2s, transform .2s var(--vto-ease);
+}
+.vto-btn-ghost:hover { background: var(--vto-surface) !important; border-color: #d6d6da !important; transform: translateY(-1px); }
+.vto-privacy { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; font: 400 11px/1.4 var(--vto-ff) !important; color: var(--vto-ink-4) !important; }
+
+/* ── Merge ── */
+.vto-merge { text-align: center; padding: 20px 0 8px; }
+.vto-merge__title { margin: 0 0 24px; font: 600 18px/1 var(--vto-ff) !important; color: var(--vto-ink) !important; letter-spacing: -.01em; animation: vto-breathe 1.8s ease-in-out infinite; }
+.vto-merge__stage { position: relative; height: 320px; border-radius: 22px; overflow: hidden; background: var(--vto-surface) !important; border: 1px solid var(--vto-line-2) !important; display: flex; align-items: center; justify-content: center; }
+.vto-merge__img { position: absolute; width: 150px; height: 225px; object-fit: cover; border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.14); transition: all 1.3s var(--vto-ease); }
 .vto-merge__left { left: 18%; transform: rotate(-4deg); }
 .vto-merge__right { right: 18%; transform: rotate(4deg); }
-.vto-merge__left.merging { left: 50%; transform: translateX(-50%) rotate(0deg) scale(1.1); opacity: .5; }
-.vto-merge__right.merging { right: 50%; transform: translateX(50%) rotate(0deg) scale(1.1); opacity: .5; }
-.vto-merge__glow { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(124,58,237,.3), transparent 70%); opacity: 0; transition: opacity .8s; }
-.vto-merge__glow.active { opacity: 1; animation: vto-glowPulse 1.5s ease infinite; }
-@keyframes vto-glowPulse { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.6);opacity:1} }
+.vto-merge__left.merging { left: 50%; transform: translateX(-50%) scale(1.08); opacity: .45; }
+.vto-merge__right.merging { right: 50%; transform: translateX(50%) scale(1.08); opacity: .45; }
+.vto-merge__glow { position: absolute; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(109,93,252,.28), transparent 70%); opacity: 0; transition: opacity .8s; }
+.vto-merge__glow.active { opacity: 1; animation: vto-glow 1.6s ease-in-out infinite; }
+@keyframes vto-glow { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.7);opacity:1} }
 
-/* ── RESULT ── */
-.vto-result-wrap { text-align: center; }
-.vto-result__img-wrap { position: relative; margin: 0 auto 14px; max-width: 360px; border-radius: 18px; overflow: hidden; box-shadow: 0 16px 50px rgba(0,0,0,.1); animation: vto-resultReveal .8s cubic-bezier(.16,1,.3,1); }
-.vto-result__img-wrap img { width: 100% !important; display: block !important; border-radius: 18px; }
-.vto-result__shine { position: absolute; top: -100%; left: -100%; width: 200%; height: 200%; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.25) 50%, transparent 60%); animation: vto-shineMove 2s ease .5s; pointer-events: none; }
-@keyframes vto-shineMove { 0%{transform:translateX(-100%) translateY(-100%)} 100%{transform:translateX(100%) translateY(100%)} }
-@keyframes vto-resultReveal { 0%{opacity:0;transform:scale(.88) translateY(16px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
-.vto-result__product-tag { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; background: #f3f4f6 !important; border-radius: 10px; margin-bottom: 14px; }
-.vto-result__product-tag img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; }
-.vto-result__product-tag span { font: 600 12px/1 var(--vto-ff) !important; color: #374151 !important; }
-.vto-result__btns { display: flex; gap: 10px; margin-bottom: 10px; }
-.vto-disclaimer { font: 400 10px/1.4 var(--vto-ff) !important; color: #d1d5db !important; margin: 0; padding: 0 12px; }
-.vto-powered { text-align: center; padding: 10px 0 2px; font: 400 10px/1 var(--vto-ff) !important; color: #d1d5db !important; }
-.vto-powered a { color: #9ca3af !important; text-decoration: none; font-weight: 600; }
-.vto-powered a:hover { color: #6b7280 !important; }
-
-/* ── LOADING ── */
-.vto-loading-wrap { text-align: center; padding: 28px 0 14px; }
-.vto-loader-circle { margin: 0 auto 18px; width: 72px; height: 72px; }
-.vto-spinner-arc { animation: vto-spin 1s linear infinite; transform-origin: center; }
+/* ── Loading (AI studio) ── */
+.vto-loading { text-align: center; padding: 24px 0 8px; }
+.vto-loading__orb { position: relative; width: 96px; height: 96px; margin: 0 auto 24px; }
+.vto-loading__ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid transparent; border-top-color: var(--vto-accent); border-right-color: rgba(109,93,252,.3); animation: vto-spin 1.4s cubic-bezier(.5,.1,.5,.9) infinite; }
+.vto-loading__ring--2 { inset: 12px; border-top-color: var(--vto-ink); border-right-color: rgba(15,15,16,.2); animation-duration: 1.9s; animation-direction: reverse; }
+.vto-loading__core { position: absolute; inset: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, var(--vto-accent-soft)); box-shadow: 0 0 0 1px var(--vto-line) inset, 0 6px 18px rgba(109,93,252,.2); animation: vto-breathe 2s ease-in-out infinite; }
 @keyframes vto-spin { to { transform: rotate(360deg); } }
-.vto-loading__title { font: 700 17px/1 var(--vto-ff) !important; color: #111 !important; margin: 0 0 5px !important; }
-.vto-loading__sub { font: 400 12px/1.4 var(--vto-ff) !important; color: #9ca3af !important; margin: 0 0 18px !important; }
-.vto-progress { width: 100%; height: 3px; background: #f3f4f6 !important; border-radius: 3px; overflow: hidden; margin-bottom: 18px; }
-.vto-progress__bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--vto-accent), var(--vto-accent2)) !important; border-radius: 3px; animation: vto-progressGrow 28s ease forwards; }
-@keyframes vto-progressGrow { 0%{width:0%} 30%{width:30%} 60%{width:55%} 85%{width:75%} 100%{width:92%} }
-.vto-loading-steps { text-align: left; max-width: 220px; margin: 0 auto 14px; }
-.vto-lstep { display: flex; align-items: center; gap: 8px; padding: 5px 0; font: 500 12px/1 var(--vto-ff) !important; color: #d1d5db !important; transition: color .3s; }
-.vto-lstep.active { color: #111 !important; }
-.vto-lstep.done { color: #22c55e !important; }
-.vto-lstep__check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; transition: all .3s; flex-shrink: 0; }
-.vto-lstep.active .vto-lstep__check { border-color: var(--vto-accent) !important; background: var(--vto-accent) !important; box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
-.vto-lstep.active .vto-lstep__check::after { content: ''; width: 4px; height: 4px; background: #fff; border-radius: 50%; }
-.vto-lstep.done .vto-lstep__check { border-color: #22c55e !important; background: #22c55e !important; }
-.vto-lstep.done .vto-lstep__check::after { content: '✓'; color: #fff; font-size: 9px; font-weight: 700; }
-.vto-loading__time { font: 400 10px/1 var(--vto-ff) !important; color: #d1d5db !important; }
+@keyframes vto-breathe { 0%,100%{opacity:1} 50%{opacity:.55} }
+.vto-loading__title { margin: 0 0 6px !important; font: 600 20px/1.2 var(--vto-ff) !important; letter-spacing: -.015em; color: var(--vto-ink) !important; }
+.vto-loading__sub { margin: 0 0 22px !important; font: 400 14px/1.4 var(--vto-ff) !important; color: var(--vto-ink-3) !important; }
+.vto-progress { width: 100%; height: 3px; background: var(--vto-line-2) !important; border-radius: 3px; overflow: hidden; margin-bottom: 22px; }
+.vto-progress__bar { height: 100%; width: 0; background: var(--vto-ink) !important; border-radius: 3px; animation: vto-progress 28s cubic-bezier(.2,.6,.3,1) forwards; }
+@keyframes vto-progress { 0%{width:0} 30%{width:32%} 60%{width:58%} 85%{width:78%} 100%{width:93%} }
+.vto-steps { list-style: none; max-width: 240px; margin: 0 auto 18px; padding: 0; text-align: left; }
+.vto-step { display: flex; align-items: center; gap: 12px; padding: 7px 0; font: 500 13px/1 var(--vto-ff) !important; color: var(--vto-ink-4) !important; transition: color .3s; }
+.vto-step.active { color: var(--vto-ink) !important; }
+.vto-step.done { color: #15803d !important; }
+.vto-step__dot { width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--vto-line); display: inline-flex; align-items: center; justify-content: center; transition: all .3s; }
+.vto-step.active .vto-step__dot { border-color: var(--vto-ink) !important; background: var(--vto-ink) !important; box-shadow: 0 0 0 4px rgba(15,15,16,.08); }
+.vto-step.active .vto-step__dot::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+.vto-step.done .vto-step__dot { border-color: #15803d !important; background: #15803d !important; }
+.vto-step.done .vto-step__dot::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 700; }
+/* legacy class aliases used by JS */
+.vto-lstep { display: flex; align-items: center; gap: 12px; padding: 7px 0; font: 500 13px/1 var(--vto-ff) !important; color: var(--vto-ink-4) !important; }
+.vto-lstep.active { color: var(--vto-ink) !important; }
+.vto-lstep.done { color: #15803d !important; }
+.vto-lstep .vto-step__dot { width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--vto-line); display: inline-flex; align-items: center; justify-content: center; }
+.vto-lstep.active .vto-step__dot { border-color: var(--vto-ink) !important; background: var(--vto-ink) !important; box-shadow: 0 0 0 4px rgba(15,15,16,.08); }
+.vto-lstep.active .vto-step__dot::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+.vto-lstep.done .vto-step__dot { border-color: #15803d !important; background: #15803d !important; }
+.vto-lstep.done .vto-step__dot::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 700; }
+.vto-loading__eta { margin: 0; font: 400 11px/1 var(--vto-ff) !important; color: var(--vto-ink-4) !important; letter-spacing: .02em; }
 
-/* ── ERROR ── */
-.vto-error-wrap { text-align: center; padding: 36px 0 18px; }
-.vto-error__emoji { font-size: 44px; margin-bottom: 10px; }
-.vto-error__title { font: 700 18px/1 var(--vto-ff) !important; color: #111 !important; margin: 0 0 6px !important; }
-.vto-error__msg { font: 400 13px/1.4 var(--vto-ff) !important; color: #9ca3af !important; margin: 0 0 18px !important; }
-
-/* ── ANIMATIONS ── */
-@keyframes vto-fadeIn { from{opacity:0} to{opacity:1} }
-@keyframes vto-scaleIn { from{opacity:0;transform:scale(.94) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
-@keyframes vto-slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-@keyframes vto-pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-
-/* ── MOBILE ── */
-@media(max-width:480px){
-  .vto-modal { padding: 22px 18px !important; border-radius: 22px !important; max-width: 100%; margin: 8px; }
-  .vto-title { font-size: 20px !important; }
-  .vto-sub { font-size: 12px !important; }
-  .vto-split__img-wrap { aspect-ratio: 2/3; border-radius: 12px; }
-  .vto-split__divider { width: 32px; }
-  .vto-split__plus { width: 26px; height: 26px; }
-  .vto-split__plus svg { width: 12px; height: 12px; }
-  .vto-split__name { font-size: 11px !important; }
-  .vto-split__price { font-size: 10px !important; }
-  .vto-split__change { padding: 6px 10px !important; font-size: 10px !important; border-radius: 8px !important; bottom: 6px !important; }
-  .vto-merge__img { width: 110px; height: 165px; }
-  .vto-merge-canvas { height: 220px; }
-  .vto-main-cta { padding: 14px !important; font-size: 13px !important; }
-  .vto-close { width: 32px !important; height: 32px !important; top: 10px !important; right: 10px !important; }
-  .vto-close svg { width: 14px; height: 14px; }
-  .vto-result__img-wrap { max-width: 100%; }
+/* ── Result ── */
+.vto-result { text-align: center; }
+.vto-result__hero {
+  position: relative; margin: 6px auto 18px; max-width: 420px;
+  border-radius: 22px; overflow: hidden; background: var(--vto-surface) !important;
+  border: 1px solid var(--vto-line) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 24px 60px rgba(0,0,0,.14);
+  animation: vto-reveal .8s var(--vto-ease);
 }
-@media(max-width:360px){
-  .vto-modal { padding: 18px 14px !important; }
-  .vto-title { font-size: 18px !important; }
-  .vto-split__label { font-size: 8px !important; }
+.vto-result__hero img { display: block !important; width: 100% !important; height: auto !important; }
+.vto-result__shine { position: absolute; inset: -100%; background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.35) 50%, transparent 58%); animation: vto-shine 1.6s ease .4s 1; pointer-events: none; }
+@keyframes vto-shine { 0%{transform:translate(-40%,-40%)} 100%{transform:translate(40%,40%)} }
+@keyframes vto-reveal { 0%{opacity:0;transform:scale(.94) translateY(14px)} 100%{opacity:1;transform:none} }
+.vto-result__tag { display: inline-flex; align-items: center; gap: 12px; padding: 8px 18px 8px 8px; margin-bottom: 18px; background: var(--vto-surface) !important; border: 1px solid var(--vto-line-2) !important; border-radius: 100px; text-align: left; }
+.vto-result__tag img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.vto-result__tag-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vto-result__tag-name { font: 600 13px/1.2 var(--vto-ff) !important; color: var(--vto-ink) !important; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vto-result__tag-price { font: 500 12px/1 var(--vto-ff) !important; color: var(--vto-ink-3) !important; }
+.vto-result__actions { display: flex; gap: 12px; margin-bottom: 14px; }
+.vto-disclaimer { margin: 0 !important; padding: 0 20px; font: 400 11px/1.5 var(--vto-ff) !important; color: var(--vto-ink-4) !important; }
+.vto-powered { margin: 12px 0 0 !important; font: 400 11px/1 var(--vto-ff) !important; color: var(--vto-ink-4) !important; }
+.vto-powered a { color: var(--vto-ink-3) !important; text-decoration: none; font-weight: 600; }
+
+/* ── Error ── */
+.vto-error { text-align: center; padding: 32px 0 12px; }
+.vto-error__icon { display: inline-flex; margin-bottom: 14px; color: var(--vto-ink-3) !important; }
+.vto-error__title { margin: 0 0 8px !important; font: 600 20px/1.2 var(--vto-ff) !important; color: var(--vto-ink) !important; }
+.vto-error__msg { margin: 0 0 22px !important; font: 400 14px/1.5 var(--vto-ff) !important; color: var(--vto-ink-3) !important; }
+
+/* ── Motion ── */
+@keyframes vto-fade { from{opacity:0} to{opacity:1} }
+@keyframes vto-pop { from{opacity:0;transform:scale(.96) translateY(10px)} to{opacity:1;transform:none} }
+@keyframes vto-rise { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@media (prefers-reduced-motion: reduce) { #vto * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* ── Tablet ── */
+@media (max-width: 820px) {
+  .vto-modal { max-width: 600px; padding: 44px 32px 30px !important; }
+  .vto-head { padding: 0 24px; }
+  .vto-title { font-size: 26px !important; }
+  .vto-split__divider { width: 44px; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 560px) {
+  .vto-overlay { padding: 12px; align-items: flex-end; }
+  .vto-modal { max-width: 100%; max-height: calc(100vh - 24px); border-radius: 24px !important; padding: 56px 20px 24px !important; }
+  .vto-close { top: 12px !important; right: 12px !important; width: 44px !important; height: 44px !important; }
+  .vto-head { padding: 0; margin-bottom: 22px; }
+  .vto-eyebrow { font-size: 10px !important; padding: 5px 12px; margin-bottom: 10px; }
+  .vto-title { font-size: 23px !important; }
+  .vto-sub { font-size: 14px !important; margin-top: 8px !important; }
+  .vto-split { flex-direction: column; gap: 18px; margin-bottom: 22px; }
+  .vto-split__divider { width: 100%; padding-top: 0; }
+  .vto-split__frame { aspect-ratio: 4 / 5; border-radius: 18px; }
+  .vto-split__product .vto-split__frame { aspect-ratio: 4 / 3; }
+  .vto-drop__icon { width: 64px; height: 64px; }
+  .vto-drop__text { font-size: 15px !important; }
+  .vto-cta { min-height: 54px; padding: 16px 20px; font-size: 15px !important; }
+  .vto-result__actions { flex-direction: column; }
+  .vto-cta--inline, .vto-btn-ghost { flex: none; width: 100%; }
+  .vto-merge__stage { height: 240px; }
+  .vto-merge__img { width: 112px; height: 168px; }
+  .vto-result__hero { max-width: 100%; }
+}
+@media (max-width: 380px) {
+  .vto-modal { padding: 52px 16px 20px !important; }
+  .vto-title { font-size: 21px !important; }
 }
 </style>
 
@@ -415,13 +498,13 @@
   }
   function openModal(){overlay.style.display='flex';show('upload');popup.style.display='none';document.body.style.overflow='hidden';}
   function closeModal(){overlay.style.display='none';document.body.style.overflow='';reset();}
-  function reset(){file=null;if(fileInput)fileInput.value='';if(dzEmpty)dzEmpty.style.display='block';if(dzPreview)dzPreview.style.display='none';submitBtn.disabled=true;submitTxt.textContent='Upload photo to try on';}
+  function reset(){file=null;if(fileInput)fileInput.value='';if(dzEmpty)dzEmpty.style.display='block';if(dzPreview)dzPreview.style.display='none';submitBtn.disabled=true;submitTxt.textContent='Upload a photo to continue';}
   function handleFile(f){
     if(!f||!f.type.startsWith('image/'))return;
     if(f.size>10*1024*1024){alert('File too large. Max 10 MB.');return;}
     file=f;
     const r=new FileReader();
-    r.onload=e=>{prevImg.src=e.target.result;dzEmpty.style.display='none';dzPreview.style.display='block';submitBtn.disabled=false;submitTxt.textContent='Try it on →';};
+    r.onload=e=>{prevImg.src=e.target.result;dzEmpty.style.display='none';dzPreview.style.display='block';submitBtn.disabled=false;submitTxt.textContent='Try On Now';};
     r.readAsDataURL(f);
   }
   btn.addEventListener('click',openModal);

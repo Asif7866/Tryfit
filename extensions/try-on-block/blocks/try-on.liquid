@@ -15,12 +15,12 @@
   </button>
 
   <!-- ═══ MODAL ═══ -->
-  <div id="vto-modal" class="vto-overlay" style="display:none;">
+  <div id="vto-modal" class="vto-ov" style="display:none;">
     <div class="vto-card">
       <div class="vto-card__head">
         <div>
           <h2 class="vto-card__title">See it on you</h2>
-          <p class="vto-card__sub" id="vto-subtitle">Best results come from a photo in the same pose as the product shot</p>
+          <p class="vto-card__sub" id="vto-sub">Best results come from a photo in the same pose as the product shot</p>
         </div>
         <button id="vto-close" class="vto-x" type="button" aria-label="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -45,17 +45,19 @@
         </div>
       </div>
 
-      <!-- PROCESSING (expanded view) -->
+      <!-- PROCESSING -->
       <div id="vto-s-proc" class="vto-s" style="display:none;">
         <div class="vto-proc">
           <div class="vto-proc__imgs">
-            <div class="vto-proc__img"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
+            <div class="vto-proc__img vto-float-l"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
             <div class="vto-proc__spin">
-              <svg width="28" height="28" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#e5e5e5" stroke-width="2.5"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spinner"/></svg>
+              <svg class="vto-ring" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#f0f0f0" stroke-width="2.5"/><circle cx="20" cy="20" r="17" fill="none" stroke="url(#vto-grad)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="80 107" class="vto-spinner"/><defs><linearGradient id="vto-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#111"/><stop offset="100%" stop-color="#666"/></linearGradient></defs></svg>
             </div>
-            <div class="vto-proc__img"><img id="vto-proc-u" alt="" /></div>
+            <div class="vto-proc__img vto-float-r"><img id="vto-proc-u" alt="" /></div>
           </div>
-          <p class="vto-proc__status" id="vto-status">Reading your photo</p>
+          <!-- Progress bar -->
+          <div class="vto-pbar"><div class="vto-pbar__fill" id="vto-pbar-fill"></div></div>
+          <p class="vto-proc__status" id="vto-status">Starting your try-on</p>
           <p class="vto-proc__time" id="vto-timer">0 sec</p>
         </div>
       </div>
@@ -116,6 +118,7 @@
 
 <style>
 :root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
+*,*::before,*::after{box-sizing:border-box;}
 
 /* BTN */
 .vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
@@ -124,92 +127,104 @@
 .vto-btn__icon{flex-shrink:0;}
 .vto-btn__badge{padding:3px 8px;background:rgba(255,255,255,.2);border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;}
 
-/* OVERLAY */
-.vto-overlay{position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:vF .2s;}
+/* OVERLAY — max z-index */
+.vto-ov{position:fixed!important;inset:0!important;z-index:2147483646!important;background:rgba(0,0,0,.5)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;animation:vF .2s;}
 
 /* CARD */
-.vto-card{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:vS .25s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;}
-.vto-card__head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 22px 0;gap:12px;}
-.vto-card__title{margin:0;font:700 22px/1.2 var(--vf);color:#111;}
-.vto-card__sub{margin:6px 0 0;font:400 13px/1.45 var(--vf);color:#888;}
-.vto-x{width:34px;height:34px;min-width:34px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;cursor:pointer;color:#888;transition:background .15s;flex-shrink:0;margin-top:2px;}
-.vto-x:hover{background:#eaeaea;}
+.vto-card{background:#fff;border-radius:22px;max-width:500px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:vS .3s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;box-shadow:0 25px 60px rgba(0,0,0,.2);}
+.vto-card__head{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:12px;}
+.vto-card__title{margin:0;font:800 24px/1.15 var(--vf);color:#111;letter-spacing:-.3px;}
+.vto-card__sub{margin:6px 0 0;font:400 13px/1.5 var(--vf);color:#888;}
+.vto-x{width:36px;height:36px;min-width:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;color:#888;transition:background .15s,transform .15s;flex-shrink:0;margin-top:2px;}
+.vto-x:hover{background:#e5e5e5;transform:scale(1.05);}
+.vto-s{padding:18px 24px 24px;}
 
-/* STATES */
-.vto-s{padding:18px 22px 22px;}
-
-/* UPLOAD DROP ZONE */
-.vto-drop{border:2px dashed #d4d4d4;border-radius:16px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;cursor:pointer;transition:border-color .2s,background .2s;}
+/* UPLOAD */
+.vto-drop{border:2px dashed #d4d4d4;border-radius:18px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;cursor:pointer;transition:border-color .2s,background .2s;}
 .vto-drop:hover{border-color:#999;background:#fafafa;}
 .vto-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
-.vto-choose{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#1a1a2e;color:#fff;border:none;border-radius:12px;font:600 14px/1 var(--vf);cursor:pointer;pointer-events:none;}
-.vto-drop__hint{margin:14px 0 0;font:400 12px/1.4 var(--vf);color:#aaa;text-align:center;padding:0 20px;}
+.vto-choose{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#1a1a2e;color:#fff;border:none;border-radius:14px;font:600 14px/1 var(--vf);cursor:pointer;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,46,.2);transition:transform .15s;}
+.vto-drop__hint{margin:16px 0 0;font:400 12px/1.4 var(--vf);color:#aaa;text-align:center;padding:0 20px;}
 
 /* PREVIOUS RESULTS */
 .vto-prev{padding:0 0 4px;}
-.vto-prev__label{font:500 13px/1 var(--vf);color:#555;margin:16px 0 10px;}
-.vto-prev__grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
-.vto-prev__grid img{width:64px;height:64px;border-radius:10px;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
-.vto-prev__grid img:hover{border-color:#111;}
+.vto-prev__label{font:600 13px/1 var(--vf);color:#444;margin:18px 0 10px;}
+.vto-prev__grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+.vto-prev__grid img{width:72px;height:72px;border-radius:12px;object-fit:cover;cursor:pointer;border:2px solid #f0f0f0;transition:border-color .15s,transform .15s;}
+.vto-prev__grid img:hover{border-color:#111;transform:scale(1.05);}
 
 /* PROCESSING */
-.vto-proc{text-align:center;padding:24px 0 8px;}
-.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:20px;}
-.vto-proc__img{width:42%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06);}
+.vto-proc{text-align:center;padding:28px 0 12px;}
+.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:24px;}
+.vto-proc__img{width:44%;aspect-ratio:3/4;border-radius:16px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.1);border:3px solid #fff;}
 .vto-proc__img img{width:100%;height:100%;object-fit:cover;display:block;}
-.vto-proc__spin{width:16%;display:flex;align-items:center;justify-content:center;}
-.vto-proc__status{font:500 15px/1 var(--vf);color:#444;margin:0 0 4px;}
+.vto-proc__spin{width:12%;display:flex;align-items:center;justify-content:center;z-index:1;}
+
+/* Floating animation on images */
+.vto-float-l{animation:vFloatL 3s ease-in-out infinite;}
+.vto-float-r{animation:vFloatR 3s ease-in-out infinite;}
+@keyframes vFloatL{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(-1deg)}}
+@keyframes vFloatR{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+
+/* Progress bar */
+.vto-pbar{width:80%;margin:0 auto 16px;height:3px;background:#f0f0f0;border-radius:3px;overflow:hidden;}
+.vto-pbar__fill{height:100%;width:0%;background:linear-gradient(90deg,#111,#555);border-radius:3px;transition:width .5s ease;}
+
+.vto-proc__status{font:600 15px/1 var(--vf);color:#333;margin:0 0 4px;}
 .vto-proc__time{font:400 13px/1 var(--vf);color:#aaa;margin:0;}
 .vto-spinner{animation:vR 1s linear infinite;transform-origin:center;}
 @keyframes vR{to{transform:rotate(360deg)}}
 
-/* RESULT */
+/* RESULT — 20% bigger image */
 .vto-res__btns{display:flex;gap:10px;margin-bottom:10px;}
-.vto-btn-o{flex:1;padding:13px;background:#f3f3f3;color:#222;border:none;border-radius:var(--vr);font:600 14px/1 var(--vf);cursor:pointer;transition:background .15s;}
-.vto-btn-o:hover{background:#e8e8e8;}
-.vto-btn-f{width:100%;padding:14px;background:#1a1a2e;color:#fff;border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
+.vto-btn-o{flex:1;padding:14px;background:#f3f3f3;color:#222;border:none;border-radius:var(--vr);font:600 14px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;}
+.vto-btn-o:hover{background:#e5e5e5;transform:translateY(-1px);}
+.vto-btn-f{width:100%;padding:15px;background:#1a1a2e;color:#fff;border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
 .vto-btn-f:hover{background:#2a2a3e;transform:translateY(-1px);}
-.vto-res__pic{position:relative;border-radius:16px;overflow:hidden;cursor:zoom-in;box-shadow:0 2px 16px rgba(0,0,0,.06);border:1px solid #f0f0f0;}
+.vto-res__pic{position:relative;border-radius:18px;overflow:hidden;cursor:zoom-in;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid #eee;animation:vReveal .6s cubic-bezier(.16,1,.3,1);}
 .vto-res__pic img{width:100%;display:block;}
-.vto-res__zoom{position:absolute;top:12px;right:12px;width:34px;height:34px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.08);pointer-events:none;}
+.vto-res__zoom{position:absolute;top:14px;right:14px;width:38px;height:38px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.1);pointer-events:none;}
+@keyframes vReveal{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .vto-res__disc{text-align:center;margin:10px 0 0;font:400 10px/1.4 var(--vf);color:#ccc;}
 .vto-powered{text-align:center;padding:6px 0 0;font:400 11px/1 var(--vf);color:#ccc;}
 .vto-powered a{color:#999;text-decoration:none;font-weight:600;}
 
 /* ERROR */
 .vto-err{text-align:center;padding:32px 0 12px;}
-.vto-err__icon{font-size:40px;margin:0 0 8px;}
+.vto-err__icon{font-size:44px;margin:0 0 10px;}
 .vto-err h3{font:700 18px/1 var(--vf);color:#111;margin:0 0 6px;}
 .vto-err p{font:400 13px/1.4 var(--vf);color:#999;margin:0 0 18px;}
 
-/* MINIBAR — bottom right */
-.vto-mini{position:fixed;bottom:16px;right:16px;z-index:2147483645;background:#fff;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.04);max-width:360px;width:auto;animation:vU .3s ease;}
+/* MINIBAR */
+.vto-mini{position:fixed!important;bottom:16px!important;right:16px!important;z-index:2147483645!important;background:#fff!important;border-radius:16px!important;padding:12px 16px!important;display:flex!important;align-items:center!important;gap:12px!important;box-shadow:0 8px 36px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04)!important;max-width:380px!important;width:auto!important;animation:vU .3s ease;}
 .vto-mini__thumbs{display:flex;align-items:center;flex-shrink:0;}
-.vto-mini__thumbs img{width:38px;height:38px;border-radius:8px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.vto-mini__thumbs img{width:40px;height:40px;border-radius:10px;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.1);}
 .vto-mini__thumbs img:nth-child(3){margin-left:-10px;}
-.vto-mini__sp{margin:0 -6px;z-index:1;background:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.vto-mini__sp{margin:0 -6px;z-index:1;background:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.1);}
 .vto-mini__body{flex:1;min-width:0;}
 .vto-mini__body strong{display:block;font:600 13px/1.3 var(--vf);color:#111;}
 .vto-mini__body span{font:400 11px/1.3 var(--vf);color:#999;}
-.vto-mini__arrow{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;font:600 16px/1 var(--vf);color:#666;cursor:pointer;flex-shrink:0;transition:background .15s;}
-.vto-mini__arrow:hover{background:#e8e8e8;}
+.vto-mini__arrow{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;font:600 18px/1 var(--vf);color:#555;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s;}
+.vto-mini__arrow:hover{background:#e5e5e5;transform:scale(1.05);}
 
 /* ZOOM */
-.vto-zoom{position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;animation:vF .2s;cursor:zoom-out;}
-.vto-zoom img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain;}
-.vto-zoom__x{position:absolute;top:16px;right:16px;width:44px;height:44px;background:rgba(255,255,255,.15);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;}
+.vto-zoom{position:fixed!important;inset:0!important;z-index:2147483647!important;background:rgba(0,0,0,.94)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;animation:vF .2s;cursor:zoom-out;}
+.vto-zoom img{max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;animation:vReveal .4s ease;}
+.vto-zoom__x{position:absolute;top:16px;right:16px;width:48px;height:48px;background:rgba(255,255,255,.12);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;transition:background .15s;}
+.vto-zoom__x:hover{background:rgba(255,255,255,.25);}
 
 /* ANIMS */
 @keyframes vF{from{opacity:0}to{opacity:1}}
-@keyframes vS{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes vU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes vS{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes vU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
 /* MOBILE */
 @media(max-width:500px){
-  .vto-overlay{padding:0;align-items:flex-end;}
-  .vto-card{max-width:100%;border-radius:20px 20px 0 0;max-height:94vh;}
-  .vto-drop{min-height:200px;}
-  .vto-mini{right:8px;bottom:8px;left:8px;max-width:none;width:auto;}
+  .vto-ov{padding:0!important;align-items:flex-end!important;}
+  .vto-card{max-width:100%;border-radius:22px 22px 0 0;max-height:94vh;}
+  .vto-drop{min-height:220px;}
+  .vto-mini{right:8px!important;bottom:8px!important;left:8px!important;max-width:none!important;}
+  .vto-proc__img{width:42%;}
 }
 </style>
 
@@ -220,82 +235,92 @@ const el=$('vto');if(!el)return;
 const D=el.dataset;
 const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
 const fileInput=$('vto-file');
-let file=null,resultUrl=null,timer=null,sec=0,minimized=false;
-const PREV_KEY='vto_prev_'+D.shop;
+let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
+const PK='vto_prev_'+D.shop;
 
 const show=s=>['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'+x);if(e)e.style.display=x===s?'block':'none';});
 const openModal=s=>{modal.style.display='flex';show(s||'upload');if(s==='upload')loadPrev();};
-const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;};
+const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;processing=false;};
 const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';};
+const setSub=t=>{$('vto-sub').textContent=t;};
 
-// Subtitle update
-const setSub=t=>{$('vto-subtitle').textContent=t;};
+// Confirm close during processing
+const tryClose=()=>{
+  if(processing){
+    if(confirm('Are you sure you want to close? Your current progress will be lost.')){closeAll();resetUpload();}
+  }else{closeAll();resetUpload();}
+};
 
-// Timer
-const startTimer=()=>{sec=0;tick();timer=setInterval(()=>{sec++;tick();updateStatus();},1000);};
+// Timer + progress bar
+const startTimer=()=>{sec=0;tick();timer=setInterval(()=>{sec++;tick();updateStatus();updateBar();},1000);};
 const stopTimer=()=>{if(timer){clearInterval(timer);timer=null;}};
 const tick=()=>{
   $('vto-timer').textContent=sec+' sec';
   $('vto-m-time').textContent=sec+' sec · You can keep browsing';
 };
 const updateStatus=()=>{
-  let m='Reading your photo';
-  if(sec>=5)m='Fitting it on you';
-  if(sec>=15)m='Refining the details';
-  if(sec>=25)m='Almost ready';
+  let m='Starting your try-on';
+  if(sec>=3)m='Reading your photo';
+  if(sec>=8)m='Fitting it on you';
+  if(sec>=18)m='Refining the details';
+  if(sec>=28)m='Almost ready';
   $('vto-status').textContent=m;
   $('vto-m-status').textContent=m;
 };
+const updateBar=()=>{
+  let pct=0;
+  if(sec<=5)pct=sec*4;
+  else if(sec<=15)pct=20+(sec-5)*3;
+  else if(sec<=25)pct=50+(sec-15)*3;
+  else if(sec<=35)pct=80+(sec-25)*1.5;
+  else pct=Math.min(95,80+sec*0.3);
+  $('vto-pbar-fill').style.width=Math.min(pct,95)+'%';
+};
 
-// Minimize → minibar (bottom-right)
+// Mini
 const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';};
 const toModal=()=>{minimized=false;mini.style.display='none';modal.style.display='flex';};
 
-// Previous results (sessionStorage)
+// Previous results
 const savePrev=url=>{
-  try{
-    let arr=JSON.parse(sessionStorage.getItem(PREV_KEY)||'[]');
-    arr.unshift(url);if(arr.length>6)arr=arr.slice(0,6);
-    sessionStorage.setItem(PREV_KEY,JSON.stringify(arr));
-  }catch(e){}
+  try{let a=JSON.parse(sessionStorage.getItem(PK)||'[]');a.unshift(url);if(a.length>8)a=a.slice(0,8);sessionStorage.setItem(PK,JSON.stringify(a));}catch(e){}
 };
 const loadPrev=()=>{
   try{
-    const arr=JSON.parse(sessionStorage.getItem(PREV_KEY)||'[]');
-    const wrap=$('vto-prev-wrap'),grid=$('vto-prev-grid');
-    if(arr.length>0){
-      wrap.style.display='block';
-      grid.innerHTML=arr.map(u=>'<img src="'+u+'" alt="Previous result" />').join('');
-      grid.querySelectorAll('img').forEach(img=>{
+    const a=JSON.parse(sessionStorage.getItem(PK)||'[]');
+    const w=$('vto-prev-wrap'),g=$('vto-prev-grid');
+    if(a.length>0){
+      w.style.display='block';
+      g.innerHTML=a.map(u=>'<img src="'+u+'" alt="Previous" />').join('');
+      g.querySelectorAll('img').forEach(img=>{
         img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});
       });
-    }else{wrap.style.display='none';}
+    }else{w.style.display='none';}
   }catch(e){}
 };
 
-// Show result
 const showResult=url=>{
   setSub("Here's your look! Tap the image to zoom in.");
-  $('vto-res-img').src=url;
-  $('vto-z-img').src=url;
+  $('vto-res-img').src=url;$('vto-z-img').src=url;
+  $('vto-pbar-fill').style.width='100%';
   show('result');
 };
 
 // Events
 $('vto-btn').addEventListener('click',()=>openModal('upload'));
 $('vto-close').addEventListener('click',()=>{
-  if($('vto-s-proc').style.display!=='none'){toMini();}
-  else{closeAll();resetUpload();}
+  if(processing){toMini();}
+  else{tryClose();}
 });
 modal.addEventListener('click',e=>{if(e.target===modal){
-  if($('vto-s-proc').style.display!=='none'){toMini();}
-  else{closeAll();resetUpload();}
+  if(processing){toMini();}
+  else{tryClose();}
 }});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(zoom.style.display!=='none')zoom.style.display='none';
     else if(minimized)toModal();
-    else{closeAll();resetUpload();}
+    else tryClose();
   }
 });
 $('vto-m-expand').addEventListener('click',toModal);
@@ -310,11 +335,9 @@ fileInput?.addEventListener('change',e=>{
   r.onload=ev=>{
     $('vto-proc-u').src=ev.target.result;
     $('vto-m-u').src=ev.target.result;
-    // Close modal → show minibar → start AI
-    toMini();
-    show('proc');
-    startTimer();
-    runAI();
+    processing=true;
+    $('vto-pbar-fill').style.width='0%';
+    toMini();show('proc');startTimer();runAI();
   };
   r.readAsDataURL(f);
 });
@@ -329,7 +352,7 @@ if(dz){
   });
 }
 
-// AI call — NO canvas fallback
+// AI — NO canvas fallback ever
 async function runAI(){
   try{
     const fd=new FormData();
@@ -337,13 +360,12 @@ async function runAI(){
     fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
     const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
     const data=await res.json();
-    stopTimer();
+    stopTimer();processing=false;
 
     if(res.ok&&data.success&&data.result_url){
       resultUrl=data.result_url;
       savePrev(resultUrl);
-      toModal();
-      showResult(resultUrl);
+      toModal();showResult(resultUrl);
       return;
     }
     if(res.status===429){
@@ -355,7 +377,7 @@ async function runAI(){
     }
     throw new Error(data.error||'AI generation failed');
   }catch(err){
-    stopTimer();
+    stopTimer();processing=false;
     $('vto-err-icon').textContent='😔';
     $('vto-err-title').textContent='Something went wrong';
     $('vto-err-msg').textContent=err.message||'Please try again in a moment.';
@@ -364,7 +386,7 @@ async function runAI(){
   }
 }
 
-// Result actions
+// Actions
 $('vto-regen')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
 $('vto-err-retry')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
 $('vto-buy')?.addEventListener('click',async()=>{
@@ -395,7 +417,7 @@ zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';
     { "type": "text", "id": "button_text", "label": "Button Text", "default": "TRY ON" },
     { "type": "color", "id": "button_color", "label": "Button Color", "default": "#111111" },
     { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
-    { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },
+    { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 14, "unit": "px" },
     { "type": "header", "content": "AI Settings" },
     { "type": "select", "id": "garment_category", "label": "Garment Type", "default": "dresses", "info": "Upper body = tops/shirts. Lower body = pants/skirts. Full body = kurta sets, dresses, jumpsuits.", "options": [
       { "value": "upper_body", "label": "Upper Body (tops, shirts, jackets)" },

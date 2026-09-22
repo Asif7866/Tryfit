@@ -166,9 +166,9 @@ export const loader = async ({ request }) => {
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    // Auth or billing failed — resolve shop from URL only (never cross-store findFirst)
+    // Auth failed — try to get data from DB using shop from URL
     let fallbackData = {
-      shop: "", products: [], totalProducts: 0,
+      shop: "unknown", products: [], totalProducts: 0,
       monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
       uniqueUsers: 0, topProducts: [], plan: "Free",
       addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",

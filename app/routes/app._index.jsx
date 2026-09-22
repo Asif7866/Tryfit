@@ -166,9 +166,7 @@ export const loader = async ({ request }) => {
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
-    // Re-throw Response objects (e.g. billing redirects) — let Remix handle them
-    if (e instanceof Response) throw e;
-    // Auth genuinely failed — try to resolve shop from URL
+    // Auth or billing failed — resolve shop from URL only (never cross-store findFirst)
     let fallbackData = {
       shop: "", products: [], totalProducts: 0,
       monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,

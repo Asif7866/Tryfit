@@ -375,9 +375,11 @@
       const data=await res.json();
       if(res.ok&&data.success&&data.result_url){
         resultImg.src=data.result_url;show('result');
-        try{const lf=new FormData();lf.append('shop',D.shop);lf.append('product_id',D.pid);lf.append('product_title',D.ptitle);fetch('https://tryfit-production.up.railway.app/log-tryon',{method:'POST',body:lf,mode:'cors'}).catch(()=>{});}catch(le){}
+        // Backend already logged + incremented credit on success — no duplicate log
         return;
       }
+      // Limit reached: show real message, do not fall back to canvas
+      if(res.status===429){errorMsg.textContent=data.error||'Monthly try-on limit reached.';show('error');return;}
       throw new Error(data.error||'AI unavailable');
     }catch(err){
       try{
@@ -407,7 +409,7 @@
             ctx.fillText('✨ Virtual Try-On by TryFit',300,766);
             resultImg.src=canvas.toDataURL('image/jpeg',0.92);show('result');
             // Log try-on to server for dashboard tracking
-            try{const lf=new FormData();lf.append('shop',D.shop);lf.append('product_id',D.pid);lf.append('product_title',D.ptitle);fetch('https://tryfit-production.up.railway.app/log-tryon',{method:'POST',body:lf,mode:'cors'}).catch(()=>{});}catch(le){}
+            // Canvas fallback = AI failed — do NOT consume a credit
           };
           prodImage.onerror=()=>{errorMsg.textContent='Could not load product image';show('error');};
           prodImage.src=D.pimg;

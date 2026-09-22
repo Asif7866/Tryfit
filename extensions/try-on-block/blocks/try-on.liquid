@@ -15,385 +15,372 @@
   </button>
 
   <!-- ═══ MODAL ═══ -->
-  <div id="vto-modal" class="vto-modal" style="display:none;">
-    <div class="vto-modal__card">
-      <div class="vto-modal__header">
-        <h2 class="vto-modal__title">See it on you</h2>
-        <button id="vto-close" class="vto-modal__close" type="button" aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  <div id="vto-modal" class="vto-overlay" style="display:none;">
+    <div class="vto-card">
+      <div class="vto-card__head">
+        <div>
+          <h2 class="vto-card__title">See it on you</h2>
+          <p class="vto-card__sub" id="vto-subtitle">Best results come from a photo in the same pose as the product shot</p>
+        </div>
+        <button id="vto-close" class="vto-x" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <!-- UPLOAD STATE -->
-      <div id="vto-upload" class="vto-state">
-        <div class="vto-photos">
-          <div class="vto-photos__product">
-            <img src="{{ product.featured_image | image_url: width: 800 }}" alt="{{ product.title | escape }}" />
-          </div>
-          <div class="vto-photos__divider"><span>+</span></div>
-          <div id="vto-dropzone" class="vto-photos__user">
-            <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
-            <div id="vto-dz-empty">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p>Upload your photo</p>
-              <span>JPG, PNG or WebP</span>
-            </div>
-            <div id="vto-dz-preview" style="display:none;">
-              <img id="vto-preview" alt="Your photo" />
-            </div>
+      <!-- UPLOAD -->
+      <div id="vto-s-upload" class="vto-s">
+        <div id="vto-dropzone" class="vto-drop">
+          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
+          <div id="vto-dz-empty">
+            <button class="vto-choose" type="button" tabindex="-1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Choose photo
+            </button>
+            <p class="vto-drop__hint">Your photo is deleted after your try-on is generated</p>
           </div>
         </div>
-        <p class="vto-privacy">Your photo is processed securely and never stored</p>
-      </div>
-
-      <!-- PROCESSING STATE -->
-      <div id="vto-processing" class="vto-state" style="display:none;">
-        <div class="vto-process">
-          <div class="vto-process__images">
-            <div class="vto-process__img"><img id="vto-proc-product" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
-            <div class="vto-process__spinner">
-              <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#e5e5e5" stroke-width="2.5"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spin"/></svg>
-            </div>
-            <div class="vto-process__img"><img id="vto-proc-user" alt="" /></div>
-          </div>
-          <p class="vto-process__status" id="vto-status">Reading your photo</p>
-          <p class="vto-process__timer" id="vto-timer">0 sec</p>
+        <div id="vto-prev-wrap" class="vto-prev" style="display:none;">
+          <p class="vto-prev__label">Previous results</p>
+          <div id="vto-prev-grid" class="vto-prev__grid"></div>
         </div>
       </div>
 
-      <!-- RESULT STATE -->
-      <div id="vto-result" class="vto-state" style="display:none;">
-        <p class="vto-result__sub">Here's your look! Tap the image to zoom in.</p>
-        <div class="vto-result__actions">
-          <button id="vto-regen" class="vto-btn-outline" type="button">Regenerate</button>
-          <button id="vto-download" class="vto-btn-outline" type="button">Download</button>
+      <!-- PROCESSING (expanded view) -->
+      <div id="vto-s-proc" class="vto-s" style="display:none;">
+        <div class="vto-proc">
+          <div class="vto-proc__imgs">
+            <div class="vto-proc__img"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
+            <div class="vto-proc__spin">
+              <svg width="28" height="28" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#e5e5e5" stroke-width="2.5"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spinner"/></svg>
+            </div>
+            <div class="vto-proc__img"><img id="vto-proc-u" alt="" /></div>
+          </div>
+          <p class="vto-proc__status" id="vto-status">Reading your photo</p>
+          <p class="vto-proc__time" id="vto-timer">0 sec</p>
         </div>
-        <button id="vto-buy" class="vto-btn-primary" type="button">Buy</button>
-        <div class="vto-result__image" id="vto-result-wrap">
-          <img id="vto-result-img" alt="Try-on result" />
-          <div class="vto-result__zoom-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+
+      <!-- RESULT -->
+      <div id="vto-s-result" class="vto-s" style="display:none;">
+        <div class="vto-res__btns">
+          <button id="vto-regen" class="vto-btn-o" type="button">Regenerate</button>
+          <button id="vto-dl" class="vto-btn-o" type="button">Download</button>
+        </div>
+        <button id="vto-buy" class="vto-btn-f" type="button">Buy</button>
+        <div class="vto-res__pic" id="vto-res-wrap">
+          <img id="vto-res-img" alt="Try-on result" />
+          <div class="vto-res__zoom">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
           </div>
         </div>
-        <p class="vto-result__disclaimer">Colors and fit may vary slightly from the actual product.</p>
+        <p class="vto-res__disc">Colors and fit may vary slightly from the actual product.</p>
         <div class="vto-powered">Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener">TryFit</a></div>
       </div>
 
-      <!-- ERROR STATE -->
-      <div id="vto-error" class="vto-state" style="display:none;">
-        <div class="vto-error-box">
-          <p id="vto-error-emoji">😔</p>
-          <h3 id="vto-error-title">Something went wrong</h3>
-          <p id="vto-error-msg"></p>
-          <button id="vto-error-retry" class="vto-btn-primary" type="button">Try Again</button>
+      <!-- ERROR -->
+      <div id="vto-s-error" class="vto-s" style="display:none;">
+        <div class="vto-err">
+          <p class="vto-err__icon" id="vto-err-icon">😔</p>
+          <h3 id="vto-err-title">Something went wrong</h3>
+          <p id="vto-err-msg"></p>
+          <button id="vto-err-retry" class="vto-btn-f" type="button">Try Again</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ MINI BAR (shows when modal minimized during processing) ═══ -->
-  <div id="vto-minibar" class="vto-minibar" style="display:none;">
-    <div class="vto-minibar__thumbs">
-      <img id="vto-mini-product" src="{{ product.featured_image | image_url: width: 120 }}" alt="" />
-      <div class="vto-minibar__spinner-sm">
-        <svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#ddd" stroke-width="3"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spin"/></svg>
+  <!-- ═══ MINIBAR ═══ -->
+  <div id="vto-mini" class="vto-mini" style="display:none;">
+    <div class="vto-mini__thumbs">
+      <img id="vto-m-p" src="{{ product.featured_image | image_url: width: 120 }}" alt="" />
+      <div class="vto-mini__sp">
+        <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#ddd" stroke-width="3"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spinner"/></svg>
       </div>
-      <img id="vto-mini-user" alt="" />
+      <img id="vto-m-u" alt="" />
     </div>
-    <div class="vto-minibar__text">
-      <strong id="vto-mini-status">Fitting it on you</strong>
-      <span id="vto-mini-timer">0 sec · You can keep browsing</span>
+    <div class="vto-mini__body">
+      <strong id="vto-m-status">Starting your try-on</strong>
+      <span id="vto-m-time">0 sec · You can keep browsing</span>
     </div>
-    <button id="vto-mini-expand" class="vto-minibar__expand" type="button" aria-label="Expand">›</button>
+    <button id="vto-m-expand" class="vto-mini__arrow" type="button" aria-label="Expand">›</button>
   </div>
 
-  <!-- ═══ ZOOM OVERLAY ═══ -->
+  <!-- ═══ ZOOM ═══ -->
   <div id="vto-zoom" class="vto-zoom" style="display:none;">
-    <button id="vto-zoom-close" class="vto-zoom__close" type="button" aria-label="Close">
+    <button id="vto-z-close" class="vto-zoom__x" type="button" aria-label="Close">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <img id="vto-zoom-img" alt="Zoomed result" />
+    <img id="vto-z-img" alt="Zoomed" />
   </div>
 </div>
 
 <style>
-:root{--vto-ff:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vto-r:{{ block.settings.button_radius }}px;--vto-primary:{{ block.settings.button_color }};--vto-primary-text:{{ block.settings.button_text_color }};}
+:root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
 
-/* ── BUTTON ── */
-.vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vto-primary);color:var(--vto-primary-text);border:none;border-radius:var(--vto-r);font:600 15px/1 var(--vto-ff);cursor:pointer;transition:transform .15s,box-shadow .15s;}
-.vto-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.12);}
+/* BTN */
+.vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.vto-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.1);}
 .vto-btn:active{transform:translateY(0);}
 .vto-btn__icon{flex-shrink:0;}
 .vto-btn__badge{padding:3px 8px;background:rgba(255,255,255,.2);border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;}
 
-/* ── MODAL OVERLAY ── */
-.vto-modal{position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;animation:vtoFade .2s ease;}
-.vto-modal__card{background:#fff;border-radius:20px;max-width:480px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:vtoSlide .25s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;}
-.vto-modal__header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;}
-.vto-modal__title{margin:0;font:700 20px/1.2 var(--vto-ff);color:#111;}
-.vto-modal__close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;cursor:pointer;color:#666;transition:background .15s;flex-shrink:0;}
-.vto-modal__close:hover{background:#e8e8e8;}
+/* OVERLAY */
+.vto-overlay{position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:vF .2s;}
 
-/* ── STATES ── */
-.vto-state{padding:16px 20px 20px;}
+/* CARD */
+.vto-card{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:vS .25s cubic-bezier(.16,1,.3,1);-webkit-overflow-scrolling:touch;}
+.vto-card__head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 22px 0;gap:12px;}
+.vto-card__title{margin:0;font:700 22px/1.2 var(--vf);color:#111;}
+.vto-card__sub{margin:6px 0 0;font:400 13px/1.45 var(--vf);color:#888;}
+.vto-x{width:34px;height:34px;min-width:34px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;cursor:pointer;color:#888;transition:background .15s;flex-shrink:0;margin-top:2px;}
+.vto-x:hover{background:#eaeaea;}
 
-/* ── UPLOAD: Photos side-by-side ── */
-.vto-photos{display:flex;align-items:stretch;gap:0;}
-.vto-photos__product{flex:2.5;border-radius:14px;overflow:hidden;background:#f5f5f5;}
-.vto-photos__product img{width:100%;height:100%;object-fit:cover;display:block;}
-.vto-photos__divider{display:flex;align-items:center;justify-content:center;width:36px;flex-shrink:0;}
-.vto-photos__divider span{width:28px;height:28px;border-radius:50%;background:#7c3aed;color:#fff;font:700 16px/28px var(--vto-ff);text-align:center;box-shadow:0 2px 8px rgba(124,58,237,.25);}
-.vto-photos__user{flex:1;min-height:200px;border:2px dashed #d4d4d4;border-radius:14px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s,background .2s;overflow:hidden;}
-.vto-photos__user:hover{border-color:#7c3aed;background:#faf8ff;}
-.vto-photos__user input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
-#vto-dz-empty{text-align:center;padding:12px 8px;color:#7c3aed;}
-#vto-dz-empty p{margin:8px 0 2px;font:600 12px/1.3 var(--vto-ff);color:#333;}
-#vto-dz-empty span{font:400 10px/1 var(--vto-ff);color:#aaa;}
-#vto-dz-preview{position:absolute;inset:0;}
-#vto-dz-preview img{width:100%;height:100%;object-fit:cover;}
-.vto-privacy{text-align:center;margin:12px 0 0;font:400 11px/1.4 var(--vto-ff);color:#bbb;}
+/* STATES */
+.vto-s{padding:18px 22px 22px;}
 
-/* ── PROCESSING ── */
-.vto-process{text-align:center;padding:20px 0 8px;}
-.vto-process__images{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:20px;}
-.vto-process__img{width:42%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);}
-.vto-process__img img{width:100%;height:100%;object-fit:cover;display:block;}
-.vto-process__spinner{width:16%;display:flex;align-items:center;justify-content:center;}
-.vto-process__status{font:500 15px/1 var(--vto-ff);color:#555;margin:0 0 4px;}
-.vto-process__timer{font:400 13px/1 var(--vto-ff);color:#aaa;margin:0;}
-.vto-spin{animation:vtoSpin 1s linear infinite;transform-origin:center;}
-@keyframes vtoSpin{to{transform:rotate(360deg)}}
+/* UPLOAD DROP ZONE */
+.vto-drop{border:2px dashed #d4d4d4;border-radius:16px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;cursor:pointer;transition:border-color .2s,background .2s;}
+.vto-drop:hover{border-color:#999;background:#fafafa;}
+.vto-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
+.vto-choose{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#1a1a2e;color:#fff;border:none;border-radius:12px;font:600 14px/1 var(--vf);cursor:pointer;pointer-events:none;}
+.vto-drop__hint{margin:14px 0 0;font:400 12px/1.4 var(--vf);color:#aaa;text-align:center;padding:0 20px;}
 
-/* ── RESULT ── */
-.vto-result__sub{font:400 14px/1.4 var(--vto-ff);color:#777;margin:0 0 14px;}
-.vto-result__actions{display:flex;gap:10px;margin-bottom:10px;}
-.vto-btn-outline{flex:1;padding:12px;background:#f5f5f5;color:#333;border:none;border-radius:var(--vto-r);font:600 14px/1 var(--vto-ff);cursor:pointer;transition:background .15s;}
-.vto-btn-outline:hover{background:#eee;}
-.vto-btn-primary{width:100%;padding:14px;background:#111;color:#fff;border:none;border-radius:var(--vto-r);font:600 15px/1 var(--vto-ff);cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
-.vto-btn-primary:hover{background:#222;transform:translateY(-1px);}
-.vto-result__image{position:relative;border-radius:16px;overflow:hidden;cursor:zoom-in;box-shadow:0 4px 24px rgba(0,0,0,.08);}
-.vto-result__image img{width:100%;display:block;border-radius:16px;}
-.vto-result__zoom-icon{position:absolute;top:12px;right:12px;width:36px;height:36px;background:rgba(255,255,255,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1);pointer-events:none;}
-.vto-result__disclaimer{text-align:center;margin:10px 0 0;font:400 10px/1.4 var(--vto-ff);color:#ccc;}
-.vto-powered{text-align:center;padding:8px 0 0;font:400 11px/1 var(--vto-ff);color:#ccc;}
+/* PREVIOUS RESULTS */
+.vto-prev{padding:0 0 4px;}
+.vto-prev__label{font:500 13px/1 var(--vf);color:#555;margin:16px 0 10px;}
+.vto-prev__grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.vto-prev__grid img{width:64px;height:64px;border-radius:10px;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.vto-prev__grid img:hover{border-color:#111;}
+
+/* PROCESSING */
+.vto-proc{text-align:center;padding:24px 0 8px;}
+.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:20px;}
+.vto-proc__img{width:42%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06);}
+.vto-proc__img img{width:100%;height:100%;object-fit:cover;display:block;}
+.vto-proc__spin{width:16%;display:flex;align-items:center;justify-content:center;}
+.vto-proc__status{font:500 15px/1 var(--vf);color:#444;margin:0 0 4px;}
+.vto-proc__time{font:400 13px/1 var(--vf);color:#aaa;margin:0;}
+.vto-spinner{animation:vR 1s linear infinite;transform-origin:center;}
+@keyframes vR{to{transform:rotate(360deg)}}
+
+/* RESULT */
+.vto-res__btns{display:flex;gap:10px;margin-bottom:10px;}
+.vto-btn-o{flex:1;padding:13px;background:#f3f3f3;color:#222;border:none;border-radius:var(--vr);font:600 14px/1 var(--vf);cursor:pointer;transition:background .15s;}
+.vto-btn-o:hover{background:#e8e8e8;}
+.vto-btn-f{width:100%;padding:14px;background:#1a1a2e;color:#fff;border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:background .15s,transform .1s;margin-bottom:14px;}
+.vto-btn-f:hover{background:#2a2a3e;transform:translateY(-1px);}
+.vto-res__pic{position:relative;border-radius:16px;overflow:hidden;cursor:zoom-in;box-shadow:0 2px 16px rgba(0,0,0,.06);border:1px solid #f0f0f0;}
+.vto-res__pic img{width:100%;display:block;}
+.vto-res__zoom{position:absolute;top:12px;right:12px;width:34px;height:34px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.08);pointer-events:none;}
+.vto-res__disc{text-align:center;margin:10px 0 0;font:400 10px/1.4 var(--vf);color:#ccc;}
+.vto-powered{text-align:center;padding:6px 0 0;font:400 11px/1 var(--vf);color:#ccc;}
 .vto-powered a{color:#999;text-decoration:none;font-weight:600;}
 
-/* ── ERROR ── */
-.vto-error-box{text-align:center;padding:32px 0 12px;}
-.vto-error-box p:first-child{font-size:40px;margin:0 0 8px;}
-.vto-error-box h3{font:700 18px/1 var(--vto-ff);color:#111;margin:0 0 6px;}
-.vto-error-box p{font:400 13px/1.4 var(--vto-ff);color:#999;margin:0 0 18px;}
+/* ERROR */
+.vto-err{text-align:center;padding:32px 0 12px;}
+.vto-err__icon{font-size:40px;margin:0 0 8px;}
+.vto-err h3{font:700 18px/1 var(--vf);color:#111;margin:0 0 6px;}
+.vto-err p{font:400 13px/1.4 var(--vf);color:#999;margin:0 0 18px;}
 
-/* ── MINIBAR ── */
-.vto-minibar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999998;background:#fff;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.04);max-width:380px;width:calc(100% - 32px);animation:vtoSlideUp .3s ease;}
-.vto-minibar__thumbs{display:flex;align-items:center;gap:0;flex-shrink:0;}
-.vto-minibar__thumbs img{width:36px;height:36px;border-radius:8px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.vto-minibar__thumbs img:nth-child(3){margin-left:-8px;}
-.vto-minibar__spinner-sm{margin:0 -6px;z-index:1;background:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.vto-minibar__text{flex:1;min-width:0;}
-.vto-minibar__text strong{display:block;font:600 13px/1.2 var(--vto-ff);color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.vto-minibar__text span{font:400 11px/1.2 var(--vto-ff);color:#999;}
-.vto-minibar__expand{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;font:600 18px/1 var(--vto-ff);color:#666;cursor:pointer;flex-shrink:0;transition:background .15s;}
-.vto-minibar__expand:hover{background:#e8e8e8;}
+/* MINIBAR — bottom right */
+.vto-mini{position:fixed;bottom:16px;right:16px;z-index:999998;background:#fff;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.04);max-width:360px;width:auto;animation:vU .3s ease;}
+.vto-mini__thumbs{display:flex;align-items:center;flex-shrink:0;}
+.vto-mini__thumbs img{width:38px;height:38px;border-radius:8px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.vto-mini__thumbs img:nth-child(3){margin-left:-10px;}
+.vto-mini__sp{margin:0 -6px;z-index:1;background:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.vto-mini__body{flex:1;min-width:0;}
+.vto-mini__body strong{display:block;font:600 13px/1.3 var(--vf);color:#111;}
+.vto-mini__body span{font:400 11px/1.3 var(--vf);color:#999;}
+.vto-mini__arrow{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:none;border-radius:50%;font:600 16px/1 var(--vf);color:#666;cursor:pointer;flex-shrink:0;transition:background .15s;}
+.vto-mini__arrow:hover{background:#e8e8e8;}
 
-/* ── ZOOM ── */
-.vto-zoom{position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;animation:vtoFade .2s ease;cursor:zoom-out;}
+/* ZOOM */
+.vto-zoom{position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;animation:vF .2s;cursor:zoom-out;}
 .vto-zoom img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain;}
-.vto-zoom__close{position:absolute;top:16px;right:16px;width:44px;height:44px;background:rgba(255,255,255,.15);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;}
+.vto-zoom__x{position:absolute;top:16px;right:16px;width:44px;height:44px;background:rgba(255,255,255,.15);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;}
 
-/* ── ANIMATIONS ── */
-@keyframes vtoFade{from{opacity:0}to{opacity:1}}
-@keyframes vtoSlide{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes vtoSlideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* ANIMS */
+@keyframes vF{from{opacity:0}to{opacity:1}}
+@keyframes vS{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes vU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── MOBILE ── */
+/* MOBILE */
 @media(max-width:500px){
-  .vto-modal{padding:0;align-items:flex-end;}
-  .vto-modal__card{max-width:100%;border-radius:20px 20px 0 0;max-height:95vh;}
-  .vto-photos__product{flex:2;}
-  .vto-process__img{width:40%;}
+  .vto-overlay{padding:0;align-items:flex-end;}
+  .vto-card{max-width:100%;border-radius:20px 20px 0 0;max-height:94vh;}
+  .vto-drop{min-height:200px;}
+  .vto-mini{right:8px;bottom:8px;left:8px;max-width:none;width:auto;}
 }
 </style>
 
 <script>
 (function(){
-  const $=id=>document.getElementById(id);
-  const el=$('vto');if(!el)return;
-  const D=el.dataset;
-  const modal=$('vto-modal'),minibar=$('vto-minibar'),zoom=$('vto-zoom');
-  const fileInput=$('vto-file');
-  let file=null,resultUrl=null,timerInterval=null,seconds=0,isMinimized=false;
+const $=id=>document.getElementById(id);
+const el=$('vto');if(!el)return;
+const D=el.dataset;
+const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
+const fileInput=$('vto-file');
+let file=null,resultUrl=null,timer=null,sec=0,minimized=false;
+const PREV_KEY='vto_prev_'+D.shop;
 
-  const show=state=>['upload','processing','result','error'].forEach(s=>{
-    const e=$('vto-'+s);if(e)e.style.display=s===state?'block':'none';
-  });
+const show=s=>['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'+x);if(e)e.style.display=x===s?'block':'none';});
+const openModal=s=>{modal.style.display='flex';show(s||'upload');if(s==='upload')loadPrev();};
+const closeAll=()=>{modal.style.display='none';mini.style.display='none';stopTimer();minimized=false;};
+const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';};
 
-  const openModal=()=>{modal.style.display='flex';show('upload');};
-  const closeModal=()=>{modal.style.display='none';minibar.style.display='none';stopTimer();reset();isMinimized=false;};
-  const reset=()=>{file=null;resultUrl=null;if(fileInput)fileInput.value='';$('vto-dz-empty').style.display='block';$('vto-dz-preview').style.display='none';};
+// Subtitle update
+const setSub=t=>{$('vto-subtitle').textContent=t;};
 
-  // Timer
-  const startTimer=()=>{seconds=0;updateTimer();timerInterval=setInterval(()=>{seconds++;updateTimer();updateStatus();},1000);};
-  const stopTimer=()=>{if(timerInterval){clearInterval(timerInterval);timerInterval=null;}};
-  const updateTimer=()=>{
-    $('vto-timer').textContent=seconds+' sec';
-    if(isMinimized)$('vto-mini-timer').textContent=seconds+' sec · You can keep browsing';
-  };
-  const updateStatus=()=>{
-    let msg='Reading your photo';
-    if(seconds>=5)msg='Fitting it on you';
-    if(seconds>=15)msg='Refining the details';
-    if(seconds>=25)msg='Almost ready';
-    $('vto-status').textContent=msg;
-    if(isMinimized)$('vto-mini-status').textContent=msg;
-  };
+// Timer
+const startTimer=()=>{sec=0;tick();timer=setInterval(()=>{sec++;tick();updateStatus();},1000);};
+const stopTimer=()=>{if(timer){clearInterval(timer);timer=null;}};
+const tick=()=>{
+  $('vto-timer').textContent=sec+' sec';
+  $('vto-m-time').textContent=sec+' sec · You can keep browsing';
+};
+const updateStatus=()=>{
+  let m='Reading your photo';
+  if(sec>=5)m='Fitting it on you';
+  if(sec>=15)m='Refining the details';
+  if(sec>=25)m='Almost ready';
+  $('vto-status').textContent=m;
+  $('vto-m-status').textContent=m;
+};
 
-  // Minimize / expand
-  const minimize=()=>{
-    if(!isMinimized){
-      isMinimized=true;
-      modal.style.display='none';
-      minibar.style.display='flex';
-    }
-  };
-  const expand=()=>{
-    if(isMinimized){
-      isMinimized=false;
-      minibar.style.display='none';
-      modal.style.display='flex';
-    }
-  };
+// Minimize → minibar (bottom-right)
+const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';};
+const toModal=()=>{minimized=false;mini.style.display='none';modal.style.display='flex';};
 
-  // Events
-  $('vto-btn').addEventListener('click',openModal);
-  $('vto-close').addEventListener('click',()=>{
-    if($('vto-processing').style.display!=='none'){minimize();}
-    else{closeModal();}
-  });
-  modal.addEventListener('click',e=>{if(e.target===modal){
-    if($('vto-processing').style.display!=='none'){minimize();}
-    else{closeModal();}
-  }});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(zoom.style.display!=='none'){zoom.style.display='none';}else if(isMinimized){expand();}else{closeModal();}}});
-  $('vto-mini-expand').addEventListener('click',expand);
+// Previous results (sessionStorage)
+const savePrev=url=>{
+  try{
+    let arr=JSON.parse(sessionStorage.getItem(PREV_KEY)||'[]');
+    arr.unshift(url);if(arr.length>6)arr=arr.slice(0,6);
+    sessionStorage.setItem(PREV_KEY,JSON.stringify(arr));
+  }catch(e){}
+};
+const loadPrev=()=>{
+  try{
+    const arr=JSON.parse(sessionStorage.getItem(PREV_KEY)||'[]');
+    const wrap=$('vto-prev-wrap'),grid=$('vto-prev-grid');
+    if(arr.length>0){
+      wrap.style.display='block';
+      grid.innerHTML=arr.map(u=>'<img src="'+u+'" alt="Previous result" />').join('');
+      grid.querySelectorAll('img').forEach(img=>{
+        img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});
+      });
+    }else{wrap.style.display='none';}
+  }catch(e){}
+};
 
-  // File handling — auto-start on upload
-  fileInput?.addEventListener('change',e=>{
-    const f=e.target.files[0];
-    if(!f||!f.type.startsWith('image/'))return;
-    if(f.size>10*1024*1024){alert('Max 10 MB');return;}
-    file=f;
-    const r=new FileReader();
-    r.onload=ev=>{
-      $('vto-preview').src=ev.target.result;
-      $('vto-dz-empty').style.display='none';
-      $('vto-dz-preview').style.display='block';
-      // Auto-start processing
-      setTimeout(()=>startProcessing(),300);
-    };
-    r.readAsDataURL(f);
-  });
+// Show result
+const showResult=url=>{
+  setSub("Here's your look! Tap the image to zoom in.");
+  $('vto-res-img').src=url;
+  $('vto-z-img').src=url;
+  show('result');
+};
 
-  // Drag & drop
-  const dz=$('vto-dropzone');
-  if(dz){
-    dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='#7c3aed';dz.style.background='#faf8ff';});
-    dz.addEventListener('dragleave',()=>{dz.style.borderColor='#d4d4d4';dz.style.background='';});
-    dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='#d4d4d4';dz.style.background='';const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fileInput.files=dt.files;fileInput.dispatchEvent(new Event('change'));}});
+// Events
+$('vto-btn').addEventListener('click',()=>openModal('upload'));
+$('vto-close').addEventListener('click',()=>{
+  if($('vto-s-proc').style.display!=='none'){toMini();}
+  else{closeAll();resetUpload();}
+});
+modal.addEventListener('click',e=>{if(e.target===modal){
+  if($('vto-s-proc').style.display!=='none'){toMini();}
+  else{closeAll();resetUpload();}
+}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(zoom.style.display!=='none')zoom.style.display='none';
+    else if(minimized)toModal();
+    else{closeAll();resetUpload();}
   }
+});
+$('vto-m-expand').addEventListener('click',toModal);
 
-  // Processing
-  async function startProcessing(){
-    if(!file)return;
-    $('vto-proc-user').src=$('vto-preview').src;
-    $('vto-mini-user').src=$('vto-preview').src;
-    show('processing');
+// File → auto-start, auto-minimize
+fileInput?.addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(!f||!f.type.startsWith('image/'))return;
+  if(f.size>10*1024*1024){alert('Max 10 MB');return;}
+  file=f;
+  const r=new FileReader();
+  r.onload=ev=>{
+    $('vto-proc-u').src=ev.target.result;
+    $('vto-m-u').src=ev.target.result;
+    // Close modal → show minibar → start AI
+    toMini();
+    show('proc');
     startTimer();
+    runAI();
+  };
+  r.readAsDataURL(f);
+});
 
-    try{
-      const fd=new FormData();
-      fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);
-      fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
-      const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
-      const data=await res.json();
-      stopTimer();
+// Drag-drop
+const dz=$('vto-dropzone');
+if(dz){
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='#666';dz.style.background='#f8f8f8';});
+  dz.addEventListener('dragleave',()=>{dz.style.borderColor='#d4d4d4';dz.style.background='';});
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='#d4d4d4';dz.style.background='';
+    const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fileInput.files=dt.files;fileInput.dispatchEvent(new Event('change'));}
+  });
+}
 
-      if(res.ok&&data.success&&data.result_url){
-        resultUrl=data.result_url;
-        $('vto-result-img').src=resultUrl;
-        $('vto-zoom-img').src=resultUrl;
-        if(isMinimized){expand();}
-        show('result');
-        minibar.style.display='none';
-        return;
-      }
-      if(res.status===429){
-        const em=$('vto-error-emoji'),et=$('vto-error-title'),er=$('vto-error-retry');
-        if(em)em.textContent='✨';if(et)et.textContent="You've loved this feature!";
-        $('vto-error-msg').innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';
-        if(er)er.textContent='Got it';
-        if(isMinimized){expand();}
-        show('error');minibar.style.display='none';return;
-      }
-      throw new Error(data.error||'AI unavailable');
-    }catch(err){
-      stopTimer();
-      if(isMinimized){expand();}
-      minibar.style.display='none';
-      // Canvas fallback
-      try{
-        const userUrl=URL.createObjectURL(file);
-        const canvas=document.createElement('canvas');canvas.width=600;canvas.height=800;
-        const ctx=canvas.getContext('2d');
-        const userImage=new Image();
-        userImage.onload=()=>{
-          ctx.drawImage(userImage,0,0,600,800);
-          const prodImage=new Image();prodImage.crossOrigin='anonymous';
-          prodImage.onload=()=>{
-            const tmp=document.createElement('canvas');const tw=prodImage.naturalWidth,th=prodImage.naturalHeight;
-            tmp.width=tw;tmp.height=th;const tc=tmp.getContext('2d');tc.drawImage(prodImage,0,0);
-            const imgData=tc.getImageData(0,0,tw,th);const dd=imgData.data;
-            for(let i=0;i<dd.length;i+=4){const br=(dd[i]+dd[i+1]+dd[i+2])/3;if(br>220&&Math.abs(dd[i]-dd[i+1])<25&&Math.abs(dd[i+1]-dd[i+2])<25)dd[i+3]=0;else if(br>200)dd[i+3]=Math.max(0,(255-br)*4);}
-            tc.putImageData(imgData,0,0);
-            const ratio=tw/th;let pw,ph,px,py;
-            if(ratio>1.5){pw=300;ph=pw/ratio;px=(600-pw)/2;py=480;}
-            else if(ratio>0.7){pw=240;ph=pw/ratio;px=(600-pw)/2;py=190;}
-            else{pw=340;ph=pw/ratio;px=(600-pw)/2;py=200;}
-            ctx.drawImage(tmp,px,py,pw,ph);
-            ctx.fillStyle='rgba(124,58,237,0.9)';ctx.beginPath();ctx.roundRect(170,740,260,40,14);ctx.fill();
-            ctx.fillStyle='#fff';ctx.font='600 14px sans-serif';ctx.textAlign='center';
-            ctx.fillText('✨ Virtual Try-On by TryFit',300,766);
-            resultUrl=canvas.toDataURL('image/jpeg',0.92);
-            $('vto-result-img').src=resultUrl;$('vto-zoom-img').src=resultUrl;show('result');
-          };
-          prodImage.onerror=()=>{$('vto-error-msg').textContent='Could not load product image';show('error');};
-          prodImage.src=D.pimg;
-        };
-        userImage.src=userUrl;
-      }catch(e2){$('vto-error-msg').textContent=e2.message||'Please try again.';show('error');}
+// AI call — NO canvas fallback
+async function runAI(){
+  try{
+    const fd=new FormData();
+    fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);
+    fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
+    const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
+    const data=await res.json();
+    stopTimer();
+
+    if(res.ok&&data.success&&data.result_url){
+      resultUrl=data.result_url;
+      savePrev(resultUrl);
+      toModal();
+      showResult(resultUrl);
+      return;
     }
+    if(res.status===429){
+      $('vto-err-icon').textContent='✨';
+      $('vto-err-title').textContent="You've loved this feature!";
+      $('vto-err-msg').innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';
+      $('vto-err-retry').textContent='Got it';
+      toModal();show('error');mini.style.display='none';return;
+    }
+    throw new Error(data.error||'AI generation failed');
+  }catch(err){
+    stopTimer();
+    $('vto-err-icon').textContent='😔';
+    $('vto-err-title').textContent='Something went wrong';
+    $('vto-err-msg').textContent=err.message||'Please try again in a moment.';
+    $('vto-err-retry').textContent='Try Again';
+    toModal();show('error');mini.style.display='none';
   }
+}
 
-  // Result actions
-  $('vto-regen')?.addEventListener('click',()=>{reset();show('upload');});
-  $('vto-error-retry')?.addEventListener('click',()=>{
-    $('vto-error-emoji').textContent='😔';$('vto-error-title').textContent='Something went wrong';
-    $('vto-error-retry').textContent='Try Again';reset();show('upload');
-  });
-  $('vto-buy')?.addEventListener('click',async()=>{
-    try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}
-    const vid=D.vid||document.querySelector('[name="id"]')?.value;
-    try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeModal();window.location.href='/cart';}catch(e){window.location.href='/cart';}
-  });
-  $('vto-download')?.addEventListener('click',()=>{
-    if(!resultUrl)return;
-    const a=document.createElement('a');a.href=resultUrl;a.download='tryfit-look.jpg';a.click();
-  });
+// Result actions
+$('vto-regen')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
+$('vto-err-retry')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
+$('vto-buy')?.addEventListener('click',async()=>{
+  try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}
+  const vid=D.vid||document.querySelector('[name="id"]')?.value;
+  try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeAll();window.location.href='/cart';}catch(e){window.location.href='/cart';}
+});
+$('vto-dl')?.addEventListener('click',()=>{
+  if(!resultUrl)return;
+  const a=document.createElement('a');a.href=resultUrl;a.download='tryfit-look.jpg';document.body.appendChild(a);a.click();a.remove();
+});
 
-  // Zoom
-  $('vto-result-wrap')?.addEventListener('click',()=>{if(resultUrl){zoom.style.display='flex';}});
-  $('vto-zoom-close')?.addEventListener('click',()=>{zoom.style.display='none';});
-  zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';});
+// Zoom
+$('vto-res-wrap')?.addEventListener('click',()=>{if(resultUrl)zoom.style.display='flex';});
+$('vto-z-close')?.addEventListener('click',()=>{zoom.style.display='none';});
+zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';});
 })();
 </script>
 {% endif %}
@@ -404,54 +391,17 @@
   "target": "section",
   "templates": ["product"],
   "settings": [
-    {
-      "type": "header",
-      "content": "Button"
-    },
-    {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button Text",
-      "default": "TRY ON"
-    },
-    {
-      "type": "color",
-      "id": "button_color",
-      "label": "Button Color",
-      "default": "#111111"
-    },
-    {
-      "type": "color",
-      "id": "button_text_color",
-      "label": "Button Text Color",
-      "default": "#FFFFFF"
-    },
-    {
-      "type": "range",
-      "id": "button_radius",
-      "label": "Corner Radius",
-      "min": 0,
-      "max": 30,
-      "step": 2,
-      "default": 12,
-      "unit": "px"
-    },
-    {
-      "type": "header",
-      "content": "AI Settings"
-    },
-    {
-      "type": "select",
-      "id": "garment_category",
-      "label": "Garment Type",
-      "default": "dresses",
-      "info": "Upper body = tops/shirts. Lower body = pants/skirts. Full body = kurta sets, dresses, jumpsuits.",
-      "options": [
-        { "value": "upper_body", "label": "Upper Body (tops, shirts, jackets)" },
-        { "value": "lower_body", "label": "Lower Body (pants, skirts)" },
-        { "value": "dresses", "label": "Full Body (sets, dresses, jumpsuits)" }
-      ]
-    }
+    { "type": "header", "content": "Button" },
+    { "type": "text", "id": "button_text", "label": "Button Text", "default": "TRY ON" },
+    { "type": "color", "id": "button_color", "label": "Button Color", "default": "#111111" },
+    { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
+    { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },
+    { "type": "header", "content": "AI Settings" },
+    { "type": "select", "id": "garment_category", "label": "Garment Type", "default": "dresses", "info": "Upper body = tops/shirts. Lower body = pants/skirts. Full body = kurta sets, dresses, jumpsuits.", "options": [
+      { "value": "upper_body", "label": "Upper Body (tops, shirts, jackets)" },
+      { "value": "lower_body", "label": "Lower Body (pants, skirts)" },
+      { "value": "dresses", "label": "Full Body (sets, dresses, jumpsuits)" }
+    ]}
   ]
 }
 {% endschema %}

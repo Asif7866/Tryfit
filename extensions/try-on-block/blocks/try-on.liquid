@@ -29,7 +29,8 @@
 const el=document.getElementById('vto');if(!el)return;
 const D=el.dataset;
 const host=document.getElementById('vto-shadow-host');
-document.body.appendChild(host);
+if(document.body){document.body.appendChild(host);}
+else{document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(host));}
 const shadow=host.attachShadow({mode:'closed'});
 
 // ═══ ALL HTML + CSS inside Shadow DOM ═══
@@ -212,10 +213,13 @@ const savePrev=url=>{try{let a=JSON.parse(sessionStorage.getItem(PK)||'[]');a.un
 const loadPrev=()=>{try{const a=JSON.parse(sessionStorage.getItem(PK)||'[]');const w=q('prev-wrap'),g=q('prev-grid');if(a.length>0){w.classList.remove('hide');g.innerHTML=a.map(u=>'<img src="'+u+'" alt="Previous" />').join('');g.querySelectorAll('img').forEach(img=>{img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});});}else{w.classList.add('hide');}}catch(e){}};
 const showResult=url=>{setSub("Here's your look! Tap the image to zoom in.");q('res-img').src=url;q('z-img').src=url;q('pbar').style.width='100%';show('result');};
 
-// Events — scoped selector + delegation fallback for themes that defer app block rendering
-const _btn=el.querySelector('#vto-btn')||document.getElementById('vto-btn');
-if(_btn){_btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openModal('upload');},true);_btn.addEventListener('touchend',function(e){e.preventDefault();openModal('upload');},{passive:false,capture:true});}
-else{document.addEventListener('click',e=>{const t=e.target.closest('#vto-btn');if(t){e.stopPropagation();openModal('upload');}},true);}
+// Events — simple delegation, works on every theme
+document.addEventListener('click',function(e){
+  if(e.target&&e.target.closest('#vto-btn')){openModal('upload');}
+});
+document.addEventListener('touchend',function(e){
+  if(e.target&&e.target.closest('#vto-btn')){openModal('upload');}
+});
 q('close').addEventListener('click',()=>{if(processing)toMini();else tryClose();});
 modal.addEventListener('click',e=>{if(e.target===modal){if(processing)toMini();else tryClose();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!zm.classList.contains('hide'))zm.classList.add('hide');else if(minimized)toModal();else tryClose();}});

@@ -32,7 +32,7 @@
 
   <div id="vto-overlay" class="vto-overlay" style="display:none;">
     <div class="vto-modal" role="dialog" aria-modal="true">
-      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close">
+      <button id="vto-modal-close" class="vto-close" type="button" aria-label="Close" onclick="document.getElementById('vto-overlay').style.display='none';document.body.style.overflow='';">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
 
@@ -219,13 +219,15 @@
   width: 36px !important; height: 36px !important;
   background: #f3f4f6 !important; border: none !important; border-radius: 50% !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
-  cursor: pointer; color: #6b7280 !important; z-index: 10 !important;
+  cursor: pointer !important; color: #6b7280 !important; z-index: 2147483647 !important;
   transition: all .2s ease; padding: 0 !important; margin: 0 !important;
   line-height: 1 !important; min-width: 0 !important; min-height: 0 !important;
   box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
+  pointer-events: auto !important; opacity: 1 !important; visibility: visible !important;
+  -webkit-appearance: none !important; appearance: none !important;
 }
 .vto-close:hover { background: #e5e7eb !important; color: #111 !important; transform: rotate(90deg); }
-.vto-close svg { display: block !important; pointer-events: none; }
+.vto-close svg { display: block !important; pointer-events: none !important; }
 
 /* ── BADGE ── */
 .vto-badge { display: inline-block; padding: 6px 14px; background: linear-gradient(135deg, #f5f3ff, #fdf2f8) !important; border: 1px solid rgba(139,92,246,.1); border-radius: 20px; font: 600 11px/1 var(--vto-ff) !important; color: var(--vto-accent) !important; margin-bottom: 12px; letter-spacing: 0.3px; }

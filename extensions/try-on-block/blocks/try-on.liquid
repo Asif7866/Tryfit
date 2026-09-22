@@ -212,8 +212,12 @@ const savePrev=url=>{try{let a=JSON.parse(sessionStorage.getItem(PK)||'[]');a.un
 const loadPrev=()=>{try{const a=JSON.parse(sessionStorage.getItem(PK)||'[]');const w=q('prev-wrap'),g=q('prev-grid');if(a.length>0){w.classList.remove('hide');g.innerHTML=a.map(u=>'<img src="'+u+'" alt="Previous" />').join('');g.querySelectorAll('img').forEach(img=>{img.addEventListener('click',()=>{resultUrl=img.src;showResult(img.src);});});}else{w.classList.add('hide');}}catch(e){}};
 const showResult=url=>{setSub("Here's your look! Tap the image to zoom in.");q('res-img').src=url;q('z-img').src=url;q('pbar').style.width='100%';show('result');};
 
-// Events
-document.getElementById('vto-btn').addEventListener('click',()=>openModal('upload'));
+// Events — robust button binding (some themes block clicks or defer scripts)
+const vtoBtn=document.getElementById('vto-btn')||el.querySelector('#vto-btn');
+if(vtoBtn){
+  vtoBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openModal('upload');},true);
+  vtoBtn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();openModal('upload');},{passive:false});
+}
 q('close').addEventListener('click',()=>{if(processing)toMini();else tryClose();});
 modal.addEventListener('click',e=>{if(e.target===modal){if(processing)toMini();else tryClose();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!zm.classList.contains('hide'))zm.classList.add('hide');else if(minimized)toModal();else tryClose();}});

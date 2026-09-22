@@ -39,7 +39,15 @@ export const loader = async ({ request }) => {
     const activeSubs = billingData.data?.appInstallation?.activeSubscriptions || [];
     const hasActiveSub = activeSubs.some(s => s.status === "ACTIVE");
 
-    // 2. Determine plan — free plan has no Shopify subscription, that's normal
+    // 2. If no active subscription, redirect to Shopify hosted plan selection
+    if (!hasActiveSub) {
+      const shopSlug = session.shop.replace(".myshopify.com", "");
+      // For embedded apps, redirect via exitiframe to Shopify's pricing page
+      const pricingUrl = `https://admin.shopify.com/store/${shopSlug}/charges/tryfit-5/pricing_plans`;
+      throw new Response(null, { status: 302, headers: { Location: pricingUrl } });
+    }
+
+    // 3. Active plan info
     const activePlan = activeSubs.find(s => s.status === "ACTIVE");
     const planName = activePlan?.name || "Free";
 

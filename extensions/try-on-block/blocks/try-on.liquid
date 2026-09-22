@@ -371,7 +371,7 @@
     try{
       const fd=new FormData();
       fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
-      const res=await fetch('https://tryfit-production.up.railway.app/app/proxy/tryon',{method:'POST',body:fd,mode:'cors'});
+      const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
       const data=await res.json();
       if(res.ok&&data.success&&data.result_url){
         resultImg.src=data.result_url;show('result');

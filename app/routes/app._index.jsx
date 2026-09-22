@@ -183,21 +183,8 @@ export const loader = async ({ request }) => {
         const host = url.searchParams.get("host");
         if (host) { try { const decoded = atob(host); const match = decoded.match(/([^/]+\.myshopify\.com)/); if (match) shopName = match[1]; } catch(e){} }
       }
-      // Try from ShopSettings
-      if (!shopName) {
-        const anySetting = await prisma.shopSettings.findFirst({ select: { shop: true }, orderBy: { updatedAt: "desc" } });
-        if (anySetting) shopName = anySetting.shop;
-      }
-      // Try from Session
-      if (!shopName) {
-        const anySession = await prisma.session.findFirst({ select: { shop: true }, orderBy: { id: "desc" } });
-        if (anySession) shopName = anySession.shop;
-      }
-      // Try from TryOnLog
-      if (!shopName) {
-        const anyLog = await prisma.tryOnLog.findFirst({ select: { shop: true }, orderBy: { createdAt: "desc" } });
-        if (anyLog) shopName = anyLog.shop;
-      }
+      // SECURITY: Never use findFirst() without shop filter — it returns ANY store's data
+      // Shop must come from URL params or host decode only
       if (shopName) {
         const settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

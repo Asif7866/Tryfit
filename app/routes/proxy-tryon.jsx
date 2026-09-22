@@ -74,6 +74,14 @@ export const action = async ({ request }) => {
     let garmImg = productImageUrl;
     if (garmImg.startsWith("//")) garmImg = "https:" + garmImg;
 
+    // Better garment description based on category
+    const categoryDescMap = {
+      "upper_body": "upper body garment, top, shirt, blouse, jacket",
+      "lower_body": "lower body garment, pants, trousers, skirt, lehenga",
+      "dresses": "full body outfit, dress, suit, kurta set, co-ord set, jumpsuit"
+    };
+    const garmentDesc = productTitle + ", " + (categoryDescMap[category] || categoryDescMap["dresses"]);
+
     // Create prediction via Replicate API
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -86,7 +94,7 @@ export const action = async ({ request }) => {
         input: {
           human_img: userPhotoDataUri,
           garm_img: garmImg,
-          garment_des: productTitle,
+          garment_des: garmentDesc,
           category: category,
         },
       }),

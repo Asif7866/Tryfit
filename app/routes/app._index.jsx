@@ -166,6 +166,8 @@ export const loader = async ({ request }) => {
       setupCompleted: !!settings || fromCookie,
     });
   } catch (e) {
+    // If it's a Response (like billing redirect), let Remix handle it — don't fall into fallback
+    if (e instanceof Response) throw e;
     // Auth failed — try to get data from DB using shop from URL
     let fallbackData = {
       shop: "unknown", products: [], totalProducts: 0,

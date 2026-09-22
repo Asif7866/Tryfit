@@ -64,7 +64,7 @@ export const loader = async ({ request }) => {
     const planName = activePlan?.name || "Free";
 
     // Plan limits mapping
-    const PLAN_LIMITS = { "free": 10, "starter": 200, "growth": 600, "pro": 2000 };
+    const PLAN_LIMITS = { "free": 10, "starter": 100, "growth": 400, "pro": 1200 };
     const planKey = planName.toLowerCase();
     const monthlyLimit = PLAN_LIMITS[planKey] || 50;
 

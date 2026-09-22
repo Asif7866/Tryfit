@@ -119,8 +119,6 @@
 <style>
 :root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
 *,*::before,*::after{box-sizing:border-box;}
-/* Force ALL page elements below our overlay */
-.vto-ov ~ *,.vto-ov ~ * *{z-index:auto!important;}
 
 /* BTN */
 .vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}
@@ -236,6 +234,10 @@ const $=id=>document.getElementById(id);
 const el=$('vto');if(!el)return;
 const D=el.dataset;
 const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
+// Move overlays to body — escapes ALL theme stacking contexts
+document.body.appendChild(modal);
+document.body.appendChild(mini);
+document.body.appendChild(zoom);
 const fileInput=$('vto-file');
 let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;

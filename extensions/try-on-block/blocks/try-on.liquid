@@ -22,9 +22,7 @@
           <h2 class="vto-card__title">See it on you</h2>
           <p class="vto-card__sub" id="vto-sub">Best results come from a photo in the same pose as the product shot</p>
         </div>
-        <div id="vto-close" tabindex="0" aria-label="Close" style="width:36px;height:36px;min-width:36px;min-height:36px;max-width:36px;max-height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;padding:0;margin:2px 0 0;line-height:1;font-size:0;box-shadow:none;flex-shrink:0;overflow:hidden;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" style="display:block;pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </div>
+        <div id="vto-close-slot"></div>
       </div>
 
       <!-- UPLOAD -->
@@ -138,9 +136,7 @@ body.vto-active>header,body.vto-active>footer,body.vto-active>main,body.vto-acti
 .vto-card__head{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:12px;}
 .vto-card__title{margin:0;font:800 24px/1.15 var(--vf);color:#111;letter-spacing:-.3px;}
 .vto-card__sub{margin:6px 0 0;font:400 13px/1.5 var(--vf);color:#888;}
-.vto-x{width:36px!important;height:36px!important;min-width:36px!important;min-height:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#f3f3f3!important;border:none!important;border-radius:50%!important;cursor:pointer!important;color:#888!important;padding:0!important;margin:2px 0 0!important;line-height:1!important;font-size:0!important;text-indent:0!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none!important;transition:background .15s,transform .15s;flex-shrink:0!important;}
-.vto-x:hover{background:#e5e5e5!important;transform:scale(1.05);}
-.vto-x svg{display:block!important;width:18px!important;height:18px!important;pointer-events:none;}
+
 .vto-s{padding:18px 24px 24px;}
 
 /* UPLOAD */
@@ -242,6 +238,16 @@ const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
 document.body.appendChild(modal);
 document.body.appendChild(mini);
 document.body.appendChild(zoom);
+
+// Create close button via JS — no HTML for theme to target
+const closeBtn=document.createElement('div');
+closeBtn.id='vto-close';
+const cS=closeBtn.style;
+cS.cssText='width:36px;height:36px;min-width:36px;min-height:36px;max-width:36px;max-height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;padding:0;margin:2px 0 0;line-height:1;font-size:0;box-shadow:none;flex-shrink:0;overflow:hidden;position:relative;';
+closeBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" style="display:block;pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+closeBtn.onmouseenter=()=>{cS.background='#e5e5e5';cS.transform='scale(1.05)';};
+closeBtn.onmouseleave=()=>{cS.background='#f3f3f3';cS.transform='';};
+$('vto-close-slot').replaceWith(closeBtn);
 const fileInput=$('vto-file');
 let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;
@@ -318,10 +324,6 @@ const showResult=url=>{
 
 // Events
 $('vto-btn').addEventListener('click',()=>openModal('upload'));
-// Close button hover - force styles via JS (immune to theme CSS)
-const closeBtn=$('vto-close');
-closeBtn.addEventListener('mouseenter',()=>{closeBtn.style.background='#e5e5e5';closeBtn.style.transform='scale(1.05)';});
-closeBtn.addEventListener('mouseleave',()=>{closeBtn.style.background='#f3f3f3';closeBtn.style.transform='';});
 closeBtn.addEventListener('click',()=>{
   if(processing){toMini();}
   else{tryClose();}

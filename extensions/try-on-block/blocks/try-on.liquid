@@ -400,9 +400,9 @@ $('vto-buy')?.addEventListener('click',async()=>{
   const vid=D.vid||document.querySelector('[name="id"]')?.value;
   try{if(vid){await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vid,quantity:1})});}closeAll();window.location.href='/cart';}catch(e){window.location.href='/cart';}
 });
-$('vto-dl')?.addEventListener('click',()=>{
+$('vto-dl')?.addEventListener('click',async()=>{
   if(!resultUrl)return;
-  const a=document.createElement('a');a.href=resultUrl;a.download='tryfit-look.jpg';document.body.appendChild(a);a.click();a.remove();
+  try{const r=await fetch(resultUrl);const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='tryfit-look.jpg';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}catch(e){window.open(resultUrl,'_blank');}
 });
 
 // Zoom

@@ -30,7 +30,7 @@ const el=document.getElementById('vto');if(!el)return;
 const D=el.dataset;
 const host=document.getElementById('vto-shadow-host');
 document.body.appendChild(host);
-const shadow=host.attachShadow({mode:'open'});
+const shadow=host.attachShadow({mode:'closed'});
 
 // ═══ ALL HTML + CSS inside Shadow DOM ═══
 shadow.innerHTML=`

@@ -21,8 +21,10 @@ export const action = async ({ request }) => {
 export const loader = async ({ request }) => {
   const cookieVal = await setupCookie.parse(request.headers.get("Cookie"));
   const fromCookie = cookieVal === "done";
+  let authenticatedShop = null;
   try {
     const { admin, session } = await shopify.authenticate.admin(request);
+    authenticatedShop = session.shop;
 
     // 1. Check active Shopify App Pricing subscription
     const billingRes = await admin.graphql(`{
@@ -168,7 +170,7 @@ export const loader = async ({ request }) => {
   } catch (e) {
     // Auth failed — try to get data from DB using shop from URL
     let fallbackData = {
-      shop: "unknown", products: [], totalProducts: 0,
+      shop: authenticatedShop || "unknown", products: [], totalProducts: 0,
       monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
       uniqueUsers: 0, topProducts: [], plan: "Free",
       addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",

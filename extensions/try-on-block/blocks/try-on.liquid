@@ -28,7 +28,7 @@
       <!-- UPLOAD -->
       <div id="vto-s-upload" class="vto-s">
         <div id="vto-dropzone" class="vto-drop">
-          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
+          <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" title="" />
           <div id="vto-dz-empty">
             <button class="vto-choose" type="button" tabindex="-1">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -239,15 +239,17 @@ document.body.appendChild(modal);
 document.body.appendChild(mini);
 document.body.appendChild(zoom);
 
-// Create close button via JS — no HTML for theme to target
-const closeBtn=document.createElement('div');
-closeBtn.id='vto-close';
-const cS=closeBtn.style;
-cS.cssText='width:36px;height:36px;min-width:36px;min-height:36px;max-width:36px;max-height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;padding:0;margin:2px 0 0;line-height:1;font-size:0;box-shadow:none;flex-shrink:0;overflow:hidden;position:relative;';
-closeBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" style="display:block;pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-closeBtn.onmouseenter=()=>{cS.background='#e5e5e5';cS.transform='scale(1.05)';};
-closeBtn.onmouseleave=()=>{cS.background='#f3f3f3';cS.transform='';};
-$('vto-close-slot').replaceWith(closeBtn);
+// Create close button inside Shadow DOM — theme CSS CANNOT penetrate
+const closeBtnHost=document.createElement('div');
+closeBtnHost.id='vto-close';
+closeBtnHost.style.cssText='flex-shrink:0;margin:2px 0 0;';
+const shadow=closeBtnHost.attachShadow({mode:'closed'});
+shadow.innerHTML=`<style>
+:host{display:block;width:36px;height:36px;}
+.x{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border:none;border-radius:50%;cursor:pointer;transition:background .15s,transform .15s;}
+.x:hover{background:#e5e5e5;transform:scale(1.05);}
+</style><div class="x"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>`;
+$('vto-close-slot').replaceWith(closeBtnHost);
 const fileInput=$('vto-file');
 let file=null,resultUrl=null,timer=null,sec=0,minimized=false,processing=false;
 const PK='vto_prev_'+D.shop;
@@ -324,7 +326,7 @@ const showResult=url=>{
 
 // Events
 $('vto-btn').addEventListener('click',()=>openModal('upload'));
-closeBtn.addEventListener('click',()=>{
+closeBtnHost.addEventListener('click',()=>{
   if(processing){toMini();}
   else{tryClose();}
 });

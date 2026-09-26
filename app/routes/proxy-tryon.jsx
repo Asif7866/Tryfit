@@ -1,42 +1,7 @@
 import { json } from "@remix-run/node";
 import { PrismaClient } from "@prisma/client";
-import sharp from "sharp";
 
 const prisma = new PrismaClient();
-
-// Preprocess image: resize to target dimensions with white background padding (maintains aspect ratio)
-async function preprocessImage(buffer, targetSize = 1024) {
-  const img = sharp(buffer);
-  const meta = await img.metadata();
-  const { width, height } = meta;
-
-  // Calculate resize dimensions maintaining aspect ratio
-  const scale = Math.min(targetSize / width, targetSize / height);
-  const resizedW = Math.round(width * scale);
-  const resizedH = Math.round(height * scale);
-
-  // Resize then pad to exact target with white background
-  const processed = await sharp(buffer)
-    .resize(resizedW, resizedH, { fit: "inside", withoutEnlargement: false })
-    .extend({
-      top: Math.floor((targetSize - resizedH) / 2),
-      bottom: Math.ceil((targetSize - resizedH) / 2),
-      left: Math.floor((targetSize - resizedW) / 2),
-      right: Math.ceil((targetSize - resizedW) / 2),
-      background: { r: 255, g: 255, b: 255, alpha: 1 },
-    })
-    .jpeg({ quality: 95 })
-    .toBuffer();
-
-  return `data:image/jpeg;base64,${processed.toString("base64")}`;
-}
-
-// Download image URL to buffer
-async function downloadImage(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to download image: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
-}
 
 // CORS: allow direct storefront calls (bypasses Shopify proxy 30s timeout)
 const CORS = {
@@ -99,30 +64,15 @@ export const action = async ({ request }) => {
       return json({ error: "AI not configured" }, { status: 503, headers: CORS });
     }
 
-    // Convert uploaded file to buffer then preprocess
+    // Convert uploaded file to base64 data URI
     const arrayBuffer = await userPhotoFile.arrayBuffer();
-    const userBuffer = Buffer.from(arrayBuffer);
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const mimeType = userPhotoFile.type || "image/jpeg";
+    const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
     // Fix product image URL (Shopify returns protocol-relative URLs)
     let garmImg = productImageUrl;
     if (garmImg.startsWith("//")) garmImg = "https:" + garmImg;
-
-    // PREPROCESSING: resize both images to 1024x1024 with white padding
-    // This fixes: feet cutoff, edge artifacts, body proportion issues
-    let userPhotoDataUri, garmImgDataUri;
-    try {
-      [userPhotoDataUri, garmImgDataUri] = await Promise.all([
-        preprocessImage(userBuffer, 1024),
-        downloadImage(garmImg).then(buf => preprocessImage(buf, 1024)),
-      ]);
-    } catch (preprocessErr) {
-      console.error("Preprocessing failed, using raw images:", preprocessErr.message);
-      // Fallback to raw images if preprocessing fails
-      const base64 = userBuffer.toString("base64");
-      const mimeType = userPhotoFile.type || "image/jpeg";
-      userPhotoDataUri = `data:${mimeType};base64,${base64}`;
-      garmImgDataUri = garmImg; // use original URL
-    }
 
     // Better garment description based on category
     const categoryDescMap = {
@@ -132,7 +82,7 @@ export const action = async ({ request }) => {
     };
     const garmentDesc = productTitle + ", " + (categoryDescMap[category] || categoryDescMap["dresses"]);
 
-    // Create prediction via Replicate API — with optimized params
+    // Create prediction via Replicate API — optimized params for better quality
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -143,7 +93,7 @@ export const action = async ({ request }) => {
         version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
         input: {
           human_img: userPhotoDataUri,
-          garm_img: garmImgDataUri,
+          garm_img: garmImg,
           garment_des: garmentDesc,
           category: category,
           is_checked_crop: true,

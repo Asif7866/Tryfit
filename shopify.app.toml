@@ -20,7 +20,7 @@ redirect_urls = [
 api_version = "2024-10"
 
   [[webhooks.subscriptions]]
-  topics = ["app/uninstalled"]
+  topics = ["app/uninstalled", "orders/create"]
   uri = "/webhooks"
 
 [webhooks.privacy_compliance]

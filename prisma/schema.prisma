@@ -21,21 +21,30 @@ model Session {
 }
 
 model ShopSettings {
-  id              String   @id @default(uuid())
-  shop            String   @unique
-  enabled         Boolean  @default(true)
-  plan            String   @default("free")
-  buttonText      String   @default("Try The Look")
-  buttonColor     String   @default("#000000")
-  buttonTextColor String   @default("#FFFFFF")
-  modalTitle      String   @default("Ready to try this on?")
-  totalTryOns     Int      @default(0)
-  monthlyTryOns   Int      @default(0)
-  monthlyLimit    Int      @default(5)
-  planChosen      Boolean  @default(false)
-  billingId       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  shop                String   @unique
+  enabled             Boolean  @default(true)
+  plan                String   @default("free")
+  buttonText          String   @default("Try The Look")
+  buttonColor         String   @default("#000000")
+  buttonTextColor     String   @default("#FFFFFF")
+  modalTitle          String   @default("Ready to try this on?")
+  totalTryOns         Int      @default(0)
+  monthlyTryOns       Int      @default(0)
+  monthlyLimit        Int      @default(5)
+  planChosen          Boolean  @default(false)
+  billingId           String?
+  // New: product-level control (JSON array of product IDs as strings)
+  disabledProducts    Json     @default("[]")
+  // New: monthly reset + usage alerts
+  lastResetAt         DateTime?
+  usageAlertSent      Boolean  @default(false)
+  merchantEmail       String?
+  // New: onboarding checklist
+  themeBlockAdded     Boolean  @default(false)
+  onboardingDismissed Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([shop])
 }
@@ -47,8 +56,22 @@ model TryOnLog {
   productTitle  String?
   resultUrl     String?
   status        String   @default("pending")
+  // New: order attribution
+  orderId       String?
+  revenue       Float?
   createdAt     DateTime @default(now())
 
   @@index([shop])
   @@index([createdAt])
+  @@index([shop, productId])
+}
+
+model TryOnCache {
+  id         String   @id @default(uuid())
+  shop       String
+  cacheKey   String   @unique
+  resultUrl  String
+  createdAt  DateTime @default(now())
+
+  @@index([shop])
 }

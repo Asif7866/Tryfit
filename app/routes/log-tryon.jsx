@@ -1,7 +1,5 @@
 import { json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../shopify.server";
 
 // Direct endpoint for logging try-on events from storefront
 export const action = async ({ request }) => {

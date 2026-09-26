@@ -1,245 +1,234 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit, useActionData, useNavigation } from "@remix-run/react";
-import { useState, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
-  Page, Layout, Card, Text, BlockStack, InlineStack,
-  TextField, Select, ColorPicker, Button, Divider,
-  Badge, Banner, hsbToRgb, rgbToHsb
+  Page, Layout, Card, Text, BlockStack, InlineStack, TextField, RangeSlider,
+  Button, Badge, Banner, Box, Checkbox, Thumbnail, Divider, InlineGrid,
 } from "@shopify/polaris";
-import shopify from "../shopify.server";
+import shopify, { prisma } from "../shopify.server";
 
-const defaults = {
-  buttonText: "Try On",
-  buttonColor: "#111111",
-  buttonTextColor: "#ffffff",
-  buttonRadius: "12",
-  buttonSize: "large",
-  modalTitle: "Try it before you buy",
-  modalSubtitle: "Upload your photo and see this on you in seconds",
-  position: "below_cart",
-  enabled: "true",
-  maxFileSize: "10",
-  brandName: "TryFit",
-  poweredBy: "true",
-};
+const DEFAULTS = { buttonText: "TRY ON", buttonColor: "#111111", buttonTextColor: "#FFFFFF", buttonRadius: 12 };
+
+async function fetchProducts(admin, query = "") {
+  const q = query ? `, query: "title:*${query.replace(/"/g, "")}*"` : "";
+  const res = await admin.graphql(`{
+    products(first: 50, sortKey: TITLE${q}) {
+      edges { node { id title status featuredImage { url } } }
+    }
+  }`);
+  const data = await res.json();
+  return (data.data?.products?.edges || []).map(e => ({
+    id: e.node.id.replace("gid://shopify/Product/", ""),
+    title: e.node.title,
+    status: e.node.status,
+    image: e.node.featuredImage?.url || null,
+  }));
+}
 
 export const loader = async ({ request }) => {
-  try {
-    const { session } = await shopify.authenticate.admin(request);
-    return json({ shop: session.shop, settings: defaults, error: null });
-  } catch (e) {
-    return json({ shop: "unknown", settings: defaults, error: e.message });
-  }
+  const { admin, session } = await shopify.authenticate.admin(request);
+  const url = new URL(request.url);
+  const query = url.searchParams.get("q") || "";
+  const [settings, products] = await Promise.all([
+    prisma.shopSettings.findUnique({ where: { shop: session.shop } }),
+    fetchProducts(admin, query),
+  ]);
+  const cfg = {
+    buttonText: settings?.buttonText || DEFAULTS.buttonText,
+    buttonColor: settings?.buttonColor || DEFAULTS.buttonColor,
+    buttonTextColor: settings?.buttonTextColor || DEFAULTS.buttonTextColor,
+    buttonRadius: DEFAULTS.buttonRadius,
+    disabledProducts: Array.isArray(settings?.disabledProducts) ? settings.disabledProducts.map(String) : [],
+  };
+  return json({ shop: session.shop, cfg, products, query });
 };
 
 export const action = async ({ request }) => {
-  const formData = await request.formData();
-  const settings = Object.fromEntries(formData);
-  return json({ success: true, settings });
+  const { admin, session } = await shopify.authenticate.admin(request);
+  const fd = await request.formData();
+  const buttonText = String(fd.get("buttonText") || DEFAULTS.buttonText).slice(0, 40);
+  const buttonColor = String(fd.get("buttonColor") || DEFAULTS.buttonColor);
+  const buttonTextColor = String(fd.get("buttonTextColor") || DEFAULTS.buttonTextColor);
+  const buttonRadius = parseInt(fd.get("buttonRadius") || DEFAULTS.buttonRadius, 10);
+  let disabledProducts = [];
+  try { disabledProducts = JSON.parse(fd.get("disabledProducts") || "[]").map(String); } catch (e) {}
+
+  await prisma.shopSettings.upsert({
+    where: { shop: session.shop },
+    update: { buttonText, buttonColor, buttonTextColor, disabledProducts },
+    create: { shop: session.shop, buttonText, buttonColor, buttonTextColor, disabledProducts, enabled: true },
+  });
+
+  // Push config to shop metafield so the storefront block reads it without extra requests
+  let metafieldError = null;
+  try {
+    const shopIdRes = await admin.graphql(`{ shop { id } }`);
+    const shopId = (await shopIdRes.json()).data.shop.id;
+    const mfRes = await admin.graphql(`
+      mutation SetCfg($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields { id }
+          userErrors { field message }
+        }
+      }`, {
+      variables: {
+        metafields: [{
+          ownerId: shopId,
+          namespace: "tryfit",
+          key: "config",
+          type: "json",
+          value: JSON.stringify({ buttonText, buttonColor, buttonTextColor, buttonRadius, disabledProducts }),
+        }],
+      },
+    });
+    const mf = await mfRes.json();
+    const errs = mf.data?.metafieldsSet?.userErrors || [];
+    if (errs.length) metafieldError = errs.map(e => e.message).join(", ");
+  } catch (e) {
+    metafieldError = e.message;
+  }
+
+  return json({ ok: true, metafieldError, savedAt: Date.now() });
 };
 
 export default function Settings() {
-  const { shop, settings: saved, error } = useLoaderData();
+  const { cfg, products, query } = useLoaderData();
   const actionData = useActionData();
   const submit = useSubmit();
   const nav = useNavigation();
   const saving = nav.state === "submitting";
 
-  const [s, setS] = useState(saved);
-  const update = (key, val) => setS(prev => ({ ...prev, [key]: val }));
+  const [buttonText, setButtonText] = useState(cfg.buttonText);
+  const [buttonColor, setButtonColor] = useState(cfg.buttonColor);
+  const [buttonTextColor, setButtonTextColor] = useState(cfg.buttonTextColor);
+  const [buttonRadius, setButtonRadius] = useState(cfg.buttonRadius);
+  const [disabled, setDisabled] = useState(new Set(cfg.disabledProducts));
+  const [search, setSearch] = useState(query);
+  const [toast, setToast] = useState(false);
 
-  const [btnHsb, setBtnHsb] = useState({ hue: 0, saturation: 0, brightness: 0.07 });
+  useEffect(() => { if (actionData?.ok) { setToast(true); const t = setTimeout(() => setToast(false), 3000); return () => clearTimeout(t); } }, [actionData?.savedAt]);
 
-  const handleSave = () => {
-    const formData = new FormData();
-    Object.entries(s).forEach(([k, v]) => formData.append(k, v));
-    submit(formData, { method: "post" });
+  const dirty = useMemo(() => {
+    const d = [...disabled].sort().join(",") !== [...cfg.disabledProducts].sort().join(",");
+    return d || buttonText !== cfg.buttonText || buttonColor !== cfg.buttonColor || buttonTextColor !== cfg.buttonTextColor || buttonRadius !== cfg.buttonRadius;
+  }, [disabled, buttonText, buttonColor, buttonTextColor, buttonRadius, cfg]);
+
+  const save = () => {
+    const fd = new FormData();
+    fd.append("buttonText", buttonText);
+    fd.append("buttonColor", buttonColor);
+    fd.append("buttonTextColor", buttonTextColor);
+    fd.append("buttonRadius", String(buttonRadius));
+    fd.append("disabledProducts", JSON.stringify([...disabled]));
+    submit(fd, { method: "post" });
   };
 
-  const st = {
-    section: { background: "#fff", borderRadius: 16, border: "1px solid #f0f0f0", padding: 28, boxShadow: "0 1px 3px rgba(0,0,0,0.03)" },
-    label: { fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 6, display: "block" },
-    sublabel: { fontSize: 11, color: "#888", marginTop: 2 },
-    input: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e5e5", fontSize: 14, outline: "none", transition: "border 0.2s" },
-    select: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e5e5", fontSize: 14, background: "#fff" },
-    colorSwatch: (color) => ({ width: 36, height: 36, borderRadius: 8, background: color, border: "2px solid #eee", cursor: "pointer" }),
-    preview: {
-      btn: { padding: "14px 32px", borderRadius: `${s.buttonRadius}px`, background: s.buttonColor, color: s.buttonTextColor, border: "none", fontSize: s.buttonSize === "large" ? 16 : s.buttonSize === "medium" ? 14 : 12, fontWeight: 600, cursor: "pointer", letterSpacing: "0.3px" },
-    },
-    footer: { textAlign: "center", padding: "20px 0 8px", opacity: 0.5, fontSize: 11, letterSpacing: "0.5px" },
-  };
+  const toggle = (id) => setDisabled(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const enabledCount = products.filter(p => !disabled.has(p.id)).length;
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 16px" }}>
+    <Page
+      title="Settings"
+      backAction={{ content: "Dashboard", url: "/app" }}
+      primaryAction={{ content: "Save", onAction: save, loading: saving, disabled: !dirty }}
+    >
+      <Layout>
+        {toast && (
+          <Layout.Section>
+            <Banner tone="success" onDismiss={() => setToast(false)}>Settings saved. Changes are live on your storefront.</Banner>
+          </Layout.Section>
+        )}
+        {actionData?.metafieldError && (
+          <Layout.Section>
+            <Banner tone="warning" title="Saved, but storefront sync failed">
+              <p>{actionData.metafieldError}. Button styling will fall back to your theme editor settings.</p>
+            </Banner>
+          </Layout.Section>
+        )}
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 0 20px" }}>
-        <div>
-          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: "#888" }}>Settings</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#111" }}>Customize TryFit</div>
-          <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>{shop}</div>
-        </div>
-        <button onClick={handleSave} disabled={saving} style={{ padding: "12px 28px", borderRadius: 10, background: "#111", color: "#fff", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
+        {/* Button customization */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <BlockStack gap="100">
+                <Text as="h2" variant="headingMd">Try-on button</Text>
+                <Text as="p" variant="bodySm" tone="subdued">Controls how the button looks on your product pages.</Text>
+              </BlockStack>
+              <InlineGrid columns={{ xs: 1, md: 2 }} gap="400">
+                <BlockStack gap="400">
+                  <TextField label="Button text" value={buttonText} onChange={setButtonText} maxLength={40} showCharacterCount autoComplete="off" />
+                  <InlineGrid columns={2} gap="300">
+                    <TextField label="Button color" value={buttonColor} onChange={setButtonColor} autoComplete="off"
+                      prefix={<span style={{ display: "inline-block", width: 16, height: 16, borderRadius: 4, background: buttonColor, border: "1px solid #ccc" }} />} />
+                    <TextField label="Text color" value={buttonTextColor} onChange={setButtonTextColor} autoComplete="off"
+                      prefix={<span style={{ display: "inline-block", width: 16, height: 16, borderRadius: 4, background: buttonTextColor, border: "1px solid #ccc" }} />} />
+                  </InlineGrid>
+                  <RangeSlider label="Corner radius" value={buttonRadius} onChange={setButtonRadius} min={0} max={30} step={2} output suffix={<Text as="span" variant="bodySm">{buttonRadius}px</Text>} />
+                </BlockStack>
+                <Box background="bg-surface-secondary" borderRadius="300" padding="600">
+                  <BlockStack gap="300" inlineAlign="center">
+                    <Text as="p" variant="bodySm" tone="subdued">Preview</Text>
+                    <button type="button" style={{
+                      display: "inline-flex", alignItems: "center", gap: 8, width: "100%", maxWidth: 320, justifyContent: "center",
+                      padding: "16px 24px", background: buttonColor, color: buttonTextColor, border: "none",
+                      borderRadius: buttonRadius, fontWeight: 600, fontSize: 15, cursor: "default",
+                    }}>
+                      <span>{buttonText || "TRY ON"}</span>
+                      <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 999, background: "rgba(255,255,255,.2)" }}>AI</span>
+                    </button>
+                  </BlockStack>
+                </Box>
+              </InlineGrid>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
 
-      {actionData?.success && (
-        <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 12, padding: "12px 16px", marginBottom: 16, fontSize: 13, color: "#065f46" }}>
-          ✅ Settings saved successfully!
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20 }}>
-
-        {/* Left Column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-          {/* Button Settings */}
-          <div style={st.section}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 4 }}>Try-On Button</div>
-            <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>Customize the button that appears on product pages</div>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div>
-                <label style={st.label}>Button Text</label>
-                <input style={st.input} value={s.buttonText} onChange={e => update("buttonText", e.target.value)} />
+        {/* Product-level control */}
+        <Layout.Section>
+          <Card padding="0">
+            <Box padding="400">
+              <BlockStack gap="300">
+                <InlineStack align="space-between" blockAlign="center">
+                  <BlockStack gap="100">
+                    <Text as="h2" variant="headingMd">Products</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">Turn try-on off for products where results aren't a good fit (e.g. heavily draped garments).</Text>
+                  </BlockStack>
+                  <Badge tone="info">{enabledCount} of {products.length} enabled</Badge>
+                </InlineStack>
+                <TextField
+                  label="Search products" labelHidden placeholder="Search products" value={search} onChange={setSearch}
+                  autoComplete="off" clearButton onClearButtonClick={() => { setSearch(""); submit({ q: "" }, { method: "get" }); }}
+                  connectedRight={<Button onClick={() => submit({ q: search }, { method: "get" })}>Search</Button>}
+                />
+                <InlineStack gap="200">
+                  <Button size="slim" onClick={() => setDisabled(new Set())}>Enable all</Button>
+                  <Button size="slim" onClick={() => setDisabled(new Set(products.map(p => p.id)))}>Disable all shown</Button>
+                </InlineStack>
+              </BlockStack>
+            </Box>
+            <Divider />
+            {products.length === 0 ? (
+              <Box padding="800"><InlineStack align="center"><Text as="p" tone="subdued">No products found.</Text></InlineStack></Box>
+            ) : products.map((p, i) => (
+              <div key={p.id}>
+                <Box paddingBlock="300" paddingInline="400">
+                  <InlineStack align="space-between" blockAlign="center" wrap={false}>
+                    <InlineStack gap="300" blockAlign="center" wrap={false}>
+                      <Thumbnail size="small" source={p.image || "https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"} alt={p.title} />
+                      <BlockStack gap="050">
+                        <Text as="p" variant="bodyMd" fontWeight="medium">{p.title}</Text>
+                        <Text as="p" variant="bodySm" tone="subdued">{p.status === "ACTIVE" ? "Active" : p.status}</Text>
+                      </BlockStack>
+                    </InlineStack>
+                    <Checkbox label="Try-on enabled" labelHidden checked={!disabled.has(p.id)} onChange={() => toggle(p.id)} />
+                  </InlineStack>
+                </Box>
+                {i < products.length - 1 && <Divider />}
               </div>
-              <div>
-                <label style={st.label}>Button Size</label>
-                <select style={st.select} value={s.buttonSize} onChange={e => update("buttonSize", e.target.value)}>
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
-              </div>
-              <div>
-                <label style={st.label}>Border Radius (px)</label>
-                <input style={st.input} type="number" value={s.buttonRadius} onChange={e => update("buttonRadius", e.target.value)} />
-              </div>
-              <div>
-                <label style={st.label}>Position</label>
-                <select style={st.select} value={s.position} onChange={e => update("position", e.target.value)}>
-                  <option value="below_cart">Below Add to Cart</option>
-                  <option value="above_cart">Above Add to Cart</option>
-                  <option value="below_price">Below Price</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-              <div>
-                <label style={st.label}>Button Color</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input type="color" value={s.buttonColor} onChange={e => update("buttonColor", e.target.value)} style={{ width: 40, height: 40, borderRadius: 8, border: "2px solid #eee", cursor: "pointer", padding: 0 }} />
-                  <input style={{ ...st.input, width: 120 }} value={s.buttonColor} onChange={e => update("buttonColor", e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <label style={st.label}>Text Color</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input type="color" value={s.buttonTextColor} onChange={e => update("buttonTextColor", e.target.value)} style={{ width: 40, height: 40, borderRadius: 8, border: "2px solid #eee", cursor: "pointer", padding: 0 }} />
-                  <input style={{ ...st.input, width: 120 }} value={s.buttonTextColor} onChange={e => update("buttonTextColor", e.target.value)} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Modal Settings */}
-          <div style={st.section}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 4 }}>Try-On Modal</div>
-            <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>Customize the virtual try-on popup experience</div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <label style={st.label}>Modal Title</label>
-                <input style={st.input} value={s.modalTitle} onChange={e => update("modalTitle", e.target.value)} />
-              </div>
-              <div>
-                <label style={st.label}>Modal Subtitle</label>
-                <input style={st.input} value={s.modalSubtitle} onChange={e => update("modalSubtitle", e.target.value)} />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <label style={st.label}>Max Upload Size (MB)</label>
-                  <input style={st.input} type="number" value={s.maxFileSize} onChange={e => update("maxFileSize", e.target.value)} />
-                </div>
-                <div>
-                  <label style={st.label}>Brand Name</label>
-                  <input style={st.input} value={s.brandName} onChange={e => update("brandName", e.target.value)} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* General */}
-          <div style={st.section}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 4 }}>General</div>
-            <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>App-wide settings</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div>
-                <label style={st.label}>Try-On Feature</label>
-                <select style={st.select} value={s.enabled} onChange={e => update("enabled", e.target.value)}>
-                  <option value="true">Enabled</option>
-                  <option value="false">Disabled</option>
-                </select>
-              </div>
-              <div>
-                <label style={st.label}>Show "Powered by"</label>
-                <select style={st.select} value={s.poweredBy} onChange={e => update("poweredBy", e.target.value)}>
-                  <option value="true">Yes</option>
-                  <option value="false">No (Premium)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Preview */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-          {/* Button Preview */}
-          <div style={{ ...st.section, position: "sticky", top: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 16 }}>Live Preview</div>
-            
-            {/* Product Preview */}
-            <div style={{ background: "#fafafa", borderRadius: 14, padding: 20, border: "1px solid #f0f0f0" }}>
-              <div style={{ width: "100%", height: 180, background: "#eee", borderRadius: 10, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>👕</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>Sample Product</div>
-              <div style={{ fontSize: 13, color: "#888", margin: "4px 0 16px" }}>₹2,499.00</div>
-              <button style={{ width: "100%", padding: "12px", borderRadius: 8, background: "#333", color: "#fff", border: "none", fontSize: 14, fontWeight: 500, marginBottom: 10, cursor: "pointer" }}>Add to Cart</button>
-              <button style={{ width: "100%", ...st.preview.btn }}>{s.buttonText || "Try On"}</button>
-            </div>
-
-            {/* Modal Preview Mini */}
-            <div style={{ marginTop: 16, background: "#fafafa", borderRadius: 14, padding: 20, border: "1px solid #f0f0f0" }}>
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>Modal Preview</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#111" }}>{s.modalTitle}</div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{s.modalSubtitle}</div>
-              <div style={{ marginTop: 12, padding: 16, border: "2px dashed #ddd", borderRadius: 10, textAlign: "center" }}>
-                <div style={{ fontSize: 24, marginBottom: 4 }}>📸</div>
-                <div style={{ fontSize: 12, color: "#aaa" }}>Upload area</div>
-              </div>
-              {s.poweredBy === "true" && (
-                <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "#bbb" }}>Powered by futuretechiez.in</div>
-              )}
-            </div>
-          </div>
-
-          {/* Support Card */}
-          <div style={{ background: "linear-gradient(135deg, #25D366, #128C7E)", borderRadius: 16, padding: 24, color: "#fff" }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Need Help?</div>
-            <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 16 }}>We're here to help you set up and get the most out of TryFit.</div>
-            <a href="https://wa.me/917002073054?text=Hi%2C%20I%20need%20help%20with%20TryFit%20app" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 10, background: "rgba(255,255,255,0.2)", color: "#fff", textDecoration: "none", fontSize: 14, fontWeight: 600 }}>
-              💬 Chat on WhatsApp
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div style={st.footer}>
-        Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer" style={{ color: "#555", textDecoration: "none", fontWeight: 600 }}>futuretechiez.in</a>
-      </div>
-    </div>
+            ))}
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }

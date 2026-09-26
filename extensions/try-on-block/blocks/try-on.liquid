@@ -1,4 +1,23 @@
-{% if product %}
+{%- assign vto_cfg = shop.metafields.tryfit.config.value -%}
+{%- assign vto_disabled = false -%}
+{%- if vto_cfg and vto_cfg.disabledProducts -%}
+  {%- assign vto_pid_str = product.id | append: "" -%}
+  {%- for d in vto_cfg.disabledProducts -%}
+    {%- assign d_str = d | append: "" -%}
+    {%- if d_str == vto_pid_str -%}{%- assign vto_disabled = true -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- assign vto_btn_text = block.settings.button_text -%}
+{%- assign vto_btn_color = block.settings.button_color -%}
+{%- assign vto_btn_text_color = block.settings.button_text_color -%}
+{%- assign vto_btn_radius = block.settings.button_radius -%}
+{%- if vto_cfg -%}
+  {%- if vto_cfg.buttonText != blank -%}{%- assign vto_btn_text = vto_cfg.buttonText -%}{%- endif -%}
+  {%- if vto_cfg.buttonColor != blank -%}{%- assign vto_btn_color = vto_cfg.buttonColor -%}{%- endif -%}
+  {%- if vto_cfg.buttonTextColor != blank -%}{%- assign vto_btn_text_color = vto_cfg.buttonTextColor -%}{%- endif -%}
+  {%- if vto_cfg.buttonRadius != blank -%}{%- assign vto_btn_radius = vto_cfg.buttonRadius -%}{%- endif -%}
+{%- endif -%}
+{% if product and vto_disabled == false %}
 <div
   id="vto"
   data-pid="{{ product.id }}"
@@ -10,7 +29,7 @@
 >
   <button id="vto-btn" class="vto-btn" type="button">
     <svg class="vto-btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>
-    <span>{{ block.settings.button_text }}</span>
+    <span>{{ vto_btn_text }}</span>
     <span class="vto-btn__badge">AI</span>
   </button>
 
@@ -113,7 +132,7 @@
 </div>
 
 <style>
-:root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ block.settings.button_radius }}px;--vc:{{ block.settings.button_color }};--vt:{{ block.settings.button_text_color }};}
+:root{--vf:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--vr:{{ vto_btn_radius }}px;--vc:{{ vto_btn_color }};--vt:{{ vto_btn_text_color }};}
 
 /* BTN */
 .vto-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;margin-top:10px;background:var(--vc);color:var(--vt);border:none;border-radius:var(--vr);font:600 15px/1 var(--vf);cursor:pointer;transition:transform .15s,box-shadow .15s;}

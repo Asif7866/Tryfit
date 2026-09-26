@@ -72,7 +72,7 @@ export const action = async ({ request }) => {
     const userBuffer = Buffer.from(arrayBuffer);
     const photoHash = createHash("sha256").update(userBuffer).digest("hex");
     const studio = settings?.studioBackground === true;
-    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}|${studio ? "studio" : "raw"}`).digest("hex");
+    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}|${studio ? "studio" : "raw"}|${(process.env.TRYON_MODEL || "kolors").toLowerCase()}`).digest("hex");
 
     // Cache hit → instant, free, not counted against quota
     try {
@@ -87,11 +87,29 @@ export const action = async ({ request }) => {
     const userBlob = new Blob([userBuffer], { type: userPhotoFile.type || "image/jpeg" });
     const userPhotoUrl = await fal.storage.upload(userBlob);
 
-    const result = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
-      input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
-    });
-
-    let resultUrl = result.data?.image?.url;
+    // Model switch: TRYON_MODEL=fashn (FASHN v1.6, better for on-model/multi-layer garments) | default kolors
+    const model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
+    let resultUrl;
+    if (model === "fashn") {
+      const catMap = { upper_body: "tops", lower_body: "bottoms", dresses: "one-pieces" };
+      const r = await fal.subscribe("fal-ai/fashn/tryon/v1.6", {
+        input: {
+          model_image: userPhotoUrl,
+          garment_image: garmImg,
+          category: catMap[formData.get("category")] || "auto",
+          mode: "quality",
+          garment_photo_type: "model",
+          num_samples: 1,
+        },
+      });
+      resultUrl = r.data?.images?.[0]?.url;
+    } else {
+      const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
+        input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
+      });
+      resultUrl = r.data?.image?.url;
+    }
+    const result = { data: { image: { url: resultUrl } } };
     if (!resultUrl) {
       console.error("No result from fal.ai:", JSON.stringify(result));
       return json({ error: "AI returned no result" }, { status: 500, headers: CORS });

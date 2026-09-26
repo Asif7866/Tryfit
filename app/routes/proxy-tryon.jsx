@@ -1,82 +1,7 @@
 import { json } from "@remix-run/node";
 import { PrismaClient } from "@prisma/client";
-import { Client } from "@gradio/client";
 
 const prisma = new PrismaClient();
-
-// Kolors Virtual Try-On via HuggingFace Space (FREE)
-async function kolorsVTON(userPhotoDataUri, garmImgUrl) {
-  const client = await Client.connect("Kwai-Kolors/Kolors-Virtual-Try-On");
-
-  // Convert data URI to Blob for Gradio
-  const base64Data = userPhotoDataUri.split(",")[1];
-  const mimeMatch = userPhotoDataUri.match(/data:([^;]+);/);
-  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-  const userBlob = new Blob([Buffer.from(base64Data, "base64")], { type: mime });
-
-  // Download garment image and convert to Blob
-  const garmRes = await fetch(garmImgUrl);
-  if (!garmRes.ok) throw new Error("Failed to download garment image");
-  const garmBuffer = await garmRes.arrayBuffer();
-  const garmBlob = new Blob([garmBuffer], { type: "image/jpeg" });
-
-  const result = await client.predict("/tryon", [
-    userBlob,   // person image
-    garmBlob,   // garment image
-    0,          // seed
-    true,       // randomize seed
-  ]);
-
-  // Result contains image URL from HuggingFace
-  if (result?.data?.[0]?.url) {
-    return result.data[0].url;
-  }
-  throw new Error("No result from Kolors");
-}
-
-// IDM-VTON via Replicate (FALLBACK — $0.05/run)
-async function idmVTON(userPhotoDataUri, garmImgUrl, garmentDesc, category, token) {
-  const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
-      input: {
-        human_img: userPhotoDataUri,
-        garm_img: garmImgUrl,
-        garment_des: garmentDesc,
-        category: category,
-        is_checked: true,
-        is_checked_crop: true,
-        denoise_steps: 40,
-      },
-    }),
-  });
-
-  const prediction = await createRes.json();
-  if (!createRes.ok) throw new Error(prediction.detail || "Replicate error");
-
-  let result = prediction;
-  const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
-
-  for (let i = 0; i < 60; i++) {
-    if (result.status === "succeeded") break;
-    if (result.status === "failed" || result.status === "canceled") {
-      throw new Error("AI generation failed");
-    }
-    await new Promise(r => setTimeout(r, 1000));
-    const pollRes = await fetch(getUrl, {
-      headers: { "Authorization": `Bearer ${token}` },
-    });
-    result = await pollRes.json();
-  }
-
-  if (result.status !== "succeeded") throw new Error("AI timeout");
-  return Array.isArray(result.output) ? result.output[0] : result.output;
-}
 
 // CORS: allow direct storefront calls (bypasses Shopify proxy 30s timeout)
 const CORS = {
@@ -139,45 +64,67 @@ export const action = async ({ request }) => {
       return json({ error: "AI not configured" }, { status: 503, headers: CORS });
     }
 
-    // Convert uploaded file to base64 data URI
+    // Convert uploaded file (customer selfie) to base64 data URI
     const arrayBuffer = await userPhotoFile.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const mimeType = userPhotoFile.type || "image/jpeg";
     const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
 
     // Fix product image URL (Shopify returns protocol-relative URLs)
-    let garmImg = productImageUrl;
-    if (garmImg.startsWith("//")) garmImg = "https:" + garmImg;
+    let productImg = productImageUrl;
+    if (productImg.startsWith("//")) productImg = "https:" + productImg;
 
-    // Better garment description based on category
-    const categoryDescMap = {
-      "upper_body": "upper body garment, top, shirt, blouse, jacket",
-      "lower_body": "lower body garment, pants, trousers, skirt, lehenga",
-      "dresses": "full body outfit, dress, suit, kurta set, co-ord set, jumpsuit"
-    };
-    const garmentDesc = productTitle + ", " + (categoryDescMap[category] || categoryDescMap["dresses"]);
+    // FACE SWAP approach:
+    // input_image = product photo (model wearing garment) — face gets REPLACED
+    // swap_image = customer's selfie — their face goes ON the product model
+    // Result: garment stays 100% identical, only face changes
+    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: "278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
+        input: {
+          input_image: productImg,
+          swap_image: userPhotoDataUri,
+        },
+      }),
+    });
 
-    // DUAL PROVIDER: Kolors (FREE via HuggingFace) → IDM-VTON (Replicate $0.05 fallback)
-    let resultUrl;
-    let provider = "kolors";
+    const prediction = await createRes.json();
 
-    try {
-      console.log("Trying Kolors Virtual Try-On (HuggingFace)...");
-      resultUrl = await kolorsVTON(userPhotoDataUri, garmImg);
-      console.log("Kolors succeeded");
-    } catch (kolorsErr) {
-      console.error("Kolors failed:", kolorsErr.message, "— falling back to IDM-VTON");
-      provider = "idm-vton";
-      try {
-        resultUrl = await idmVTON(userPhotoDataUri, garmImg, garmentDesc, category, token);
-        console.log("IDM-VTON fallback succeeded");
-      } catch (replicateErr) {
-        console.error("IDM-VTON also failed:", replicateErr.message);
-        return json({ error: "AI generation failed" }, { status: 500, headers: CORS });
-      }
+    if (!createRes.ok) {
+      console.error("Replicate create error:", JSON.stringify(prediction));
+      return json({ error: prediction.detail || "AI model error" }, { status: 500, headers: CORS });
     }
 
-    // Increment usage counter (non-blocking)
+    // Poll for result
+    let result = prediction;
+    const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
+
+    for (let i = 0; i < 60; i++) {
+      if (result.status === "succeeded") break;
+      if (result.status === "failed" || result.status === "canceled") {
+        return json({ error: "AI generation failed" }, { status: 500, headers: CORS });
+      }
+
+      await new Promise(r => setTimeout(r, 1000));
+
+      const pollRes = await fetch(getUrl, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      result = await pollRes.json();
+    }
+
+    if (result.status !== "succeeded") {
+      return json({ error: "AI timeout" }, { status: 504, headers: CORS });
+    }
+
+    const resultUrl = result.output;
+
+    // Increment usage counter
     if (shop) {
       try {
         await prisma.shopSettings.update({
@@ -201,7 +148,7 @@ export const action = async ({ request }) => {
       }
     }
 
-    return json({ success: true, result_url: String(resultUrl), provider }, { headers: CORS });
+    return json({ success: true, result_url: String(resultUrl) }, { headers: CORS });
 
   } catch (error) {
     console.error("Try-on error:", error);
@@ -210,7 +157,6 @@ export const action = async ({ request }) => {
 };
 
 export const loader = async ({ request }) => {
-  // Belt-and-suspenders: handle OPTIONS here too in case adapter routes it to loader
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS });
   }

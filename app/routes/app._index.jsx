@@ -1,6 +1,11 @@
 import { json, redirect, createCookie } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  Page, Layout, Card, Text, BlockStack, InlineStack, InlineGrid, Box,
+  Badge, Button, ProgressBar, Divider, Thumbnail, EmptyState, Banner,
+  DataTable, Icon, Link as PolarisLink,
+} from "@shopify/polaris";
 import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
@@ -446,171 +451,216 @@ export default function Index() {
 
   const currentIdx = STEPS.findIndex(s => s.id === step);
 
-  // DASHBOARD VIEW
+  // DASHBOARD VIEW — Polaris native Shopify admin design
   if (setupDone) {
     const usagePercent = monthlyLimit > 0 ? Math.min((monthlyTryOns / monthlyLimit) * 100, 100) : 0;
     const creditsLeft = Math.max(monthlyLimit - monthlyTryOns, 0);
     const currSymbol = currencyCode === "USD" ? "$" : currencyCode === "EUR" ? "€" : currencyCode === "GBP" ? "£" : "₹";
+    const goToPricing = () => {
+      if (window.shopify?.navigate) { window.shopify.navigate('/charges/tryfit-5/pricing_plans'); }
+      else { window.top.location.href = `https://admin.shopify.com/store/${shop.replace('.myshopify.com','')}/charges/tryfit-5/pricing_plans`; }
+    };
+    const planTone = plan.toLowerCase() === "free" ? "info" : plan.toLowerCase() === "pro" ? "success" : "attention";
+    const usageTone = usagePercent >= 90 ? "critical" : usagePercent >= 70 ? "warning" : "success";
+
+    const productRows = topProducts.map(p => [
+      p.title,
+      p.count,
+      `${p.count > 0 ? ((p.atc / p.count) * 100).toFixed(1) : "0.0"}%`,
+    ]);
 
     return (
-      <div style={{ fontFamily: "'Jost', sans-serif", background: "#f8f9fb", minHeight: "100vh" }}>
-        <style>{CSS}</style>
-        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 24px" }}>
+      <Page
+        title="TryFit"
+        subtitle={shop}
+        primaryAction={{ content: "Manage plan", onAction: goToPricing }}
+        secondaryActions={[
+          { content: "Settings", url: "/app/settings" },
+          { content: "Setup guide", onAction: () => { setSetupDone(false); setStep("start"); } },
+        ]}
+      >
+        <Layout>
+          {/* Usage warning banner */}
+          {usagePercent >= 80 && (
+            <Layout.Section>
+              <Banner
+                title={usagePercent >= 100 ? "Monthly limit reached" : "Running low on try-ons"}
+                tone={usagePercent >= 100 ? "critical" : "warning"}
+                action={{ content: "Upgrade plan", onAction: goToPricing }}
+              >
+                <p>{monthlyTryOns} of {monthlyLimit} try-ons used this month. Upgrade to keep virtual try-on active for your shoppers.</p>
+              </Banner>
+            </Layout.Section>
+          )}
 
-          {/* Header */}
-          <div className="fu fu1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: "#1e1b4b", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 18 }}>T</div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: "#1e1b4b" }}>TryFit</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
-                  <span className="live-dot" />
-                  <span style={{ fontSize: 13, color: "#94a3b8" }}>{shop}</span>
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <a href="/app/settings" className="btn btn-outline" style={{ textDecoration: "none" }}>⚙ Settings</a>
-              <button className="btn btn-outline" onClick={() => { setSetupDone(false); setStep("start"); }}>🔄 Setup</button>
-              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" className="btn btn-accent" style={{ textDecoration: "none" }}>💬 Support</a>
-            </div>
-          </div>
+          {/* Performance metrics */}
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <BlockStack gap="100">
+                    <Text as="h2" variant="headingMd">Store performance</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">Last 30 days</Text>
+                  </BlockStack>
+                  <Badge tone="success">Active</Badge>
+                </InlineStack>
+                <InlineGrid columns={{ xs: 2, md: 4 }} gap="400">
+                  {[
+                    { label: "Try-ons generated", value: totalTryOns.toLocaleString() },
+                    { label: "Unique shoppers", value: uniqueUsers.toLocaleString() },
+                    { label: "Add-to-cart rate", value: `${addToCartRate}%` },
+                    { label: "Revenue", value: `${currSymbol}${Number(totalRevenue).toLocaleString()}` },
+                  ].map((s, i) => (
+                    <Box key={i} padding="400" background="bg-surface-secondary" borderRadius="200">
+                      <BlockStack gap="100">
+                        <Text as="p" variant="bodySm" tone="subdued">{s.label}</Text>
+                        <Text as="p" variant="headingLg">{s.value}</Text>
+                      </BlockStack>
+                    </Box>
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
 
-          {/* Store Performance */}
-          <div className="card fu fu2" style={{ marginBottom: 20, padding: "24px 28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>Store Performance</div>
-                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Last 30 days</div>
-              </div>
-              <span style={{ padding: "6px 14px", borderRadius: 8, background: "#eef2ff", color: "#4f46e5", fontSize: 12, fontWeight: 600 }}>Active</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-              {[
-                { label: "Try-Ons Generated", value: totalTryOns },
-                { label: "Unique Users", value: uniqueUsers },
-                { label: "Add to Cart Rate", value: `${addToCartRate}%` },
-                { label: "Total Revenue", value: `${currSymbol}${Number(totalRevenue).toLocaleString()}` },
-              ].map((s, i) => (
-                <div key={i} style={{ padding: "18px 20px", background: "#f8f9fb", borderRadius: 12, border: "1px solid #e8eaef" }}>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: "#1e1b4b" }}>{s.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Plan & usage */}
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text as="h2" variant="headingMd">Plan & usage</Text>
+                    <Badge tone={planTone}>{plan}</Badge>
+                  </InlineStack>
+                  <Button variant="plain" onClick={goToPricing}>Change plan</Button>
+                </InlineStack>
+                <InlineGrid columns={{ xs: 3 }} gap="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">Used this month</Text>
+                    <Text as="p" variant="headingLg">{monthlyTryOns}</Text>
+                  </BlockStack>
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">Remaining</Text>
+                    <Text as="p" variant="headingLg">{creditsLeft}</Text>
+                  </BlockStack>
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">Monthly limit</Text>
+                    <Text as="p" variant="headingLg">{monthlyLimit}</Text>
+                  </BlockStack>
+                </InlineGrid>
+                <BlockStack gap="200">
+                  <ProgressBar progress={usagePercent} tone={usageTone} size="small" />
+                  <Text as="p" variant="bodySm" tone="subdued">{monthlyTryOns} of {monthlyLimit} try-ons used · resets every 30 days</Text>
+                </BlockStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
 
-          {/* Plan & Credit Usage */}
-          <div className="card fu fu3" style={{ marginBottom: 20, padding: "24px 28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>Plan & Credit Usage</div>
-              <button onClick={() => { if(window.shopify?.navigate){window.shopify.navigate('/charges/tryfit-5/pricing_plans');}else{window.top.location.href=`https://admin.shopify.com/store/${shop.replace('.myshopify.com','')}/charges/tryfit-5/pricing_plans`;} }} style={{ padding: "8px 20px", borderRadius: 10, background: "#4f46e5", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'Jost',sans-serif" }}>💎 Manage Plan</button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-              {[
-                { label: "Plan Type", value: plan },
-                { label: "Credits Remaining", value: creditsLeft },
-                { label: "Credits Used", value: monthlyTryOns },
-                { label: "Monthly Limit", value: monthlyLimit },
-              ].map((s, i) => (
-                <div key={i} style={{ padding: "18px 20px", background: "#f8f9fb", borderRadius: 12, border: "1px solid #e8eaef" }}>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#1e1b4b" }}>{s.value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="progress-bar" style={{ marginTop: 16, height: 6 }}>
-              <div className="progress-fill" style={{ width: `${Math.max(usagePercent, 1)}%` }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>{monthlyTryOns} of {monthlyLimit} credits used</div>
-              {usagePercent >= 80 && <button onClick={() => { if(window.shopify?.navigate){window.shopify.navigate('/charges/tryfit-5/pricing_plans');}else{window.top.location.href=`https://admin.shopify.com/store/${shop.replace('.myshopify.com','')}/charges/tryfit-5/pricing_plans`;} }} style={{ fontSize: 12, color: "#4f46e5", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>⚡ Upgrade for more credits</button>}
-            </div>
-          </div>
-
-          {/* Top Products + Sidebar */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
-
-            {/* Top Products by Try-On */}
-            <div className="card fu fu4" style={{ padding: "24px 28px" }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 18 }}>Top Products by Try-On</div>
+          {/* Top products */}
+          <Layout.Section>
+            <Card padding="0">
+              <Box padding="400">
+                <Text as="h2" variant="headingMd">Top products by try-on</Text>
+              </Box>
               {topProducts.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
-                  <div style={{ fontSize: 36, marginBottom: 8, opacity: .5 }}>📊</div>
-                  <div style={{ fontWeight: 500 }}>No try-on data yet</div>
-                  <div style={{ fontSize: 13, marginTop: 4 }}>Data appears when shoppers use virtual try-on</div>
-                </div>
+                <Box paddingBlockEnd="400">
+                  <EmptyState
+                    heading="No try-on data yet"
+                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                  >
+                    <p>Analytics will appear here once shoppers start using virtual try-on on your product pages.</p>
+                  </EmptyState>
+                </Box>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid #e8eaef" }}>
-                      <th style={{ textAlign: "left", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>Product Name</th>
-                      <th style={{ textAlign: "center", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>Try-Ons</th>
-                      <th style={{ textAlign: "center", padding: "10px 0", fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>ATC Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topProducts.map((p, i) => (
-                      <tr key={p.id} style={{ borderBottom: "1px solid #f1f3f5" }}>
-                        <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 500, color: "#1e1b4b" }}>{p.title}</td>
-                        <td style={{ padding: "14px 0", fontSize: 14, fontWeight: 700, color: "#4f46e5", textAlign: "center" }}>{p.count}</td>
-                        <td style={{ padding: "14px 0", fontSize: 14, color: "#64748b", textAlign: "center" }}>{p.count > 0 ? ((p.atc / p.count) * 100).toFixed(1) : "0.0"}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <DataTable
+                  columnContentTypes={["text", "numeric", "numeric"]}
+                  headings={["Product", "Try-ons", "Add-to-cart rate"]}
+                  rows={productRows}
+                />
               )}
-            </div>
+            </Card>
+          </Layout.Section>
 
-            {/* Sidebar */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Sidebar */}
+          <Layout.Section variant="oneThird">
+            <BlockStack gap="400">
+              <Card>
+                <BlockStack gap="300">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <Text as="h2" variant="headingMd">Products</Text>
+                    <Badge>{totalProducts}</Badge>
+                  </InlineStack>
+                  {products.length === 0 ? (
+                    <Text as="p" variant="bodySm" tone="subdued">No products found in your store.</Text>
+                  ) : (
+                    <BlockStack gap="300">
+                      {products.slice(0, 5).map((p, i) => (
+                        <BlockStack key={p.id} gap="300">
+                          <InlineStack gap="300" blockAlign="center" wrap={false}>
+                            <Thumbnail
+                              source={p.featuredImage?.url || "https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"}
+                              alt={p.title}
+                              size="small"
+                            />
+                            <BlockStack gap="050">
+                              <Text as="p" variant="bodyMd" fontWeight="medium" truncate>{p.title}</Text>
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                {p.priceRangeV2?.minVariantPrice ? `${p.priceRangeV2.minVariantPrice.currencyCode} ${parseFloat(p.priceRangeV2.minVariantPrice.amount).toFixed(0)}` : "—"}
+                              </Text>
+                            </BlockStack>
+                          </InlineStack>
+                          {i < Math.min(products.length, 5) - 1 && <Divider />}
+                        </BlockStack>
+                      ))}
+                    </BlockStack>
+                  )}
+                </BlockStack>
+              </Card>
 
-              {/* Products List */}
-              <div className="card fu fu5" style={{ padding: "20px 24px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b" }}>Products</div>
-                  <span className="tag tag-blue">{totalProducts}</span>
-                </div>
-                {products.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>No products yet</div>
-                ) : products.slice(0, 5).map(p => (
-                  <div key={p.id} className="product-row" style={{ marginBottom: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {p.featuredImage?.url ? <img src={p.featuredImage.url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} /> : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#f1f3f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📷</div>}
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1e1b4b" }}>{p.title}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{p.priceRangeV2?.minVariantPrice ? `${p.priceRangeV2.minVariantPrice.currencyCode} ${parseFloat(p.priceRangeV2.minVariantPrice.amount).toFixed(0)}` : "—"}</div>
-                      </div>
-                    </div>
-                    <span className={`tag ${p.status === "ACTIVE" ? "tag-green" : "tag-yellow"}`} style={{ fontSize: 10 }}>{p.status}</span>
-                  </div>
-                ))}
-              </div>
+              <Card>
+                <BlockStack gap="300">
+                  <Text as="h2" variant="headingMd">Need help?</Text>
+                  <Text as="p" variant="bodyMd" tone="subdued">
+                    Get setup assistance or report an issue. We usually respond within a few hours.
+                  </Text>
+                  <Button
+                    url="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit"
+                    external
+                    fullWidth
+                  >
+                    Contact support
+                  </Button>
+                </BlockStack>
+              </Card>
 
-              {/* Store Info */}
-              <div className="card fu fu6" style={{ padding: "20px 24px" }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b", marginBottom: 12 }}>Store</div>
-                {[["Shop", shop], ["Extension", "Active"], ["Categories", cats.length || "—"]].map(([l, v], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < 2 ? "1px solid #f1f3f5" : "none" }}>
-                    <span style={{ fontSize: 13, color: "#94a3b8" }}>{l}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "#1e1b4b" }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* WhatsApp */}
-              <a href="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block", background: "#1e1b4b", borderRadius: 16, padding: "20px 24px", color: "#fff" }}>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>💬 Need Help?</div>
-                <div style={{ fontSize: 12, opacity: .6, marginTop: 4 }}>Chat on WhatsApp</div>
-              </a>
-            </div>
-          </div>
-
-          <div style={{ textAlign: "center", padding: "28px 0 12px", fontSize: 12, color: "#bbb" }}>
-            Powered by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer" style={{ color: "#888", textDecoration: "none", fontWeight: 600 }}>futuretechiez.in</a>
-          </div>
-        </div>
-      </div>
+              <Card>
+                <BlockStack gap="200">
+                  <Text as="h2" variant="headingMd">Store details</Text>
+                  <InlineStack align="space-between">
+                    <Text as="span" variant="bodySm" tone="subdued">Shop</Text>
+                    <Text as="span" variant="bodySm">{shop.replace(".myshopify.com", "")}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" variant="bodySm" tone="subdued">Extension</Text>
+                    <Badge tone="success" size="small">Installed</Badge>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" variant="bodySm" tone="subdued">AI engine</Text>
+                    <Text as="span" variant="bodySm">Kolors v1.5</Text>
+                  </InlineStack>
+                </BlockStack>
+              </Card>
+            </BlockStack>
+          </Layout.Section>
+        </Layout>
+        <Box paddingBlockStart="800" paddingBlockEnd="400">
+          <InlineStack align="center">
+            <Text as="p" variant="bodySm" tone="subdued">
+              Powered by <PolarisLink url="https://futuretechiez.in" external removeUnderline>FutureTechiez</PolarisLink>
+            </Text>
+          </InlineStack>
+        </Box>
+      </Page>
     );
   }
 

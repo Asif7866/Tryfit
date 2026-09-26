@@ -8,7 +8,18 @@ import { authenticate } from "../shopify.server";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  try {
+    await authenticate.admin(request);
+  } catch (e) {
+    const u = new URL(request.url);
+    if (e instanceof Response) {
+      console.error("[AUTH FAIL]", e.status, u.pathname, "params:", [...u.searchParams.keys()].join(","),
+        "hasAuthHeader:", !!request.headers.get("authorization"), "resp-headers:", JSON.stringify(Object.fromEntries(e.headers)));
+    } else {
+      console.error("[AUTH ERR]", e?.message || e);
+    }
+    throw e;
+  }
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
 

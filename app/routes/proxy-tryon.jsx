@@ -100,14 +100,15 @@ export const action = async ({ request }) => {
       return json({ error: prediction.detail || "AI model error" }, { status: 500, headers: CORS });
     }
 
-    // Poll for result
+    // Poll for result — 120s timeout (cold starts can take 30-40s before processing begins)
     let result = prediction;
     const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
 
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 120; i++) {
       if (result.status === "succeeded") break;
       if (result.status === "failed" || result.status === "canceled") {
-        return json({ error: "AI generation failed" }, { status: 500, headers: CORS });
+        console.error("Face swap failed:", result.error || result.logs);
+        return json({ error: "AI generation failed: " + (result.error || "unknown") }, { status: 500, headers: CORS });
       }
 
       await new Promise(r => setTimeout(r, 1000));
@@ -119,10 +120,15 @@ export const action = async ({ request }) => {
     }
 
     if (result.status !== "succeeded") {
-      return json({ error: "AI timeout" }, { status: 504, headers: CORS });
+      console.error("Face swap timeout after 120s, last status:", result.status);
+      return json({ error: "AI timeout — please try again" }, { status: 504, headers: CORS });
     }
 
-    const resultUrl = result.output;
+    // Handle output — can be string URL or file object
+    let resultUrl = result.output;
+    if (typeof resultUrl === "object" && resultUrl !== null) {
+      resultUrl = resultUrl.url || resultUrl[0]?.url || resultUrl[0] || String(resultUrl);
+    }
 
     // Increment usage counter
     if (shop) {

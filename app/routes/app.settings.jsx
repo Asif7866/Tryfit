@@ -59,6 +59,7 @@ export const loader = async ({ request }) => {
     buttonTextColor: settings?.buttonTextColor || DEFAULTS.buttonTextColor,
     buttonRadius: DEFAULTS.buttonRadius,
     disabledProducts: Array.isArray(settings?.disabledProducts) ? settings.disabledProducts.map(String) : [],
+    studioBackground: settings?.studioBackground === true,
   };
   return json({ shop, cfg, products, query, authError });
 };
@@ -76,11 +77,12 @@ export const action = async ({ request }) => {
   const buttonRadius = parseInt(fd.get("buttonRadius") || DEFAULTS.buttonRadius, 10);
   let disabledProducts = [];
   try { disabledProducts = JSON.parse(fd.get("disabledProducts") || "[]").map(String); } catch (e) {}
+  const studioBackground = fd.get("studioBackground") === "1";
 
   await prisma.shopSettings.upsert({
     where: { shop },
-    update: { buttonText, buttonColor, buttonTextColor, disabledProducts },
-    create: { shop, buttonText, buttonColor, buttonTextColor, disabledProducts, enabled: true },
+    update: { buttonText, buttonColor, buttonTextColor, disabledProducts, studioBackground },
+    create: { shop, buttonText, buttonColor, buttonTextColor, disabledProducts, studioBackground, enabled: true },
   });
 
   // Push config to shop metafield so the storefront block reads it without extra requests
@@ -128,6 +130,7 @@ export default function Settings() {
   const [buttonTextColor, setButtonTextColor] = useState(cfg.buttonTextColor);
   const [buttonRadius, setButtonRadius] = useState(cfg.buttonRadius);
   const [disabled, setDisabled] = useState(new Set(cfg.disabledProducts));
+  const [studio, setStudio] = useState(cfg.studioBackground);
   const [search, setSearch] = useState(query);
   const [toast, setToast] = useState(false);
 
@@ -135,8 +138,8 @@ export default function Settings() {
 
   const dirty = useMemo(() => {
     const d = [...disabled].sort().join(",") !== [...cfg.disabledProducts].sort().join(",");
-    return d || buttonText !== cfg.buttonText || buttonColor !== cfg.buttonColor || buttonTextColor !== cfg.buttonTextColor || buttonRadius !== cfg.buttonRadius;
-  }, [disabled, buttonText, buttonColor, buttonTextColor, buttonRadius, cfg]);
+    return d || studio !== cfg.studioBackground || buttonText !== cfg.buttonText || buttonColor !== cfg.buttonColor || buttonTextColor !== cfg.buttonTextColor || buttonRadius !== cfg.buttonRadius;
+  }, [disabled, studio, buttonText, buttonColor, buttonTextColor, buttonRadius, cfg]);
 
   const save = () => {
     const fd = new FormData();
@@ -146,6 +149,7 @@ export default function Settings() {
     fd.append("buttonRadius", String(buttonRadius));
     fd.append("disabledProducts", JSON.stringify([...disabled]));
     fd.append("shop", shop);
+    fd.append("studioBackground", studio ? "1" : "0");
     submit(fd, { method: "post" });
   };
 
@@ -212,6 +216,24 @@ export default function Settings() {
                   </BlockStack>
                 </Box>
               </InlineGrid>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
+        {/* Result quality */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="300">
+              <BlockStack gap="100">
+                <Text as="h2" variant="headingMd">Result quality</Text>
+                <Text as="p" variant="bodySm" tone="subdued">Options that change how generated try-on images look.</Text>
+              </BlockStack>
+              <Checkbox
+                label="Studio background"
+                helpText="Replaces the shopper's photo background with a clean studio backdrop matched to your product photo. Adds a few seconds per try-on."
+                checked={studio}
+                onChange={setStudio}
+              />
             </BlockStack>
           </Card>
         </Layout.Section>

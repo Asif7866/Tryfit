@@ -43,6 +43,7 @@ model ShopSettings {
   // New: onboarding checklist
   themeBlockAdded     Boolean  @default(false)
   onboardingDismissed Boolean  @default(false)
+  studioBackground    Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

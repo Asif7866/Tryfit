@@ -3,6 +3,7 @@ import { fal } from "@fal-ai/client";
 import { createHash } from "node:crypto";
 import { prisma } from "../shopify.server";
 import { ensureMonthlyReset, maybeSendUsageAlert } from "../lib/usage.server";
+import { applyStudioBackground } from "../lib/studio.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -70,7 +71,8 @@ export const action = async ({ request }) => {
     const arrayBuffer = await userPhotoFile.arrayBuffer();
     const userBuffer = Buffer.from(arrayBuffer);
     const photoHash = createHash("sha256").update(userBuffer).digest("hex");
-    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}`).digest("hex");
+    const studio = settings?.studioBackground === true;
+    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}|${studio ? "studio" : "raw"}`).digest("hex");
 
     // Cache hit → instant, free, not counted against quota
     try {
@@ -89,10 +91,19 @@ export const action = async ({ request }) => {
       input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
     });
 
-    const resultUrl = result.data?.image?.url;
+    let resultUrl = result.data?.image?.url;
     if (!resultUrl) {
       console.error("No result from fal.ai:", JSON.stringify(result));
       return json({ error: "AI returned no result" }, { status: 500, headers: CORS });
+    }
+
+    // Optional: studio backdrop matching the product photo (merchant toggle)
+    if (studio) {
+      try {
+        resultUrl = await applyStudioBackground(resultUrl, garmImg);
+      } catch (bgErr) {
+        console.error("Studio background failed, using raw result:", bgErr.message);
+      }
     }
 
     // Persist cache + usage + log

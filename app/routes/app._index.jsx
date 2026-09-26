@@ -1,6 +1,6 @@
 import { json, redirect, createCookie } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
@@ -51,12 +51,11 @@ export const loader = async ({ request }) => {
     const activeSubs = billingData.data?.appInstallation?.activeSubscriptions || [];
     const hasActiveSub = activeSubs.some(s => s.status === "ACTIVE");
 
-    // 2. If no active subscription, redirect to Shopify hosted plan selection
+    // 2. If no active subscription, return flag — component handles redirect via App Bridge
     if (!hasActiveSub) {
       const shopSlug = session.shop.replace(".myshopify.com", "");
-      // For embedded apps, redirect via exitiframe to Shopify's pricing page
       const pricingUrl = `https://admin.shopify.com/store/${shopSlug}/charges/tryfit-5/pricing_plans`;
-      throw new Response(null, { status: 302, headers: { Location: pricingUrl } });
+      return json({ requiresPlan: true, pricingUrl, shop: session.shop });
     }
 
     // 3. Active plan info
@@ -304,8 +303,37 @@ const CATEGORIES = [
 ];
 
 export default function Index() {
-  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted, addToCartRate, totalRevenue, currencyCode } = useLoaderData();
+  const loaderData = useLoaderData();
+  const { shop, products, totalProducts, monthlyTryOns, monthlyLimit, totalTryOns, uniqueUsers, topProducts, plan, setupCompleted, addToCartRate, totalRevenue, currencyCode } = loaderData;
   const submit = useSubmit();
+
+  // Billing redirect — install ke baad seedha pricing page
+  useEffect(() => {
+    if (loaderData?.requiresPlan && loaderData?.pricingUrl) {
+      // App Bridge embedded app — top-level redirect to Shopify pricing page
+      if (window.top !== window.self) {
+        window.top.location.href = loaderData.pricingUrl;
+      } else {
+        window.location.href = loaderData.pricingUrl;
+      }
+    }
+  }, [loaderData]);
+
+  if (loaderData?.requiresPlan) {
+    return (
+      <>
+        <style dangerouslySetInnerHTML={{ __html: CSS }} />
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fafafa", fontFamily: "'Jost', sans-serif" }}>
+          <div style={{ textAlign: "center" }}>
+            <div className="spinner" style={{ width: 40, height: 40, margin: "0 auto 20px", borderWidth: 3 }} />
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginBottom: 8 }}>Setting up your account...</h2>
+            <p style={{ fontSize: 14, color: "#888" }}>Redirecting to plan selection</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const [step, setStep] = useState("start");
   const [setupDone, setSetupDone] = useState(true);
   const [cats, setCats] = useState([]);

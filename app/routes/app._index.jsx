@@ -644,10 +644,6 @@ export default function Index() {
                     <Text as="span" variant="bodySm" tone="subdued">Extension</Text>
                     <Badge tone="success" size="small">Installed</Badge>
                   </InlineStack>
-                  <InlineStack align="space-between">
-                    <Text as="span" variant="bodySm" tone="subdued">AI engine</Text>
-                    <Text as="span" variant="bodySm">Kolors v1.5</Text>
-                  </InlineStack>
                 </BlockStack>
               </Card>
             </BlockStack>

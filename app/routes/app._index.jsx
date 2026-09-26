@@ -63,9 +63,9 @@ export const loader = async ({ request }) => {
     const planName = activePlan?.name || "Free";
 
     // Plan limits mapping
-    const PLAN_LIMITS = { "free": 10, "starter": 100, "growth": 400, "pro": 1200 };
+    const PLAN_LIMITS = { "free": 5, "starter": 100, "growth": 300, "pro": 700 };
     const planKey = planName.toLowerCase();
-    const monthlyLimit = PLAN_LIMITS[planKey] || 50;
+    const monthlyLimit = PLAN_LIMITS[planKey] || 5;
 
     // 4. Fetch real products + product count
     const prodRes = await admin.graphql(`{
@@ -180,7 +180,7 @@ export const loader = async ({ request }) => {
     // Auth failed — try to get data from DB using shop from URL
     let fallbackData = {
       shop: authenticatedShop || "unknown", products: [], totalProducts: 0,
-      monthlyTryOns: 0, monthlyLimit: 50, totalTryOns: 0,
+      monthlyTryOns: 0, monthlyLimit: 5, totalTryOns: 0,
       uniqueUsers: 0, topProducts: [], plan: "Free",
       addToCartRate: "0.0", totalRevenue: "0.00", currencyCode: "INR",
       setupCompleted: fromCookie,
@@ -216,7 +216,7 @@ export const loader = async ({ request }) => {
           shop: shopName,
           products: [], totalProducts: 0,
           monthlyTryOns: settings?.monthlyTryOns || 0,
-          monthlyLimit: settings?.monthlyLimit || 50,
+          monthlyLimit: settings?.monthlyLimit || 5,
           totalTryOns,
           uniqueUsers,
           topProducts,

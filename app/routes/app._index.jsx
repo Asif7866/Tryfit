@@ -163,7 +163,19 @@ export const loader = async ({ request }) => {
           where: { shop: shopName, status: "completed", resultUrl: { not: "" }, NOT: { resultUrl: "client-fallback" } },
           orderBy: { createdAt: "desc" }, take: 12, select: { id: true, resultUrl: true, productTitle: true, createdAt: true },
         });
-        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: settings?.monthlyLimit || 5, plan: settings?.plan || "Free", totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0 };
+        const logs = await prisma.tryOnLog.findMany({ where: { shop: shopName, createdAt: { gte: since }, status: { in: ["completed", "added_to_cart"] } }, orderBy: { createdAt: "desc" }, take: 1000, select: { productId: true, productTitle: true, status: true } });
+        const counts = {};
+        logs.forEach(l => {
+          if (!counts[l.productId]) counts[l.productId] = { id: l.productId, title: l.productTitle || "Unknown", count: 0, atc: 0 };
+          if (l.status === "completed") counts[l.productId].count++;
+          if (l.status === "added_to_cart") counts[l.productId].atc++;
+        });
+        const topProducts = Object.values(counts).filter(c => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 5);
+        const atc = logs.filter(l => l.status === "added_to_cart").length;
+        const converted = await prisma.tryOnLog.findMany({ where: { shop: shopName, status: "converted", createdAt: { gte: since } }, select: { revenue: true } });
+        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: settings?.monthlyLimit || 5, plan: settings?.plan || "Free", totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0,
+          topProducts, uniqueUsers: Object.keys(counts).length, addToCartRate: totalTryOns > 0 ? ((atc / totalTryOns) * 100).toFixed(1) : "0.0",
+          conversions: converted.length, tryOnRevenue: converted.reduce((a, c) => a + (c.revenue || 0), 0).toFixed(2) };
       }
     } catch (_) {}
     return json(fb);

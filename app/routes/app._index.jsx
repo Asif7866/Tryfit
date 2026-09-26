@@ -136,7 +136,10 @@ export const loader = async ({ request }) => {
       },
     });
   } catch (e) {
-    // Auth failed — DB-only fallback, strictly filtered by shop
+    // Auth redirects/401s from Shopify MUST propagate for token exchange to work
+    if (e instanceof Response) throw e;
+    console.error("Dashboard loader error:", e?.message || e);
+    // Non-auth failure — DB-only fallback, strictly filtered by shop
     const shopName = authenticatedShop;
     let fb = {
       shop: shopName || "unknown", products: [], totalProducts: 0, currencyCode: "INR",

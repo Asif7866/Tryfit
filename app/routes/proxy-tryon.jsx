@@ -1,9 +1,9 @@
 import { json } from "@remix-run/node";
 import { PrismaClient } from "@prisma/client";
+import { fal } from "@fal-ai/client";
 
 const prisma = new PrismaClient();
 
-// CORS: allow direct storefront calls (bypasses Shopify proxy 30s timeout)
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -26,7 +26,7 @@ export const action = async ({ request }) => {
     const category = formData.get("category") || "dresses";
     const shop = formData.get("shop");
 
-    // Log-only mode: just record the try-on event (for client-side fallback tracking)
+    // Log-only mode
     const logOnly = formData.get("log_only");
     if (logOnly === "1" && shop) {
       try {
@@ -46,7 +46,7 @@ export const action = async ({ request }) => {
       return json({ error: "Missing required fields" }, { status: 400, headers: CORS });
     }
 
-    // Check try-on limits (non-blocking) — skip for dev store
+    // Check try-on limits — skip for dev store
     const DEV_STORES = ["testing-ashif.myshopify.com"];
     if (shop && !DEV_STORES.includes(shop)) {
       try {
@@ -59,76 +59,41 @@ export const action = async ({ request }) => {
       }
     }
 
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
+    const falKey = process.env.FAL_KEY;
+    if (!falKey) {
       return json({ error: "AI not configured" }, { status: 503, headers: CORS });
     }
 
-    // Convert uploaded file (customer selfie) to base64 data URI
+    // Configure fal.ai
+    fal.config({ credentials: falKey });
+
+    // Fix product image URL
+    let garmImg = productImageUrl;
+    if (garmImg.startsWith("//")) garmImg = "https:" + garmImg;
+
+    // Upload user photo to fal.ai storage (they need URLs, not base64)
     const arrayBuffer = await userPhotoFile.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const mimeType = userPhotoFile.type || "image/jpeg";
-    const userPhotoDataUri = `data:${mimeType};base64,${base64}`;
+    const userBlob = new Blob([arrayBuffer], { type: userPhotoFile.type || "image/jpeg" });
+    const userPhotoUrl = await fal.storage.upload(userBlob);
 
-    // Fix product image URL (Shopify returns protocol-relative URLs)
-    let productImg = productImageUrl;
-    if (productImg.startsWith("//")) productImg = "https:" + productImg;
+    console.log("Calling Kolors VTON v1.5 — human:", userPhotoUrl, "garment:", garmImg);
 
-    // FACE SWAP approach:
-    // input_image = product photo (model wearing garment) — face gets REPLACED
-    // swap_image = customer's selfie — their face goes ON the product model
-    // Result: garment stays 100% identical, only face changes
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
+    // Kolors Virtual Try-On v1.5 via fal.ai ($0.07/run)
+    // Same model as kolorsvirtual.com — best quality for Indian garments
+    const result = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
+      input: {
+        human_image_url: userPhotoUrl,
+        garment_image_url: garmImg,
       },
-      body: JSON.stringify({
-        version: "278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
-        input: {
-          input_image: productImg,
-          swap_image: userPhotoDataUri,
-        },
-      }),
     });
 
-    const prediction = await createRes.json();
-
-    if (!createRes.ok) {
-      console.error("Replicate create error:", JSON.stringify(prediction));
-      return json({ error: prediction.detail || "AI model error" }, { status: 500, headers: CORS });
+    const resultUrl = result.data?.image?.url;
+    if (!resultUrl) {
+      console.error("No result URL from fal.ai:", JSON.stringify(result));
+      return json({ error: "AI returned no result" }, { status: 500, headers: CORS });
     }
 
-    // Poll for result — 120s timeout (cold starts can take 30-40s before processing begins)
-    let result = prediction;
-    const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
-
-    for (let i = 0; i < 120; i++) {
-      if (result.status === "succeeded") break;
-      if (result.status === "failed" || result.status === "canceled") {
-        console.error("Face swap failed:", result.error || result.logs);
-        return json({ error: "AI generation failed: " + (result.error || "unknown") }, { status: 500, headers: CORS });
-      }
-
-      await new Promise(r => setTimeout(r, 1000));
-
-      const pollRes = await fetch(getUrl, {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      result = await pollRes.json();
-    }
-
-    if (result.status !== "succeeded") {
-      console.error("Face swap timeout after 120s, last status:", result.status);
-      return json({ error: "AI timeout — please try again" }, { status: 504, headers: CORS });
-    }
-
-    // Handle output — can be string URL or file object
-    let resultUrl = result.output;
-    if (typeof resultUrl === "object" && resultUrl !== null) {
-      resultUrl = resultUrl.url || resultUrl[0]?.url || resultUrl[0] || String(resultUrl);
-    }
+    console.log("Kolors VTON success:", resultUrl);
 
     // Increment usage counter
     if (shop) {

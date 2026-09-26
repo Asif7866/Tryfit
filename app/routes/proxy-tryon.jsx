@@ -106,13 +106,19 @@ export const action = async ({ request }) => {
       }
     }
 
-    // Persist cache + usage + log
+    // Persist cache (independent — must never block usage logging)
     try {
       await prisma.tryOnCache.upsert({
         where: { cacheKey },
         update: { resultUrl, createdAt: new Date() },
         create: { shop, cacheKey, resultUrl },
       });
+    } catch (cacheErr) {
+      console.error("Cache write skipped:", cacheErr.message);
+    }
+
+    // Usage + log
+    try {
       await prisma.shopSettings.upsert({
         where: { shop },
         update: { monthlyTryOns: { increment: 1 }, totalTryOns: { increment: 1 } },

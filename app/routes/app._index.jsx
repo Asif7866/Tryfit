@@ -50,12 +50,34 @@ export const loader = async ({ request }) => {
     const billingData = await billingRes.json();
     const activeSubs = billingData.data?.appInstallation?.activeSubscriptions || [];
     const hasActiveSub = activeSubs.some(s => s.status === "ACTIVE");
+    const hasPaidPlan = activeSubs.some(s => s.status === "ACTIVE" && s.name && s.name.toLowerCase() !== "free");
 
-    // 2. If no active subscription, return flag — component handles redirect via App Bridge
-    if (!hasActiveSub) {
+    // 2. Check if merchant has explicitly chosen a plan (DB flag)
+    const existingSettings = await prisma.shopSettings.findUnique({ where: { shop: session.shop } });
+    const hasChosenPlan = existingSettings?.planChosen === true;
+
+    // 3. If no paid plan AND merchant hasn't explicitly chosen a plan → redirect to pricing page
+    // This forces ALL new installs to visit pricing page, even for free plan
+    if (!hasPaidPlan && !hasChosenPlan) {
       const shopSlug = session.shop.replace(".myshopify.com", "");
       const pricingUrl = `https://admin.shopify.com/store/${shopSlug}/charges/tryfit-5/pricing_plans`;
-      return json({ requiresPlan: true, pricingUrl, shop: session.shop });
+      
+      // Mark in DB that we've sent them to pricing (they'll come back after choosing)
+      // We set planChosen=true AFTER they return with an active subscription
+      // For now, check URL for "charge_id" param which Shopify adds after plan approval
+      const reqUrl = new URL(request.url);
+      const chargeId = reqUrl.searchParams.get("charge_id");
+      
+      if (chargeId) {
+        // Merchant just approved a plan — mark as chosen
+        await prisma.shopSettings.upsert({
+          where: { shop: session.shop },
+          update: { planChosen: true },
+          create: { shop: session.shop, planChosen: true, enabled: true },
+        });
+      } else {
+        return json({ requiresPlan: true, pricingUrl, shop: session.shop });
+      }
     }
 
     // 3. Active plan info

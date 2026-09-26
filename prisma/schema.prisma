@@ -31,7 +31,8 @@ model ShopSettings {
   modalTitle      String   @default("Ready to try this on?")
   totalTryOns     Int      @default(0)
   monthlyTryOns   Int      @default(0)
-  monthlyLimit    Int      @default(10)
+  monthlyLimit    Int      @default(5)
+  planChosen      Boolean  @default(false)
   billingId       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

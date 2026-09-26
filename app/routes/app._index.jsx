@@ -136,9 +136,16 @@ export const loader = async ({ request }) => {
       },
     });
   } catch (e) {
-    // Auth redirects/401s from Shopify MUST propagate for token exchange to work
-    if (e instanceof Response) throw e;
-    console.error("Dashboard loader error:", e?.message || e);
+    // Log the real reason (visible in Railway logs), then fall back to DB data
+    try {
+      const u = new URL(request.url);
+      if (e instanceof Response) {
+        console.error("[AUTH FAIL]", e.status, u.pathname, "params:", [...u.searchParams.keys()].join(","),
+          "authHeader:", !!request.headers.get("authorization"), "hdrs:", JSON.stringify(Object.fromEntries(e.headers)));
+      } else {
+        console.error("[LOADER ERR]", e?.message || e);
+      }
+    } catch (_) {}
     // Non-auth failure — DB-only fallback, strictly filtered by shop
     const shopName = authenticatedShop;
     let fb = {

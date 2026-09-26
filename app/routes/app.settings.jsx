@@ -25,13 +25,33 @@ async function fetchProducts(admin, query = "") {
   }));
 }
 
+function shopFromUrl(request) {
+  try {
+    const u = new URL(request.url);
+    const sp = u.searchParams.get("shop");
+    if (sp) return sp;
+    const h = u.searchParams.get("host");
+    if (h) { const m = atob(h).match(/([^/]+\.myshopify\.com)/); if (m) return m[1]; }
+  } catch (_) {}
+  return null;
+}
+
 export const loader = async ({ request }) => {
-  const { admin, session } = await shopify.authenticate.admin(request);
   const url = new URL(request.url);
   const query = url.searchParams.get("q") || "";
+  let admin = null, shop = null, authError = null;
+  try {
+    const r = await shopify.authenticate.admin(request);
+    admin = r.admin; shop = r.session.shop;
+  } catch (e) {
+    authError = e instanceof Response ? `auth ${e.status}` : (e?.message || "auth failed");
+    console.error("[SETTINGS AUTH FAIL]", authError);
+    shop = shopFromUrl(request);
+  }
+  if (!shop) return json({ shop: "unknown", cfg: { ...DEFAULTS, disabledProducts: [] }, products: [], query, authError: authError || "no shop" });
   const [settings, products] = await Promise.all([
-    prisma.shopSettings.findUnique({ where: { shop: session.shop } }),
-    fetchProducts(admin, query),
+    prisma.shopSettings.findUnique({ where: { shop } }),
+    admin ? fetchProducts(admin, query).catch(() => []) : Promise.resolve([]),
   ]);
   const cfg = {
     buttonText: settings?.buttonText || DEFAULTS.buttonText,
@@ -40,12 +60,16 @@ export const loader = async ({ request }) => {
     buttonRadius: DEFAULTS.buttonRadius,
     disabledProducts: Array.isArray(settings?.disabledProducts) ? settings.disabledProducts.map(String) : [],
   };
-  return json({ shop: session.shop, cfg, products, query });
+  return json({ shop, cfg, products, query, authError });
 };
 
 export const action = async ({ request }) => {
-  const { admin, session } = await shopify.authenticate.admin(request);
+  let admin = null, shop = null;
+  try { const r = await shopify.authenticate.admin(request); admin = r.admin; shop = r.session.shop; }
+  catch (e) { shop = shopFromUrl(request); }
   const fd = await request.formData();
+  if (!shop) shop = String(fd.get("shop") || "");
+  if (!shop) return json({ ok: false, metafieldError: "Could not identify shop" });
   const buttonText = String(fd.get("buttonText") || DEFAULTS.buttonText).slice(0, 40);
   const buttonColor = String(fd.get("buttonColor") || DEFAULTS.buttonColor);
   const buttonTextColor = String(fd.get("buttonTextColor") || DEFAULTS.buttonTextColor);
@@ -54,14 +78,15 @@ export const action = async ({ request }) => {
   try { disabledProducts = JSON.parse(fd.get("disabledProducts") || "[]").map(String); } catch (e) {}
 
   await prisma.shopSettings.upsert({
-    where: { shop: session.shop },
+    where: { shop },
     update: { buttonText, buttonColor, buttonTextColor, disabledProducts },
-    create: { shop: session.shop, buttonText, buttonColor, buttonTextColor, disabledProducts, enabled: true },
+    create: { shop, buttonText, buttonColor, buttonTextColor, disabledProducts, enabled: true },
   });
 
   // Push config to shop metafield so the storefront block reads it without extra requests
   let metafieldError = null;
-  try {
+  if (!admin) metafieldError = "Not connected to Shopify (auth). Storefront will use theme editor settings.";
+  else try {
     const shopIdRes = await admin.graphql(`{ shop { id } }`);
     const shopId = (await shopIdRes.json()).data.shop.id;
     const mfRes = await admin.graphql(`
@@ -92,7 +117,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { cfg, products, query } = useLoaderData();
+  const { shop, cfg, products, query, authError } = useLoaderData();
   const actionData = useActionData();
   const submit = useSubmit();
   const nav = useNavigation();
@@ -120,6 +145,7 @@ export default function Settings() {
     fd.append("buttonTextColor", buttonTextColor);
     fd.append("buttonRadius", String(buttonRadius));
     fd.append("disabledProducts", JSON.stringify([...disabled]));
+    fd.append("shop", shop);
     submit(fd, { method: "post" });
   };
 
@@ -136,6 +162,13 @@ export default function Settings() {
         {toast && (
           <Layout.Section>
             <Banner tone="success" onDismiss={() => setToast(false)}>Settings saved. Changes are live on your storefront.</Banner>
+          </Layout.Section>
+        )}
+        {authError && (
+          <Layout.Section>
+            <Banner tone="critical" title="Not connected to Shopify">
+              <p>Product list and storefront sync are unavailable until the app reconnects. Try reopening the app from the Shopify admin, or reinstall it.</p>
+            </Banner>
           </Layout.Section>
         )}
         {actionData?.metafieldError && (

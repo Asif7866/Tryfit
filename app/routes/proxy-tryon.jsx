@@ -1,7 +1,82 @@
 import { json } from "@remix-run/node";
 import { PrismaClient } from "@prisma/client";
+import { Client } from "@gradio/client";
 
 const prisma = new PrismaClient();
+
+// Kolors Virtual Try-On via HuggingFace Space (FREE)
+async function kolorsVTON(userPhotoDataUri, garmImgUrl) {
+  const client = await Client.connect("Kwai-Kolors/Kolors-Virtual-Try-On");
+
+  // Convert data URI to Blob for Gradio
+  const base64Data = userPhotoDataUri.split(",")[1];
+  const mimeMatch = userPhotoDataUri.match(/data:([^;]+);/);
+  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+  const userBlob = new Blob([Buffer.from(base64Data, "base64")], { type: mime });
+
+  // Download garment image and convert to Blob
+  const garmRes = await fetch(garmImgUrl);
+  if (!garmRes.ok) throw new Error("Failed to download garment image");
+  const garmBuffer = await garmRes.arrayBuffer();
+  const garmBlob = new Blob([garmBuffer], { type: "image/jpeg" });
+
+  const result = await client.predict("/tryon", [
+    userBlob,   // person image
+    garmBlob,   // garment image
+    0,          // seed
+    true,       // randomize seed
+  ]);
+
+  // Result contains image URL from HuggingFace
+  if (result?.data?.[0]?.url) {
+    return result.data[0].url;
+  }
+  throw new Error("No result from Kolors");
+}
+
+// IDM-VTON via Replicate (FALLBACK — $0.05/run)
+async function idmVTON(userPhotoDataUri, garmImgUrl, garmentDesc, category, token) {
+  const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
+      input: {
+        human_img: userPhotoDataUri,
+        garm_img: garmImgUrl,
+        garment_des: garmentDesc,
+        category: category,
+        is_checked: true,
+        is_checked_crop: true,
+        denoise_steps: 40,
+      },
+    }),
+  });
+
+  const prediction = await createRes.json();
+  if (!createRes.ok) throw new Error(prediction.detail || "Replicate error");
+
+  let result = prediction;
+  const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
+
+  for (let i = 0; i < 60; i++) {
+    if (result.status === "succeeded") break;
+    if (result.status === "failed" || result.status === "canceled") {
+      throw new Error("AI generation failed");
+    }
+    await new Promise(r => setTimeout(r, 1000));
+    const pollRes = await fetch(getUrl, {
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+    result = await pollRes.json();
+  }
+
+  if (result.status !== "succeeded") throw new Error("AI timeout");
+  return Array.isArray(result.output) ? result.output[0] : result.output;
+}
 
 // CORS: allow direct storefront calls (bypasses Shopify proxy 30s timeout)
 const CORS = {
@@ -82,56 +157,25 @@ export const action = async ({ request }) => {
     };
     const garmentDesc = productTitle + ", " + (categoryDescMap[category] || categoryDescMap["dresses"]);
 
-    // Create prediction via Replicate API — optimized params for better quality
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: "0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985",
-        input: {
-          human_img: userPhotoDataUri,
-          garm_img: garmImg,
-          garment_des: garmentDesc,
-          category: category,
-          is_checked_crop: true,
-          denoise_steps: 40,
-        },
-      }),
-    });
+    // DUAL PROVIDER: Kolors (FREE via HuggingFace) → IDM-VTON (Replicate $0.05 fallback)
+    let resultUrl;
+    let provider = "kolors";
 
-    const prediction = await createRes.json();
-    
-    if (!createRes.ok) {
-      console.error("Replicate create error:", JSON.stringify(prediction));
-      return json({ error: prediction.detail || "AI model error" }, { status: 500, headers: CORS });
-    }
-
-    // Poll for result
-    let result = prediction;
-    const getUrl = result.urls?.get || `https://api.replicate.com/v1/predictions/${result.id}`;
-    
-    for (let i = 0; i < 60; i++) {
-      if (result.status === "succeeded") break;
-      if (result.status === "failed" || result.status === "canceled") {
+    try {
+      console.log("Trying Kolors Virtual Try-On (HuggingFace)...");
+      resultUrl = await kolorsVTON(userPhotoDataUri, garmImg);
+      console.log("Kolors succeeded");
+    } catch (kolorsErr) {
+      console.error("Kolors failed:", kolorsErr.message, "— falling back to IDM-VTON");
+      provider = "idm-vton";
+      try {
+        resultUrl = await idmVTON(userPhotoDataUri, garmImg, garmentDesc, category, token);
+        console.log("IDM-VTON fallback succeeded");
+      } catch (replicateErr) {
+        console.error("IDM-VTON also failed:", replicateErr.message);
         return json({ error: "AI generation failed" }, { status: 500, headers: CORS });
       }
-      
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const pollRes = await fetch(getUrl, {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      result = await pollRes.json();
     }
-
-    if (result.status !== "succeeded") {
-      return json({ error: "AI timeout" }, { status: 504, headers: CORS });
-    }
-
-    const resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
 
     // Increment usage counter (non-blocking)
     if (shop) {
@@ -157,7 +201,7 @@ export const action = async ({ request }) => {
       }
     }
 
-    return json({ success: true, result_url: String(resultUrl) }, { headers: CORS });
+    return json({ success: true, result_url: String(resultUrl), provider }, { headers: CORS });
 
   } catch (error) {
     console.error("Try-on error:", error);

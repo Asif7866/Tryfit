@@ -87,10 +87,34 @@ export const action = async ({ request }) => {
     const userBlob = new Blob([userBuffer], { type: userPhotoFile.type || "image/jpeg" });
     const userPhotoUrl = await fal.storage.upload(userBlob);
 
-    // Model switch: TRYON_MODEL=fashn (FASHN v1.6, better for on-model/multi-layer garments) | default kolors
+    // Model switch: TRYON_MODEL=nano-banana | nano-banana-pro (Gemini via fal) | fashn (FASHN v1.6) | kolors (default)
     const model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
+    const runKolors = async () => {
+      const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
+        input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
+      });
+      return r.data?.image?.url;
+    };
     let resultUrl;
-    if (model === "fashn") {
+    if (model === "nano-banana" || model === "nano-banana-pro") {
+      try {
+        const r = await fal.subscribe(`fal-ai/${model}/edit`, {
+          input: {
+            prompt: `Virtual try-on. Dress the person in the first image in the exact garment shown in the second image (${productTitle}). ` +
+              "Keep the person's face, skin tone, hair, body shape, pose, and background exactly unchanged. " +
+              "Reproduce the garment's color, print, pattern, fabric texture, border, embroidery, and drape exactly as in the second image. " +
+              "Ignore any model or background in the second image. Output one photorealistic image.",
+            image_urls: [userPhotoUrl, garmImg],
+            num_images: 1,
+            output_format: "jpeg",
+          },
+        });
+        resultUrl = r.data?.images?.[0]?.url;
+      } catch (e) {
+        console.error(`${model} failed, falling back to kolors:`, e.message);
+      }
+      if (!resultUrl) resultUrl = await runKolors();
+    } else if (model === "fashn") {
       const catMap = { upper_body: "tops", lower_body: "bottoms", dresses: "one-pieces" };
       const r = await fal.subscribe("fal-ai/fashn/tryon/v1.6", {
         input: {
@@ -104,10 +128,7 @@ export const action = async ({ request }) => {
       });
       resultUrl = r.data?.images?.[0]?.url;
     } else {
-      const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
-        input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
-      });
-      resultUrl = r.data?.image?.url;
+      resultUrl = await runKolors();
     }
     const result = { data: { image: { url: resultUrl } } };
     if (!resultUrl) {

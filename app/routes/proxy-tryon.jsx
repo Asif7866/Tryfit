@@ -4,6 +4,30 @@ import { createHash } from "node:crypto";
 import { prisma } from "../shopify.server";
 import { ensureMonthlyReset, maybeSendUsageAlert } from "../lib/usage.server";
 import { applyStudioBackground } from "../lib/studio.server";
+import Jimp from "jimp";
+
+// Nearest supported aspect ratio string for the room photo
+async function roomAspect(buf) {
+  try {
+    const im = await Jimp.read(buf);
+    const r = im.bitmap.width / im.bitmap.height;
+    const opts = { "1:1": 1, "4:3": 4 / 3, "3:4": 3 / 4, "16:9": 16 / 9, "9:16": 9 / 16, "3:2": 1.5, "2:3": 2 / 3, "5:4": 1.25, "4:5": 0.8, "21:9": 21 / 9 };
+    return Object.entries(opts).sort((a, b) => Math.abs(a[1] - r) - Math.abs(b[1] - r))[0][0];
+  } catch (_) { return "auto"; }
+}
+
+// If output is noticeably taller/wider than the room photo, crop (top-anchored / centered) to the room's ratio and re-host
+async function cropToRoomAspect(resultUrl, roomBuf) {
+  const [out, room] = await Promise.all([Jimp.read(resultUrl), Jimp.read(roomBuf)]);
+  const rr = room.bitmap.width / room.bitmap.height;
+  const or = out.bitmap.width / out.bitmap.height;
+  if (Math.abs(or - rr) / rr < 0.12) return resultUrl;
+  let w = out.bitmap.width, h = out.bitmap.height, x = 0, y = 0;
+  if (or < rr) { h = Math.round(w / rr); }
+  else { w = Math.round(h * rr); x = Math.round((out.bitmap.width - w) / 2); }
+  const buf = await out.crop(x, y, w, h).quality(92).getBufferAsync(Jimp.MIME_JPEG);
+  return fal.storage.upload(new Blob([buf], { type: "image/jpeg" }));
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -110,7 +134,9 @@ export const action = async ({ request }) => {
                 "Match the room's perspective, scale, lighting, shadows and natural fabric folds so it looks photographed in place. " +
                 "Reproduce the product's color, print, pattern and texture exactly as in the second image. " +
                 "Keep everything else in the room — furniture, walls, floor, objects, lighting — exactly unchanged. " +
-                "Ignore any staging, room or props in the second image; only take the product. Output one photorealistic image."
+                "Ignore any staging, room, box, pedestal or props in the second image; only take the product itself. " +
+                "STRICT: the output must be the first image (the room) edited in place — identical framing, crop and aspect ratio as the first image. " +
+                "Never append, stack, tile or show the second image or any part of it. Output exactly one photorealistic image."
               : `Virtual try-on. Dress the person in the first image in the exact garment shown in the second image (${productTitle}). ` +
                 "Keep the person's face, skin tone, hair, body shape, pose, and background exactly unchanged. " +
                 "Reproduce the garment's color, print, pattern, fabric texture, border, embroidery, and drape exactly as in the second image. " +
@@ -118,6 +144,7 @@ export const action = async ({ request }) => {
             image_urls: [userPhotoUrl, garmImg],
             num_images: 1,
             output_format: "jpeg",
+            ...(mode === "home" ? { aspect_ratio: await roomAspect(userBuffer) } : {}),
           },
         });
         resultUrl = r.data?.images?.[0]?.url;
@@ -145,6 +172,11 @@ export const action = async ({ request }) => {
     if (!resultUrl) {
       console.error("No result from fal.ai:", JSON.stringify(result));
       return json({ error: "AI returned no result" }, { status: 500, headers: CORS });
+    }
+
+    // Home mode safety net: if the model stitched the product photo below the room, crop back to the room's aspect ratio
+    if (mode === "home") {
+      try { resultUrl = await cropToRoomAspect(resultUrl, userBuffer); } catch (e) { console.error("room crop skipped:", e.message); }
     }
 
     // Optional: studio backdrop matching the product photo (merchant toggle)

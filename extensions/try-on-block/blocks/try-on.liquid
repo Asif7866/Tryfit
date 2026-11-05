@@ -357,7 +357,7 @@ const loadPrev=()=>{
 
 // Show result
 const showResult=url=>{
-  setSub("Here's your look! Tap the image to zoom in.");
+  setSub(HOME?"Here's how it looks in your space. Tap to zoom in.":"Here's your look! Tap the image to zoom in.");
   $('vto-res-img').src=url;
   $('vto-z-img').src=url;
   show('result');

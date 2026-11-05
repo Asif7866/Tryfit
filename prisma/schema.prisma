@@ -40,7 +40,7 @@ model ShopSettings {
   modalTitle          String   @default("Ready to try this on?")
   totalTryOns         Int      @default(0)
   monthlyTryOns       Int      @default(0)
-  monthlyLimit        Int      @default(5)
+  monthlyLimit        Int      @default(10)
   planChosen          Boolean  @default(false)
   billingId           String?
   // New: product-level control (JSON array of product IDs as strings)

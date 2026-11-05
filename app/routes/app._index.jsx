@@ -8,10 +8,11 @@ import {
 } from "@shopify/polaris";
 import shopify, { prisma } from "../shopify.server";
 import { ensureMonthlyReset } from "../lib/usage.server";
+import { PLAN_LIMITS } from "../lib/plans.server";
 
 const APP_HANDLE = "tryfit-5";
 const THEME_EXT_UID = "83bb5402-d1c3-404c-b6bf-94b8bc49f12e65c66f66";
-const PLAN_LIMITS = { free: 5, starter: 100, growth: 300, pro: 700 };
+
 const THIRTY_DAYS_AGO = () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
 export const action = async ({ request }) => {

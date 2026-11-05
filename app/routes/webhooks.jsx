@@ -1,4 +1,5 @@
 import { authenticate, prisma } from "../shopify.server";
+import { applyPlan } from "../lib/plans.server";
 
 const ATTRIBUTION_WINDOW_MS = 72 * 60 * 60 * 1000; // 72h
 
@@ -10,6 +11,20 @@ export const action = async ({ request }) => {
       await prisma.shopSettings.deleteMany({ where: { shop } });
       await prisma.session.deleteMany({ where: { shop } });
       break;
+
+    case "APP_SUBSCRIPTIONS_UPDATE": {
+      // Plan changed on Shopify's hosted pricing page — sync DB immediately
+      try {
+        const sub = payload?.app_subscription || {};
+        const status = String(sub.status || "").toUpperCase();
+        const active = status === "ACTIVE" || status === "ACCEPTED";
+        await applyPlan(shop, active ? sub.name : "free", { chosen: active });
+        console.log("[plan sync]", shop, sub.name, status);
+      } catch (e) {
+        console.error("APP_SUBSCRIPTIONS_UPDATE failed:", e.message);
+      }
+      break;
+    }
 
     case "ORDERS_CREATE": {
       // Attribute order to try-on if the product was tried on within the window

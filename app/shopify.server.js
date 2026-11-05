@@ -10,16 +10,16 @@ const appUrl = process.env.SHOPIFY_APP_URL || `https://${process.env.RAILWAY_PUB
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
-  apiVersion: "2024-10",
+  apiVersion: "2026-07",
   scopes: process.env.SCOPES?.split(","),
   appUrl,
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: "appStore",
   isEmbeddedApp: true,
-  logger: { level: 3 }, // Debug — temporary
   future: {
     unstable_newEmbeddedAuthStrategy: true,
+    expiringOfflineAccessTokens: true, // required for all public apps by Jan 1, 2027
   },
 });
 

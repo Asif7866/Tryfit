@@ -17,6 +17,15 @@
   {%- if vto_cfg.buttonTextColor != blank -%}{%- assign vto_btn_text_color = vto_cfg.buttonTextColor -%}{%- endif -%}
   {%- if vto_cfg.buttonRadius != blank -%}{%- assign vto_btn_radius = vto_cfg.buttonRadius -%}{%- endif -%}
 {%- endif -%}
+{%- assign vto_mode = block.settings.tryon_mode | default: "auto" -%}
+{%- if vto_mode == "auto" -%}
+  {%- assign vto_hay = product.title | append: " " | append: product.type | append: " " | append: product.tags | join: " " | downcase -%}
+  {%- assign vto_home_words = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket,throw,pillow,cushion,curtain,drape,rug,carpet,mat,table cloth,tablecloth,runner,wall art,painting,frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
+  {%- assign vto_mode = "fashion" -%}
+  {%- for w in vto_home_words -%}
+    {%- if vto_hay contains w -%}{%- assign vto_mode = "home" -%}{%- break -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 {% if product and vto_disabled == false %}
 <div
   id="vto"
@@ -25,6 +34,7 @@
   data-pimg="{{ product.featured_image | image_url: width: 1024 }}"
   data-shop="{{ shop.permanent_domain }}"
   data-category="{{ block.settings.garment_category }}"
+  data-mode="{{ vto_mode }}"
   data-vid="{{ product.selected_or_first_available_variant.id }}"
 >
   <button id="vto-btn" class="vto-btn" type="button">
@@ -38,8 +48,8 @@
     <div class="vto-card">
       <div class="vto-card__head">
         <div>
-          <h2 class="vto-card__title">See it on you</h2>
-          <p class="vto-card__sub" id="vto-subtitle">Best results come from a photo in the same pose as the product shot</p>
+          <h2 class="vto-card__title">{% if vto_mode == "home" %}See it in your room{% else %}See it on you{% endif %}</h2>
+          <p class="vto-card__sub" id="vto-subtitle">{% if vto_mode == "home" %}Upload a photo of the bed, window, or space where it will go{% else %}Best results come from a photo in the same pose as the product shot{% endif %}</p>
         </div>
         <span id="vto-close" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;min-height:34px;background:#f5f5f5;border:none;border-radius:50%;cursor:pointer;flex-shrink:0;margin-top:2px;font-size:20px;line-height:1;color:#888;font-family:system-ui,sans-serif;font-weight:300;user-select:none;-webkit-user-select:none;">✕</span>
       </div>
@@ -51,9 +61,9 @@
           <div id="vto-dz-empty">
             <button class="vto-choose" type="button" tabindex="-1">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Choose photo
+              {% if vto_mode == "home" %}Choose room photo{% else %}Choose photo{% endif %}
             </button>
-            <p class="vto-drop__hint">Your photo is deleted after your try-on is generated</p>
+            <p class="vto-drop__hint">Your photo is deleted after your {% if vto_mode == "home" %}preview{% else %}try-on{% endif %} is generated</p>
           </div>
         </div>
         <div id="vto-prev-wrap" class="vto-prev" style="display:none;">
@@ -255,10 +265,12 @@ const tick=()=>{
   $('vto-timer').textContent=sec+' sec';
   $('vto-m-time').textContent=sec+' sec · You can keep browsing';
 };
+const HOME=(D.mode==='home');
+const SUB_DEFAULT=HOME?'Upload a photo of the bed, window, or space where it will go':'Best results come from a photo in the same pose as the product shot';
 const updateStatus=()=>{
   let m='Reading your photo';
-  if(sec>=5)m='Fitting it on you';
-  if(sec>=15)m='Refining the details';
+  if(sec>=5)m=HOME?'Placing it in your room':'Fitting it on you';
+  if(sec>=15)m=HOME?'Matching light and perspective':'Refining the details';
   if(sec>=25)m='Almost ready';
   $('vto-status').textContent=m;
   $('vto-m-status').textContent=m;
@@ -351,7 +363,7 @@ async function runAI(){
   try{
     const fd=new FormData();
     fd.append('shop',D.shop);fd.append('product_id',D.pid);fd.append('product_title',D.ptitle);
-    fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');
+    fd.append('product_image_url',D.pimg);fd.append('user_photo',file);fd.append('category',D.category||'dresses');fd.append('mode',D.mode||'fashion');
     const res=await fetch('https://tryfit-production.up.railway.app/proxy-tryon',{method:'POST',body:fd,mode:'cors'});
     const data=await res.json();
     stopTimer();
@@ -382,8 +394,8 @@ async function runAI(){
 }
 
 // Result actions
-$('vto-regen')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
-$('vto-err-retry')?.addEventListener('click',()=>{setSub('Best results come from a photo in the same pose as the product shot');resetUpload();show('upload');loadPrev();});
+$('vto-regen')?.addEventListener('click',()=>{setSub(SUB_DEFAULT);resetUpload();show('upload');loadPrev();});
+$('vto-err-retry')?.addEventListener('click',()=>{setSub(SUB_DEFAULT);resetUpload();show('upload');loadPrev();});
 $('vto-buy')?.addEventListener('click',async()=>{
   try{const af=new FormData();af.append('shop',D.shop);af.append('product_id',D.pid);af.append('product_title',D.ptitle);af.append('event','atc');navigator.sendBeacon('https://tryfit-production.up.railway.app/log-tryon',af);}catch(e){}
   const vid=D.vid||document.querySelector('[name="id"]')?.value;
@@ -414,6 +426,11 @@ zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';
     { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
     { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },
     { "type": "header", "content": "AI Settings" },
+    { "type": "select", "id": "tryon_mode", "label": "Experience", "default": "auto", "info": "Auto detects home-decor products (bedsheets, curtains, rugs, cushions, wall art) from title/type/tags and switches to room placement.", "options": [
+      { "value": "auto", "label": "Auto (recommended)" },
+      { "value": "fashion", "label": "Fashion — wear it on a photo" },
+      { "value": "home", "label": "Home decor — place it in a room photo" }
+    ]},
     { "type": "select", "id": "garment_category", "label": "Garment Type", "default": "dresses", "info": "Upper body = tops/shirts. Lower body = pants/skirts. Full body = kurta sets, dresses, jumpsuits.", "options": [
       { "value": "upper_body", "label": "Upper Body (tops, shirts, jackets)" },
       { "value": "lower_body", "label": "Lower Body (pants, skirts)" },

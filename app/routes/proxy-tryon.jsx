@@ -23,6 +23,7 @@ export const action = async ({ request }) => {
     const productImageUrl = formData.get("product_image_url");
     const productTitle = formData.get("product_title") || "garment";
     const productId = formData.get("product_id") || "";
+    const mode = (formData.get("mode") || "fashion").toLowerCase() === "home" ? "home" : "fashion";
     const userPhotoFile = formData.get("user_photo");
     const shop = formData.get("shop");
 
@@ -72,7 +73,7 @@ export const action = async ({ request }) => {
     const userBuffer = Buffer.from(arrayBuffer);
     const photoHash = createHash("sha256").update(userBuffer).digest("hex");
     const studio = settings?.studioBackground === true;
-    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}|${studio ? "studio" : "raw"}|${(process.env.TRYON_MODEL || "kolors").toLowerCase()}`).digest("hex");
+    const cacheKey = createHash("sha256").update(`${shop}|${garmImg}|${photoHash}|${studio ? "studio" : "raw"}|${(process.env.TRYON_MODEL || "kolors").toLowerCase()}|${mode}`).digest("hex");
 
     // Cache hit → instant, free, not counted against quota
     try {
@@ -88,7 +89,8 @@ export const action = async ({ request }) => {
     const userPhotoUrl = await fal.storage.upload(userBlob);
 
     // Model switch: TRYON_MODEL=nano-banana | nano-banana-pro (Gemini via fal) | fashn (FASHN v1.6) | kolors (default)
-    const model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
+    let model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
+    if (mode === "home") model = "nano-banana-pro"; // room placement needs a general image editor
     const runKolors = async () => {
       const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
         input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
@@ -100,10 +102,19 @@ export const action = async ({ request }) => {
       try {
         const r = await fal.subscribe(`fal-ai/${model}/edit`, {
           input: {
-            prompt: `Virtual try-on. Dress the person in the first image in the exact garment shown in the second image (${productTitle}). ` +
-              "Keep the person's face, skin tone, hair, body shape, pose, and background exactly unchanged. " +
-              "Reproduce the garment's color, print, pattern, fabric texture, border, embroidery, and drape exactly as in the second image. " +
-              "Ignore any model or background in the second image. Output one photorealistic image.",
+            prompt: mode === "home"
+              ? `Home decor visualization. The first image is a customer's room. The second image shows a product: ${productTitle}. ` +
+                "Place this exact product into the room on the correct surface — a bedsheet, comforter, duvet, quilt or dohar goes on the bed replacing the existing bedding; " +
+                "pillow or cushion covers go on the existing pillows/cushions; a curtain hangs on the window; a rug lies on the floor; a throw drapes over the bed or sofa; " +
+                "wall art, a frame or poster mounts on the wall; a tablecloth or runner covers the table. " +
+                "Match the room's perspective, scale, lighting, shadows and natural fabric folds so it looks photographed in place. " +
+                "Reproduce the product's color, print, pattern and texture exactly as in the second image. " +
+                "Keep everything else in the room — furniture, walls, floor, objects, lighting — exactly unchanged. " +
+                "Ignore any staging, room or props in the second image; only take the product. Output one photorealistic image."
+              : `Virtual try-on. Dress the person in the first image in the exact garment shown in the second image (${productTitle}). ` +
+                "Keep the person's face, skin tone, hair, body shape, pose, and background exactly unchanged. " +
+                "Reproduce the garment's color, print, pattern, fabric texture, border, embroidery, and drape exactly as in the second image. " +
+                "Ignore any model or background in the second image. Output one photorealistic image.",
             image_urls: [userPhotoUrl, garmImg],
             num_images: 1,
             output_format: "jpeg",
@@ -113,7 +124,7 @@ export const action = async ({ request }) => {
       } catch (e) {
         console.error(`${model} failed, falling back to kolors:`, e.message);
       }
-      if (!resultUrl) resultUrl = await runKolors();
+      if (!resultUrl && mode !== "home") resultUrl = await runKolors();
     } else if (model === "fashn") {
       const catMap = { upper_body: "tops", lower_body: "bottoms", dresses: "one-pieces" };
       const r = await fal.subscribe("fal-ai/fashn/tryon/v1.6", {
@@ -137,7 +148,7 @@ export const action = async ({ request }) => {
     }
 
     // Optional: studio backdrop matching the product photo (merchant toggle)
-    if (studio) {
+    if (studio && mode !== "home") {
       try {
         resultUrl = await applyStudioBackground(resultUrl, garmImg);
       } catch (bgErr) {

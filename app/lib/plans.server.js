@@ -1,7 +1,7 @@
 import shopify from "../shopify.server";
 import { prisma } from "../shopify.server";
 
-export const PLAN_LIMITS = { free: 5, starter: 100, growth: 300, pro: 700 };
+export const PLAN_LIMITS = { free: 10, starter: 100, growth: 300, pro: 700 };
 export const planKeyFromName = (name) => {
   const k = String(name || "free").toLowerCase().trim();
   return PLAN_LIMITS[k] !== undefined ? k : "free";

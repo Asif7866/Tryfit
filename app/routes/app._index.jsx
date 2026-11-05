@@ -71,7 +71,7 @@ export const loader = async ({ request }) => {
     const activePlan = activeSubs.find(s => s.status === "ACTIVE");
     const planName = activePlan?.name || "Free";
     const planKey = planName.toLowerCase();
-    const monthlyLimit = PLAN_LIMITS[planKey] || 5;
+    const monthlyLimit = PLAN_LIMITS[planKey] || 10;
 
     // 2. Merchant email (for usage alerts) + products
     let merchantEmail = null;
@@ -151,7 +151,7 @@ export const loader = async ({ request }) => {
     const shopName = authenticatedShop;
     let fb = {
       shop: shopName || "unknown", products: [], totalProducts: 0, currencyCode: "INR",
-      monthlyTryOns: 0, monthlyLimit: 5, plan: "Free", totalTryOns: 0, uniqueUsers: 0, topProducts: [],
+      monthlyTryOns: 0, monthlyLimit: 10, plan: "Free", totalTryOns: 0, uniqueUsers: 0, topProducts: [],
       addToCartRate: "0.0", tryOnRevenue: "0.00", conversions: 0, gallery: [], allTimeTryOns: 0,
       onboarding: { planChosen: true, themeBlockAdded: true, tested: true, dismissed: true }, fallback: true,
     };
@@ -174,7 +174,7 @@ export const loader = async ({ request }) => {
         const topProducts = Object.values(counts).filter(c => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 5);
         const atc = logs.filter(l => l.status === "added_to_cart").length;
         const converted = await prisma.tryOnLog.findMany({ where: { shop: shopName, status: "converted", createdAt: { gte: since } }, select: { revenue: true } });
-        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: settings?.monthlyLimit || 5, plan: settings?.plan || "Free", totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0,
+        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: settings?.monthlyLimit || 10, plan: settings?.plan || "Free", totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0,
           topProducts, uniqueUsers: Object.keys(counts).length, addToCartRate: totalTryOns > 0 ? ((atc / totalTryOns) * 100).toFixed(1) : "0.0",
           conversions: converted.length, tryOnRevenue: converted.reduce((a, c) => a + (c.revenue || 0), 0).toFixed(2) };
       }

@@ -27,8 +27,18 @@
   {%- endfor -%}
 {%- endif -%}
 {% if product and vto_disabled == false %}
+<!--
+  ┌──────────────────────────────────────────────────────────────┐
+  │  TryFit — AI Virtual Try-On for Shopify                      │
+  │  Shoppers see outfits on themselves, or decor in their room. │
+  │  Built by FutureTechiez · https://futuretechiez.in           │
+  │  Get it for your store → https://apps.shopify.com/partners/futuretechiez │
+  └──────────────────────────────────────────────────────────────┘
+-->
 <div
   id="vto"
+  data-app="TryFit by FutureTechiez"
+  data-app-url="https://futuretechiez.in"
   data-pid="{{ product.id }}"
   data-ptitle="{{ product.title | escape }}"
   data-pimg="{{ product.featured_image | image_url: width: 1024 }}"
@@ -295,6 +305,14 @@
 const $=id=>document.getElementById(id);
 const el=$('vto');if(!el)return;
 const D=el.dataset;
+if(!window.__tryfitBanner){window.__tryfitBanner=1;try{
+  console.log(
+    '%cTryFit%c AI Virtual Try-On %c\nShoppers see outfits on themselves — or bedsheets, curtains & decor in their own room.\nBuilt by FutureTechiez → https://futuretechiez.in\nGet it for your Shopify store → https://apps.shopify.com/partners/futuretechiez',
+    'background:#111;color:#fff;padding:4px 10px;border-radius:6px;font-weight:700;font-size:13px',
+    'color:#111;font-weight:600;font-size:13px;padding-left:6px',
+    'color:#666;font-size:12px;line-height:1.6'
+  );
+}catch(e){}}
 const modal=$('vto-modal'),mini=$('vto-mini'),zoom=$('vto-zoom');
 const fileInput=$('vto-file');
 let file=null,resultUrl=null,timer=null,sec=0,minimized=false;

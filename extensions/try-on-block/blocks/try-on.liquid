@@ -37,9 +37,15 @@
   data-mode="{{ vto_mode }}"
   data-vid="{{ product.selected_or_first_available_variant.id }}"
 >
+  {%- assign vto_btn_label = vto_btn_text -%}
+  {%- if vto_mode == "home" -%}{%- assign vto_btn_label = block.settings.button_text_home | default: "SEE IN MY ROOM" -%}{%- endif -%}
   <button id="vto-btn" class="vto-btn" type="button">
+    {%- if vto_mode == "home" -%}
+    <svg class="vto-btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+    {%- else -%}
     <svg class="vto-btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>
-    <span>{{ vto_btn_text }}</span>
+    {%- endif -%}
+    <span>{{ vto_btn_label }}</span>
     <span class="vto-btn__badge">AI</span>
   </button>
 
@@ -72,18 +78,39 @@
         </div>
       </div>
 
-      <!-- PROCESSING (expanded view) -->
+      <!-- PROCESSING (stays in modal) -->
       <div id="vto-s-proc" class="vto-s" style="display:none;">
         <div class="vto-proc">
           <div class="vto-proc__imgs">
-            <div class="vto-proc__img"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
-            <div class="vto-proc__spin">
-              <svg width="28" height="28" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#e5e5e5" stroke-width="2.5"/><circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="70 88" class="vto-spinner"/></svg>
+            <div class="vto-proc__img">
+              <img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" />
+              <span class="vto-proc__tag">Product</span>
             </div>
-            <div class="vto-proc__img"><img id="vto-proc-u" alt="" /></div>
+            <div class="vto-proc__link"><span></span><span></span><span></span></div>
+            <div class="vto-proc__img vto-proc__img--u">
+              <img id="vto-proc-u" alt="" />
+              <div class="vto-scan"></div>
+              <span class="vto-proc__tag">{% if vto_mode == "home" %}Your room{% else %}You{% endif %}</span>
+            </div>
           </div>
-          <p class="vto-proc__status" id="vto-status">Reading your photo</p>
-          <p class="vto-proc__time" id="vto-timer">0 sec</p>
+          <div class="vto-prog"><div id="vto-prog-bar" class="vto-prog__bar"></div></div>
+          <ul class="vto-steps" id="vto-steps">
+            {%- if vto_mode == "home" -%}
+            <li><i></i><span>Reading your room photo</span></li>
+            <li><i></i><span>Studying the product</span></li>
+            <li><i></i><span>Placing it in your room</span></li>
+            <li><i></i><span>Matching light &amp; perspective</span></li>
+            <li><i></i><span>Final touches</span></li>
+            {%- else -%}
+            <li><i></i><span>Reading your photo</span></li>
+            <li><i></i><span>Analysing the garment</span></li>
+            <li><i></i><span>Fitting it on you</span></li>
+            <li><i></i><span>Matching light &amp; shadows</span></li>
+            <li><i></i><span>Final touches</span></li>
+            {%- endif -%}
+          </ul>
+          <p class="vto-proc__time"><span id="vto-timer">0 sec</span> · usually takes 15–30 sec</p>
+          <button id="vto-to-mini" class="vto-link" type="button">Keep browsing — we'll bring the result back here ›</button>
         </div>
       </div>
 
@@ -180,13 +207,36 @@
 .vto-prev__grid img:hover{border-color:#111;}
 
 /* PROCESSING */
-.vto-proc{text-align:center;padding:24px 0 8px;}
-.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:20px;}
-.vto-proc__img{width:42%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06);}
+.vto-proc{text-align:center;padding:8px 0 4px;}
+.vto-proc__imgs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:18px;}
+.vto-proc__img{position:relative;width:42%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);background:#f3f3f3;}
 .vto-proc__img img{width:100%;height:100%;object-fit:cover;display:block;}
-.vto-proc__spin{width:16%;display:flex;align-items:center;justify-content:center;}
-.vto-proc__status{font:500 15px/1 var(--vf);color:#444;margin:0 0 4px;}
-.vto-proc__time{font:400 13px/1 var(--vf);color:#aaa;margin:0;}
+.vto-proc__img--u img{animation:vBreath 3s ease-in-out infinite;}
+.vto-proc__tag{position:absolute;left:8px;bottom:8px;padding:3px 8px;border-radius:999px;background:rgba(17,17,17,.72);color:#fff;font:600 10px/1.4 var(--vf);letter-spacing:.3px;backdrop-filter:blur(4px);}
+.vto-scan{position:absolute;left:0;right:0;top:-45%;height:45%;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.65) 50%,rgba(255,255,255,0));animation:vScan 2.4s ease-in-out infinite;}
+.vto-scan::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#111;opacity:.55;box-shadow:0 0 12px 2px rgba(17,17,17,.35);}
+.vto-proc__link{width:16%;display:flex;align-items:center;justify-content:center;gap:5px;}
+.vto-proc__link span{width:6px;height:6px;border-radius:50%;background:#111;opacity:.2;animation:vDot 1.2s ease-in-out infinite;}
+.vto-proc__link span:nth-child(2){animation-delay:.2s;}.vto-proc__link span:nth-child(3){animation-delay:.4s;}
+.vto-prog{height:4px;border-radius:999px;background:#ececec;overflow:hidden;margin:0 4px 16px;}
+.vto-prog__bar{height:100%;width:0;border-radius:999px;background:#111;transition:width .6s ease;}
+.vto-steps{list-style:none;margin:0 auto 14px;padding:0;text-align:left;max-width:300px;}
+.vto-steps li{display:flex;align-items:center;gap:10px;font:400 14px/1.3 var(--vf);color:#b5b5b5;padding:5px 0;transition:color .3s;}
+.vto-steps li i{width:18px;height:18px;border-radius:50%;border:2px solid #e3e3e3;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;transition:all .3s;box-sizing:border-box;}
+.vto-steps li.is-active{color:#111;font-weight:500;}
+.vto-steps li.is-active i{border-color:#111;border-top-color:transparent;animation:vSpin .8s linear infinite;}
+.vto-steps li.is-done{color:#666;}
+.vto-steps li.is-done i{background:#111;border-color:#111;}
+.vto-steps li.is-done i::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg);}
+.vto-proc__time{font:400 12px/1 var(--vf);color:#aaa;margin:0 0 10px;}
+.vto-link{background:none;border:none;padding:6px;font:500 12px/1 var(--vf);color:#666;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.vto-link:hover{color:#111;}
+.vto-res__pic img{animation:vReveal .6s cubic-bezier(.2,.8,.2,1);}
+@keyframes vScan{0%{top:-45%}100%{top:100%}}
+@keyframes vDot{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes vBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+@keyframes vSpin{to{transform:rotate(360deg)}}
+@keyframes vReveal{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 .vto-spinner{animation:vR 1s linear infinite;transform-origin:center;}
 @keyframes vR{to{transform:rotate(360deg)}}
 
@@ -267,14 +317,17 @@ const tick=()=>{
 };
 const HOME=(D.mode==='home');
 const SUB_DEFAULT=HOME?'Upload a photo of the bed, window, or space where it will go':'Best results come from a photo in the same pose as the product shot';
+const STEPS=[...document.querySelectorAll('#vto-steps li')];
+const setStep=i=>{STEPS.forEach((li,k)=>{li.classList.toggle('is-done',k<i);li.classList.toggle('is-active',k===i);});
+  const t=STEPS[i]?.querySelector('span')?.textContent||'';const ms=$('vto-m-status');if(ms)ms.textContent=t;};
+const setProgress=p=>{const b=$('vto-prog-bar');if(b)b.style.width=Math.max(0,Math.min(100,p))+'%';};
 const updateStatus=()=>{
-  let m='Reading your photo';
-  if(sec>=5)m=HOME?'Placing it in your room':'Fitting it on you';
-  if(sec>=15)m=HOME?'Matching light and perspective':'Refining the details';
-  if(sec>=25)m='Almost ready';
-  $('vto-status').textContent=m;
-  $('vto-m-status').textContent=m;
+  let i=0;if(sec>=3)i=1;if(sec>=8)i=2;if(sec>=18)i=3;if(sec>=28)i=4;
+  setStep(i);
+  const p=sec<30?sec*3:Math.min(95,90+(sec-30)*0.25);
+  setProgress(p);
 };
+const finishSteps=()=>{STEPS.forEach(li=>{li.classList.add('is-done');li.classList.remove('is-active');});setProgress(100);};
 
 // Minimize → minibar (bottom-right)
 const toMini=()=>{minimized=true;modal.style.display='none';mini.style.display='flex';};
@@ -328,6 +381,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 $('vto-m-expand').addEventListener('click',toModal);
+$('vto-to-mini')?.addEventListener('click',toMini);
 
 // File → auto-start, auto-minimize
 fileInput?.addEventListener('change',e=>{
@@ -339,9 +393,9 @@ fileInput?.addEventListener('change',e=>{
   r.onload=ev=>{
     $('vto-proc-u').src=ev.target.result;
     $('vto-m-u').src=ev.target.result;
-    // Close modal → show minibar → start AI
-    toMini();
+    // Stay in the modal and show the full process
     show('proc');
+    setProgress(0);setStep(0);
     startTimer();
     runAI();
   };
@@ -371,8 +425,8 @@ async function runAI(){
     if(res.ok&&data.success&&data.result_url){
       resultUrl=data.result_url;
       savePrev(resultUrl);
-      toModal();
-      showResult(resultUrl);
+      finishSteps();
+      setTimeout(()=>{toModal();showResult(resultUrl);},450);
       return;
     }
     if(res.status===429){
@@ -421,7 +475,8 @@ zoom?.addEventListener('click',e=>{if(e.target===zoom)zoom.style.display='none';
   "templates": ["product"],
   "settings": [
     { "type": "header", "content": "Button" },
-    { "type": "text", "id": "button_text", "label": "Button Text", "default": "TRY ON" },
+    { "type": "text", "id": "button_text", "label": "Button Text (fashion)", "default": "TRY ON" },
+    { "type": "text", "id": "button_text_home", "label": "Button Text (home decor)", "default": "SEE IN MY ROOM" },
     { "type": "color", "id": "button_color", "label": "Button Color", "default": "#111111" },
     { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
     { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },

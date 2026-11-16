@@ -160,6 +160,15 @@ export const loader = async ({ request }) => {
         // Admin session failed — still pull the real plan from Shopify via the stored offline token
         let settings = await syncPlanFromShopify(shopName);
         if (!settings) settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });
+        // Plan selection must never be skipped: returning from Shopify's pricing page marks it chosen,
+        // otherwise a shop that hasn't chosen a plan is sent to the pricing page before any dashboard.
+        const chargeId = new URL(request.url).searchParams.get("charge_id");
+        if (chargeId) {
+          settings = await prisma.shopSettings.upsert({ where: { shop: shopName }, update: { planChosen: true }, create: { shop: shopName, planChosen: true, enabled: true } });
+        } else if (!settings?.planChosen) {
+          const slug = shopName.replace(".myshopify.com", "");
+          return json({ requiresPlan: true, pricingUrl: `https://admin.shopify.com/store/${slug}/charges/${APP_HANDLE}/pricing_plans`, shop: shopName });
+        }
         const since = THIRTY_DAYS_AGO();
         const totalTryOns = await prisma.tryOnLog.count({ where: { shop: shopName, status: "completed", createdAt: { gte: since } } });
         const gallery = await prisma.tryOnLog.findMany({

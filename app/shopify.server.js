@@ -23,6 +23,11 @@ const shopify = shopifyApp({
   },
 });
 
+// Background: move existing installs to expiring offline tokens (non-blocking)
+if (process.env.NODE_ENV !== "development") {
+  setTimeout(() => import("./lib/migrate-offline-tokens.server.js").then((m) => m.migrateOfflineTokens()).catch((e) => console.error("[token-migrate]", e.message)), 15000);
+}
+
 export default shopify;
 export const authenticate = shopify.authenticate;
 export const unauthenticated = shopify.unauthenticated;

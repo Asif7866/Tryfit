@@ -1,7 +1,6 @@
 import { json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../shopify.server";
+import { PLAN_LIMITS } from "../lib/plans.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +8,6 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const PLAN_LIMITS = { "free": 10, "starter": 100, "growth": 400, "pro": 1200 };
 
 // POST /sync-plan  { shop, plan }
 // Called after merchant upgrades plan — syncs DB so dashboard fallback shows correct data

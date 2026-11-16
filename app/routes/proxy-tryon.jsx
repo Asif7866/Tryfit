@@ -3,7 +3,7 @@ import { fal } from "@fal-ai/client";
 import { createHash } from "node:crypto";
 import { prisma } from "../shopify.server";
 import { ensureMonthlyReset, maybeSendUsageAlert } from "../lib/usage.server";
-import { syncPlanFromShopify } from "../lib/plans.server";
+import { syncPlanFromShopify, PLAN_LIMITS } from "../lib/plans.server";
 import { applyStudioBackground } from "../lib/studio.server";
 import Jimp from "jimp";
 
@@ -79,11 +79,12 @@ export const action = async ({ request }) => {
         if (disabled.includes(String(productId))) {
           return json({ error: "Try-on is not available for this product." }, { status: 403, headers: CORS });
         }
-        if (!isDev && settings.monthlyTryOns >= settings.monthlyLimit) {
+        const limitFor = (st) => PLAN_LIMITS[String(st?.plan || "free").toLowerCase()] ?? st?.monthlyLimit ?? 10;
+        if (!isDev && settings.monthlyTryOns >= limitFor(settings)) {
           // Limit hit — merchant may have upgraded without the dashboard syncing. Re-check Shopify once.
           const fresh = await syncPlanFromShopify(shop);
           if (fresh) settings = fresh;
-          if (settings.monthlyTryOns >= settings.monthlyLimit) {
+          if (settings.monthlyTryOns >= limitFor(settings)) {
             return json({ error: "Monthly try-on limit reached. Please upgrade your plan." }, { status: 429, headers: CORS });
           }
         }

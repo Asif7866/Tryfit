@@ -8,7 +8,7 @@ import {
 } from "@shopify/polaris";
 import shopify, { prisma } from "../shopify.server";
 import { ensureMonthlyReset } from "../lib/usage.server";
-import { PLAN_LIMITS } from "../lib/plans.server";
+import { PLAN_LIMITS, syncPlanFromShopify } from "../lib/plans.server";
 
 const APP_HANDLE = "tryfit-5";
 const THEME_EXT_UID = "83bb5402-d1c3-404c-b6bf-94b8bc49f12e65c66f66";
@@ -157,7 +157,9 @@ export const loader = async ({ request }) => {
     };
     try {
       if (shopName) {
-        const settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });
+        // Admin session failed — still pull the real plan from Shopify via the stored offline token
+        let settings = await syncPlanFromShopify(shopName);
+        if (!settings) settings = await prisma.shopSettings.findUnique({ where: { shop: shopName } });
         const since = THIRTY_DAYS_AGO();
         const totalTryOns = await prisma.tryOnLog.count({ where: { shop: shopName, status: "completed", createdAt: { gte: since } } });
         const gallery = await prisma.tryOnLog.findMany({
@@ -174,7 +176,7 @@ export const loader = async ({ request }) => {
         const topProducts = Object.values(counts).filter(c => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 5);
         const atc = logs.filter(l => l.status === "added_to_cart").length;
         const converted = await prisma.tryOnLog.findMany({ where: { shop: shopName, status: "converted", createdAt: { gte: since } }, select: { revenue: true } });
-        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: settings?.monthlyLimit || 10, plan: settings?.plan || "Free", totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0,
+        fb = { ...fb, shop: shopName, monthlyTryOns: settings?.monthlyTryOns || 0, monthlyLimit: PLAN_LIMITS[String(settings?.plan || "free").toLowerCase()] || settings?.monthlyLimit || 10, plan: (p => p.charAt(0).toUpperCase() + p.slice(1))(String(settings?.plan || "free")), totalTryOns, gallery, allTimeTryOns: settings?.totalTryOns || 0,
           topProducts, uniqueUsers: Object.keys(counts).length, addToCartRate: totalTryOns > 0 ? ((atc / totalTryOns) * 100).toFixed(1) : "0.0",
           conversions: converted.length, tryOnRevenue: converted.reduce((a, c) => a + (c.revenue || 0), 0).toFixed(2) };
       }

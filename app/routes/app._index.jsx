@@ -64,6 +64,9 @@ export const loader = async ({ request }) => {
         await prisma.shopSettings.upsert({ where: { shop }, update: { planChosen: true }, create: { shop, planChosen: true, enabled: true } });
       } else {
         const shopSlug = shop.replace(".myshopify.com", "");
+        // Mark as shown now: Shopify doesn't always append charge_id when the Free plan is picked,
+        // so the next open goes to the dashboard instead of looping back to the pricing page.
+        await prisma.shopSettings.upsert({ where: { shop }, update: { planChosen: true }, create: { shop, planChosen: true, enabled: true, lastResetAt: new Date() } });
         return json({ requiresPlan: true, pricingUrl: `https://admin.shopify.com/store/${shopSlug}/charges/${APP_HANDLE}/pricing_plans`, shop });
       }
     }
@@ -167,6 +170,7 @@ export const loader = async ({ request }) => {
           settings = await prisma.shopSettings.upsert({ where: { shop: shopName }, update: { planChosen: true }, create: { shop: shopName, planChosen: true, enabled: true } });
         } else if (!settings?.planChosen) {
           const slug = shopName.replace(".myshopify.com", "");
+          await prisma.shopSettings.upsert({ where: { shop: shopName }, update: { planChosen: true }, create: { shop: shopName, planChosen: true, enabled: true, lastResetAt: new Date() } });
           return json({ requiresPlan: true, pricingUrl: `https://admin.shopify.com/store/${slug}/charges/${APP_HANDLE}/pricing_plans`, shop: shopName });
         }
         const since = THIRTY_DAYS_AGO();

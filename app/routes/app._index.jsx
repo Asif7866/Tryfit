@@ -350,6 +350,34 @@ export default function Index() {
                 <ProgressBar progress={usagePercent} tone={usageTone} size="small" />
                 <Text as="p" variant="bodySm" tone="subdued">{monthlyTryOns} of {monthlyLimit} used · resets every 30 days</Text>
               </BlockStack>
+              <Divider />
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Plans</Text>
+                <InlineGrid columns={{ xs: 2, sm: 3, md: 6 }} gap="200">
+                  {[
+                    { key: "free", name: "Free", price: "$0", tries: 10 },
+                    { key: "starter", name: "Starter", price: "$15.99", tries: 100 },
+                    { key: "growth", name: "Growth", price: "$59.99", tries: 300 },
+                    { key: "pro", name: "Pro", price: "$119.99", tries: 700 },
+                    { key: "business", name: "Business", price: "$249.99", tries: 1500 },
+                    { key: "enterprise", name: "Enterprise", price: "$479.99", tries: 3000 },
+                  ].map((p) => {
+                    const current = plan.toLowerCase() === p.key;
+                    return (
+                      <div key={p.key} onClick={current ? undefined : goToPricing} style={{ cursor: current ? "default" : "pointer", borderRadius: 10, padding: 12, border: current ? "2px solid #303030" : "1px solid #E3E3E3", background: current ? "#F7F7F7" : "#FFFFFF" }}>
+                        <BlockStack gap="100">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="p" variant="bodySm" fontWeight="semibold">{p.name}</Text>
+                            {current && <Badge tone="success" size="small">Current</Badge>}
+                          </InlineStack>
+                          <Text as="p" variant="headingMd">{p.tries.toLocaleString()}</Text>
+                          <Text as="p" variant="bodyXs" tone="subdued">try-ons / month · {p.price}</Text>
+                        </BlockStack>
+                      </div>
+                    );
+                  })}
+                </InlineGrid>
+              </BlockStack>
             </BlockStack>
           </Card>
         </Layout.Section>

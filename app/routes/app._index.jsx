@@ -238,7 +238,7 @@ export default function Index() {
     else window.top.location.href = `https://admin.shopify.com/store/${slug}/charges/${APP_HANDLE}/pricing_plans`;
   };
   const themeEditorUrl = `https://admin.shopify.com/store/${slug}/themes/current/editor?template=product&addAppBlockId=${THEME_EXT_UID}/try-on&target=mainSection`;
-  const planTone = plan.toLowerCase() === "free" ? "info" : plan.toLowerCase() === "pro" ? "success" : "attention";
+  const planTone = plan.toLowerCase() === "free" ? "info" : ["pro","business","enterprise"].includes(plan.toLowerCase()) ? "success" : "attention";
   const usageTone = usagePercent >= 90 ? "critical" : usagePercent >= 70 ? "warning" : "success";
 
   const steps = [

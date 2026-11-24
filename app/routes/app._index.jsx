@@ -461,8 +461,29 @@ export default function Index() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h2" variant="headingMd">Need help?</Text>
-                <Text as="p" variant="bodyMd" tone="subdued">Get setup assistance or report an issue. We usually respond within a few hours.</Text>
-                <Button url="https://wa.me/917002073054?text=Hi%20need%20help%20with%20TryFit" external fullWidth>Contact support</Button>
+                <Text as="p" variant="bodyMd" tone="subdued">Setup help, an issue, or a custom plan for higher volume — reach us directly. We usually reply within a few hours.</Text>
+                <a href={`https://wa.me/917002073054?text=${encodeURIComponent(`Hi, I need help with TryFit (${shop})`)}`} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, background: "#25D366", color: "#fff", textDecoration: "none" }}>
+                  <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" style={{ flexShrink: 0 }}>
+                    <path fill="#fff" d="M16.04 3C9.4 3 4 8.36 4 14.96c0 2.3.66 4.45 1.8 6.27L4 29l7.98-1.76a12.1 12.1 0 0 0 4.06.7C22.68 27.94 28 22.58 28 15.98 28 9.38 22.68 3 16.04 3zm0 22.73c-1.3 0-2.58-.24-3.78-.7l-.54-.21-4.73 1.04 1.06-4.53-.25-.48a9.7 9.7 0 0 1-1.47-5.1c0-5.37 4.4-9.74 9.8-9.74 5.38 0 9.75 4.6 9.75 9.97 0 5.37-4.37 9.75-9.84 9.75z"/>
+                    <path fill="#fff" d="M21.5 18.4c-.3-.15-1.76-.86-2.03-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.78-1.49-1.75-1.66-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.67-1.6-.92-2.2-.24-.57-.49-.5-.67-.5h-.57c-.2 0-.52.08-.8.37-.27.3-1.04 1.01-1.04 2.47 0 1.45 1.07 2.86 1.22 3.06.15.2 2.1 3.2 5.08 4.48.71.31 1.27.49 1.7.63.72.22 1.37.19 1.88.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.41-.08-.13-.27-.2-.57-.35z"/>
+                  </svg>
+                  <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+                    <span style={{ fontWeight: 650, fontSize: 14 }}>Chat on WhatsApp</span>
+                    <span style={{ fontSize: 13, opacity: 0.92 }}>+91 70020 73054</span>
+                  </span>
+                </a>
+                <a href={`mailto:support@futuretechiez.in?subject=${encodeURIComponent(`TryFit support — ${shop}`)}`}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, border: "1px solid #E3E3E3", color: "#303030", textDecoration: "none" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#303030" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+                    <rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>
+                  </svg>
+                  <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+                    <span style={{ fontWeight: 650, fontSize: 14 }}>Email support</span>
+                    <span style={{ fontSize: 13, color: "#616161" }}>support@futuretechiez.in</span>
+                  </span>
+                </a>
+                <Text as="p" variant="bodySm" tone="subdued">Need more than 3,000 try-ons a month? Message us for a custom plan.</Text>
               </BlockStack>
             </Card>
 

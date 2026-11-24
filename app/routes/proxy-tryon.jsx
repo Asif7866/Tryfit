@@ -230,7 +230,24 @@ export const action = async ({ request }) => {
   }
 };
 
+// GET /proxy-tryon?shop=x.myshopify.com → { available } — storefront hides the button when the store is out of try-ons
 export const loader = async ({ request }) => {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  return json({ ok: true }, { headers: CORS });
+  const shop = new URL(request.url).searchParams.get("shop");
+  if (!shop) return json({ ok: true }, { headers: CORS });
+  const H = { ...CORS, "Cache-Control": "public, max-age=60" };
+  try {
+    if (DEV_STORES.includes(shop)) return json({ available: true }, { headers: H });
+    let st = await ensureMonthlyReset(shop);
+    if (!st) return json({ available: true }, { headers: H });
+    const limitFor = (x) => PLAN_LIMITS[String(x?.plan || "free").toLowerCase()] ?? x?.monthlyLimit ?? 10;
+    if (st.enabled === false) return json({ available: false }, { headers: H });
+    if (st.monthlyTryOns >= limitFor(st)) {
+      const fresh = await syncPlanFromShopify(shop); // merchant may have just upgraded
+      if (fresh) st = fresh;
+    }
+    return json({ available: st.monthlyTryOns < limitFor(st) }, { headers: H });
+  } catch (e) {
+    return json({ available: true }, { headers: H }); // never hide the button because of our own error
+  }
 };

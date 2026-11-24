@@ -383,6 +383,14 @@ const showResult=url=>{
 
 // Events
 $('vto-btn').addEventListener('click',()=>openModal('upload'));
+/* Hide the button when the store is out of try-ons (cached 2 min per shop) */
+const hideVto=()=>{try{el.style.display='none';}catch(e){}};
+(function(){if(window.Shopify&&Shopify.designMode)return;var k='vto_av_'+D.shop,c=null;
+  try{c=JSON.parse(sessionStorage.getItem(k)||'null');}catch(e){}
+  if(c&&Date.now()-c.t<120000){if(c.a===false)hideVto();return;}
+  fetch('https://tryfit-production.up.railway.app/proxy-tryon?shop='+encodeURIComponent(D.shop),{mode:'cors'}).then(r=>r.json()).then(d=>{
+    var a=d.available!==false;try{sessionStorage.setItem(k,JSON.stringify({a:a,t:Date.now()}));}catch(e){}
+    if(!a)hideVto();}).catch(()=>{});})();
 $('vto-close').addEventListener('click',()=>{
   if($('vto-s-proc').style.display!=='none'){toMini();}
   else{closeAll();resetUpload();}
@@ -452,6 +460,8 @@ async function runAI(){
       $('vto-err-title').textContent="You've loved this feature!";
       $('vto-err-msg').innerHTML='This store has used all its virtual try-ons for this month.<br>New credits arrive next month — or the store can upgrade for more.';
       $('vto-err-retry').textContent='Got it';
+      try{sessionStorage.setItem('vto_av_'+D.shop,JSON.stringify({a:false,t:Date.now()}));}catch(e){}
+      $('vto-err-retry').addEventListener('click',hideVto,{once:true});
       toModal();show('error');mini.style.display='none';return;
     }
     throw new Error(data.error||'AI generation failed');

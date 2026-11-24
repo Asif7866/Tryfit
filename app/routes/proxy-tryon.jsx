@@ -240,6 +240,7 @@ export const loader = async ({ request }) => {
     if (DEV_STORES.includes(shop)) return json({ available: true }, { headers: H });
     let st = await ensureMonthlyReset(shop);
     if (!st) return json({ available: true }, { headers: H });
+    if (!st.themeBlockAdded) prisma.shopSettings.update({ where: { shop }, data: { themeBlockAdded: true } }).catch(() => {}); // block is live on a product page
     const limitFor = (x) => PLAN_LIMITS[String(x?.plan || "free").toLowerCase()] ?? x?.monthlyLimit ?? 10;
     if (st.enabled === false) return json({ available: false }, { headers: H });
     if (st.monthlyTryOns >= limitFor(st)) {

@@ -4,8 +4,11 @@ import { prisma } from "../shopify.server";
 export const PLAN_LIMITS = { free: 10, starter: 100, growth: 300, pro: 700, business: 1500, enterprise: 3000 };
 export const planKeyFromName = (name) => {
   const k = String(name || "free").toLowerCase().trim();
-  return PLAN_LIMITS[k] !== undefined ? k : "free";
+  if (PLAN_LIMITS[k] !== undefined) return k;
+  const hit = Object.keys(PLAN_LIMITS).find((p) => p !== "free" && k.includes(p));
+  return hit || "free";
 };
+export const planLabel = (key) => key.charAt(0).toUpperCase() + key.slice(1);
 
 /** Apply a plan to a shop's DB row (name from Shopify subscription). */
 export async function applyPlan(shop, planName, { chosen = true } = {}) {

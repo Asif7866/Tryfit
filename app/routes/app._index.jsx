@@ -8,7 +8,7 @@ import {
 } from "@shopify/polaris";
 import shopify, { prisma } from "../shopify.server";
 import { ensureMonthlyReset } from "../lib/usage.server";
-import { PLAN_LIMITS, syncPlanFromShopify } from "../lib/plans.server";
+import { PLAN_LIMITS, syncPlanFromShopify, planKeyFromName, planLabel } from "../lib/plans.server";
 
 const APP_HANDLE = "tryfit-5";
 const THEME_EXT_UID = "83bb5402-d1c3-404c-b6bf-94b8bc49f12e65c66f66";
@@ -72,8 +72,8 @@ export const loader = async ({ request }) => {
     }
 
     const activePlan = activeSubs.find(s => s.status === "ACTIVE");
-    const planName = activePlan?.name || "Free";
-    const planKey = planName.toLowerCase();
+    const planKey = planKeyFromName(activePlan?.name || "free");
+    const planName = planLabel(planKey);
     const monthlyLimit = PLAN_LIMITS[planKey] || 10;
 
     // 2. Merchant email (for usage alerts) + products
@@ -134,7 +134,7 @@ export const loader = async ({ request }) => {
       gallery, allTimeTryOns,
       onboarding: {
         planChosen: hasPaidPlan || hasChosenPlan,
-        themeBlockAdded: settings?.themeBlockAdded || false,
+        themeBlockAdded: settings?.themeBlockAdded || allTimeTryOns > 0,
         tested: allTimeTryOns > 0,
         dismissed: settings?.onboardingDismissed || false,
       },

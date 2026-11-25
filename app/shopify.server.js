@@ -24,8 +24,11 @@ const shopify = shopifyApp({
 });
 
 // Background: move existing installs to expiring offline tokens (non-blocking)
-if (process.env.NODE_ENV !== "development") {
-  setTimeout(() => import("./lib/migrate-offline-tokens.server.js").then((m) => m.migrateOfflineTokens()).catch((e) => console.error("[token-migrate]", e.message)), 15000);
+if (process.env.NODE_ENV !== "development" && !globalThis.__tokenMigrate) {
+  globalThis.__tokenMigrate = true;
+  const run = () => import("./lib/migrate-offline-tokens.server.js").then((m) => m.migrateOfflineTokens()).catch((e) => console.error("[token-migrate]", e.message));
+  setTimeout(run, 15000);
+  setInterval(run, 6 * 60 * 60 * 1000).unref?.(); // retry stragglers every 6h
 }
 
 export default shopify;

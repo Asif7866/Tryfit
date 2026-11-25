@@ -27,6 +27,8 @@ export async function applyPlan(shop, planName, { chosen = true } = {}) {
  */
 export async function syncPlanFromShopify(shop) {
   try {
+    const { ensureExpiringToken } = await import("./migrate-offline-tokens.server.js");
+    if (!(await ensureExpiringToken(shop))) return null; // never send a non-expiring token
     const { admin } = await shopify.unauthenticated.admin(shop);
     const res = await admin.graphql(`{ appInstallation { activeSubscriptions { name status } } }`);
     const data = await res.json();

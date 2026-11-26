@@ -155,7 +155,7 @@
           <div id="vto-qr" class="vto-qr" style="display:none;">
             <div class="vto-qr__box"><img id="vto-qr-img" alt="QR code" width="180" height="180" /></div>
             <p class="vto-qr__t">Scan with your phone camera</p>
-            <p class="vto-tip">Take or pick a photo on your phone — your result appears there.</p>
+            <p class="vto-qr__st" id="vto-qr-st"><i></i><span>Take a photo on your phone — your look appears right here</span></p>
           </div>
 
           <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}A wide photo of the bed or wall works best.<br><span>No close-ups or dark photos.</span>{% elsif vto_mode == "shoes" %}A standing photo with your feet visible works best.<br><span>No selfies or cut-off feet.</span>{% elsif vto_mode == "jewelry" %}A front-facing, chest-up photo works best.<br><span>Keep your neck and ears visible.</span>{% else %}A full-length photo gives the most accurate fit.<br><span>No group photos or selfies.</span>{% endif %}</p>
@@ -347,10 +347,16 @@
 .vto-ghost{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;height:40px;margin-top:4px;border:none;background:transparent;color:var(--ink);font-size:15px;font-weight:500;cursor:pointer;border-radius:14px;transition:background .3s;}
 .vto-ghost:hover{background:#f6f4f2;}
 .vto-ghost svg{width:18px;height:18px;}
-.vto-qr{display:flex;flex-direction:column;align-items:center;margin:22px 0 16px;}
+.vto-qr{display:flex;flex-direction:column;align-items:center;margin:16px 0 4px;}
 .vto-qr__box{padding:14px;border-radius:20px;background:#fff;box-shadow:0 0 0 1px var(--line);}
-.vto-qr__box img{display:block;width:176px;height:176px;}
-.vto-qr__t{margin:16px 0 4px;font-size:17px;font-weight:600;color:var(--ink);}
+.vto-qr__box{padding:12px!important;}
+.vto-qr__box img{display:block;width:150px;height:150px;}
+.vto-qr__t{margin:14px 0 6px;font-size:16px;font-weight:600;color:var(--ink);}
+.vto-qr__st{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;font-size:13px;line-height:1.4;color:var(--mute);max-width:280px;}
+.vto-qr__st i{width:7px;height:7px;border-radius:50%;background:#c9c5c2;flex-shrink:0;}
+.vto-qr__st.is-live{color:var(--ink);}
+.vto-qr__st.is-live i{background:#4caf72;box-shadow:0 0 0 0 rgba(76,175,114,.5);animation:vPing 1.4s ease-out infinite;}
+@keyframes vPing{to{box-shadow:0 0 0 8px rgba(76,175,114,0)}}
 .vto-priv{display:flex;align-items:center;justify-content:center;gap:5px;margin:8px 0 0;font-size:11px;color:#b0aba8;}
 .vto-prev{width:100%;margin-top:14px;text-align:left;}
 .vto-prev__label{font-size:12px;font-weight:600;color:var(--mute);margin:0 0 8px;}
@@ -541,7 +547,7 @@ let outT=null;
 const enter=()=>{clearTimeout(outT);modal.classList.remove('is-out');modal.style.display='flex';requestAnimationFrame(()=>requestAnimationFrame(()=>modal.classList.add('is-in')));};
 const leave=(after)=>{modal.classList.remove('is-in');modal.classList.add('is-out');clearTimeout(outT);outT=setTimeout(()=>{modal.style.display='none';modal.classList.remove('is-out');after&&after();},320);};
 const openModal=s=>{loadFont();lastFocus=document.activeElement;enter();lockScroll(true);show(s||'upload');if(!s||s==='upload'){upState.classList.remove('is-busy');qr(false);loadPrev();}if(!(window.matchMedia&&matchMedia('(pointer:coarse)').matches))setTimeout(()=>{try{$('vto-close').focus({preventScroll:true});}catch(e){}},50);};
-const closeAll=()=>{if(modal.style.display!=='none')leave();mini.style.display='none';lockScroll(false);stopTimer();minimized=false;try{lastFocus&&lastFocus.focus();}catch(e){}};
+const closeAll=()=>{try{hoStop();}catch(e){}if(modal.style.display!=='none')leave();mini.style.display='none';lockScroll(false);stopTimer();minimized=false;try{lastFocus&&lastFocus.focus();}catch(e){}};
 const resetUpload=()=>{file=null;if(fileInput)fileInput.value='';upState.classList.remove('is-busy');};
 const toast=t=>{const n=$('vto-toast');if(!n)return;n.textContent=t;n.classList.add('is-on');clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('is-on'),2200);};
 const beacon=ev=>{try{const f=new FormData();f.append('shop',D.shop);f.append('product_id',D.pid);f.append('product_title',D.ptitle);f.append('event',ev);navigator.sendBeacon(API+'/log-tryon',f);}catch(e){}};
@@ -570,8 +576,27 @@ const loadPrev=()=>{try{const a=JSON.parse(sessionStorage.getItem(PREV_KEY)||'[]
 const qrBtn=$('vto-qr-btn');
 const isTouch=window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches;
 if(isTouch&&qrBtn)qrBtn.style.display='none';
+/* Phone handoff: QR → phone page uploads → this drawer picks the photo up and starts the try-on */
+let hoSid=null,hoT=null;
+const hoStop=()=>{clearTimeout(hoT);hoT=null;hoSid=null;};
+const hoStatus=(t,live)=>{const n=$('vto-qr-st');if(!n)return;n.querySelector('span').textContent=t;n.classList.toggle('is-live',!!live);};
+const hoPoll=()=>{if(!hoSid)return;const sid=hoSid;
+  fetch(API+'/handoff/'+sid,{cache:'no-store'}).then(r=>r.json()).then(d=>{
+    if(sid!==hoSid)return;
+    if(d.state==='opened')hoStatus('Phone connected — waiting for your photo…',true);
+    if(d.state==='uploading')hoStatus('Receiving your photo…',true);
+    if(d.state==='ready'){return fetch(API+'/handoff/'+sid+'?photo=1').then(r=>r.ok?r.blob():null).then(b=>{
+      if(!b||sid!==hoSid)return;hoStop();const f=new File([b],'phone-photo.jpg',{type:b.type||'image/jpeg'});startWith(f);});}
+    hoT=setTimeout(hoPoll,1800);
+  }).catch(()=>{hoT=setTimeout(hoPoll,3000);});};
+const hoStart=()=>{hoStop();
+  const rnd=(window.crypto&&crypto.getRandomValues)?Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join(''):(Date.now().toString(36)+Math.random().toString(36).slice(2)).padEnd(20,'0');
+  hoSid=rnd;hoStatus('Take a photo on your phone — your look appears right here',false);
+  fetch(API+'/handoff/'+rnd,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t:D.ptitle,i:D.pimg,mode:D.mode,shop:D.shop})}).catch(()=>{});
+  $('vto-qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=0&color=1c1b1a&data='+encodeURIComponent(API+'/m/'+rnd);
+  hoT=setTimeout(hoPoll,1500);};
 const qr=on=>{const q=$('vto-qr'),f=$('vto-fan');if(!q)return;
-  if(on){const u=(D.purl||location.origin+location.pathname)+'?tryfit=open';$('vto-qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=0&color=1c1b1a&data='+encodeURIComponent(u);}
+  if(on)hoStart();else hoStop();
   q.style.display=on?'flex':'none';f.style.display=on?'none':'block';$('vto-tip').style.display=on?'none':'block';$('vto-qr-lbl').textContent=on?'Back':'Upload from mobile';qrBtn.dataset.on=on?'1':'';};
 qrBtn?.addEventListener('click',()=>qr(!qrBtn.dataset.on));
 

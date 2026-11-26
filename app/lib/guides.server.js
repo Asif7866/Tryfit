@@ -25,6 +25,18 @@ const PROMPTS = {
 const inflight = new Map();
 export const GUIDE_NAMES = Object.keys(PROMPTS);
 
+const lastError = new Map();
+let running = 0;
+const queue = [];
+const slot = () => new Promise((res) => { if (running < 3) { running++; res(); } else queue.push(res); });
+const release = () => { const n = queue.shift(); if (n) n(); else running--; };
+
+const ATTEMPTS = [
+  ["fal-ai/nano-banana-pro", (p) => ({ prompt: p, aspect_ratio: "3:4", num_images: 1, output_format: "jpeg" })],
+  ["fal-ai/nano-banana", (p) => ({ prompt: p, aspect_ratio: "3:4", num_images: 1, output_format: "jpeg" })],
+  ["fal-ai/flux/dev", (p) => ({ prompt: p, image_size: "portrait_4_3", num_images: 1, enable_safety_checker: true })],
+];
+
 async function _generate(name) {
   const key = `guide:${VERSION}:${name}`;
   const hit = await prisma.tryOnCache.findUnique({ where: { cacheKey: key } }).catch(() => null);
@@ -32,24 +44,36 @@ async function _generate(name) {
   const falKey = process.env.FAL_KEY;
   if (!falKey) throw new Error("FAL_KEY missing");
   fal.config({ credentials: falKey });
-  let url = null;
+  await slot();
   try {
-    const r = await fal.subscribe("fal-ai/nano-banana-pro", { input: { prompt: PROMPTS[name], aspect_ratio: "3:4", num_images: 1, output_format: "jpeg" } });
-    url = r?.data?.images?.[0]?.url;
-  } catch (e) {
-    console.error("[guide] nano-banana-pro failed, falling back:", name, e?.message);
-  }
-  if (!url) {
-    const r = await fal.subscribe("fal-ai/flux/dev", { input: { prompt: PROMPTS[name], image_size: "portrait_4_3", num_images: 1 } });
-    url = r?.data?.images?.[0]?.url;
-  }
-  if (!url) throw new Error("no image");
-  await prisma.tryOnCache.upsert({
-    where: { cacheKey: key },
-    update: { resultUrl: url },
-    create: { shop: "__tryfit__", cacheKey: key, resultUrl: url },
-  });
-  return url;
+    let url = null;
+    const errs = [];
+    for (const [model, input] of ATTEMPTS) {
+      try {
+        const r = await fal.subscribe(model, { input: input(PROMPTS[name]) });
+        url = r?.data?.images?.[0]?.url;
+        if (url) break;
+        errs.push(`${model}: empty`);
+      } catch (e) {
+        errs.push(`${model}: ${e?.status || ""} ${e?.message || e}`);
+      }
+    }
+    if (!url) { lastError.set(name, errs.join(" | ")); console.error("[guide] FAIL", name, errs.join(" | ")); throw new Error("no image"); }
+    lastError.delete(name);
+    await prisma.tryOnCache.upsert({
+      where: { cacheKey: key },
+      update: { resultUrl: url },
+      create: { shop: "__tryfit__", cacheKey: key, resultUrl: url },
+    });
+    return url;
+  } finally { release(); }
+}
+
+/** Which guide images are ready, generating, or failing (and why). */
+export async function guideStatus() {
+  const rows = await prisma.tryOnCache.findMany({ where: { shop: "__tryfit__", cacheKey: { startsWith: `guide:${VERSION}:` } }, select: { cacheKey: true, resultUrl: true } }).catch(() => []);
+  const ready = Object.fromEntries(rows.map((r) => [r.cacheKey.split(":").pop(), r.resultUrl]));
+  return Object.fromEntries(GUIDE_NAMES.map((n) => [n, ready[n] ? { ok: true, url: ready[n] } : inflight.has(n) ? { ok: false, state: "generating" } : { ok: false, state: lastError.has(n) ? "failed" : "pending", error: lastError.get(n) }]));
 }
 
 export function getGuide(name) {

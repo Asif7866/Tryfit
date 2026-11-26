@@ -328,7 +328,7 @@ export default function Index() {
       action: <InlineStack gap="200"><Button size="slim" onClick={openTab(themeEditorUrl)}>Open theme editor</Button>
         <Checkbox label="Done" checked={onboarding.themeBlockAdded} onChange={(v) => submit({ intent: "theme_added", value: v ? "1" : "0" }, { method: "post" })} /></InlineStack> },
     { key: "test", label: "Run a test try-on on your storefront", done: onboarding.tested,
-      action: <Button size="slim" url={`https://${shop}`} external>Open store</Button> },
+      action: <Button size="slim" onClick={openTab(`https://${shop}`)}>Open store</Button> },
   ];
   const doneCount = steps.filter(s => s.done).length;
   const showOnboarding = !onboarding.dismissed && doneCount < steps.length;
@@ -345,7 +345,7 @@ export default function Index() {
       subtitle={`${slug} · AI virtual try-on`}
       titleMetadata={<Badge tone={planTone}>{`${plan} plan`}</Badge>}
       primaryAction={{ content: "Manage plan", onAction: goToPricing }}
-      secondaryActions={[{ content: "Settings", url: "/app/settings" }, { content: "View store", url: `https://${shop}`, external: true }]}
+      secondaryActions={[{ content: "Settings", url: "/app/settings" }, { content: "View store", onAction: openTab(`https://${shop}`) }]}
     >
       <Layout>
         {usagePercent >= 80 && (

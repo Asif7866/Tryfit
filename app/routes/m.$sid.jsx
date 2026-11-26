@@ -20,19 +20,19 @@ export const loader = async ({ params }) => {
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0}
-:root{--ink:#1d1b1a;--ink2:#46413e;--mute:#8a8582;--ease:cubic-bezier(.22,1,.36,1)}
+:root{--ink:#1e1c2e;--ink2:#2f2b52;--mute:#8b89a0;--ease:cubic-bezier(.22,1,.36,1)}
 html,body{height:100%;background:#faf9f8}
 body{font-family:Urbanist,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
 .f{width:100%;max-width:400px;padding:1.5px;border-radius:30px;background:linear-gradient(205deg,#ecd9c6,#e6bdb3 46%,#c8b5dc);box-shadow:0 24px 60px -28px rgba(40,30,20,.22)}
 .c{background:#fff;border-radius:28.5px;padding:22px 22px 18px;text-align:center}
 .h{font-size:12px;font-weight:600;letter-spacing:.3em;padding-left:.3em}
-.chip{display:inline-block;margin-top:16px;padding:5px 10px 4px;border-radius:999px;background:#8e8a87;color:#fff;font-size:9px;font-weight:700;letter-spacing:.14em}
+.chip{display:inline-block;margin-top:16px;padding:5px 10px 4px;border-radius:999px;background:#ecebf7;color:#4a4680;font-size:9px;font-weight:700;letter-spacing:.14em}
 h1{margin-top:10px;font-size:24px;font-weight:400;letter-spacing:-.015em;line-height:1.2}
-.p{display:flex;align-items:center;gap:12px;margin:18px 0 16px;padding:8px;border-radius:16px;background:#f6f4f2;text-align:left}
+.p{display:flex;align-items:center;gap:12px;margin:18px 0 16px;padding:8px;border-radius:16px;background:#f4f3f9;text-align:left}
 .p img{width:52px;height:68px;border-radius:10px;object-fit:cover;background:#e9e4dd;flex-shrink:0}
 .p b{display:block;font-size:15px;font-weight:600;line-height:1.25}
 .p span{font-size:12.5px;color:var(--mute)}
-.tip{font-size:14px;line-height:1.45;color:var(--mute);margin-bottom:16px}.tip i{font-style:normal;color:#aaa5a2}
+.tip{font-size:14px;line-height:1.45;color:var(--mute);margin-bottom:16px}.tip i{font-style:normal;color:#adabc0}
 .btn{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;border-radius:14px;background:var(--ink2);color:#fff;font:500 17px/1 inherit;font-family:inherit;border:none;cursor:pointer;overflow:hidden;transition:transform .3s var(--ease)}
 .btn:active{transform:scale(.985)}
 .btn input{position:absolute;inset:0;opacity:0;font-size:0}
@@ -41,7 +41,7 @@ h1{margin-top:10px;font-size:24px;font-weight:400;letter-spacing:-.015em;line-he
 .prev img{width:100%;height:100%;object-fit:cover}
 .prev .sc{position:absolute;inset:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.6),transparent);background-size:100% 40%;background-repeat:no-repeat;animation:s 1.6s ease-in-out infinite}
 @keyframes s{from{background-position:0 -60%}to{background-position:0 160%}}
-.bar{height:6px;border-radius:9px;background:#e5e2df;overflow:hidden;margin:0 0 10px}.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:9px;transition:width .3s}
+.bar{height:6px;border-radius:9px;background:#e3e1f0;overflow:hidden;margin:0 0 10px}.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:9px;transition:width .3s}
 .st{font-size:14px;color:var(--mute)}
 .ok{display:none}
 .ok .tick{width:64px;height:64px;margin:20px auto 14px;border-radius:50%;background:#4caf72;display:flex;align-items:center;justify-content:center;animation:pop .6s cubic-bezier(.34,1.5,.5,1)}

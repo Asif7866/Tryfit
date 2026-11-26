@@ -1,86 +1,80 @@
-# TryFit — Shopify App
+# TryFit (Wearoom) — AI virtual try-on for Shopify
 
-AI-powered virtual try-on for Shopify stores. Customers upload their photo, see how clothes look on them.
+Open-source Shopify app that lets shoppers see a product on themselves, or in their own room, before buying. Live on the Shopify App Store: https://apps.shopify.com/tryfit-2
 
-## Setup
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-### 1. Prerequisites
-- Node.js 18+
-- Shopify Partner account (free)
-- Replicate API token (replicate.com)
+## What it does
 
-### 2. Install
-```bash
-npm install
-```
+- **Clothing try-on** — shopper uploads a photo, sees the garment on themselves.
+- **Home decor room view** — bedsheets, curtains, rugs, cushions, wall art placed in the shopper's room photo.
+- **Jewellery and shoes** modes with their own photo guides.
+- **Theme app extension** — product-page block (button + modal) and a product-card badge. No theme code edits.
+- **Merchant dashboard** — try-ons, unique users, add-to-cart rate, top products, plan usage.
+- **Plans and usage limits** via Shopify Managed Pricing.
 
-### 3. Environment
-```bash
-cp .env.example .env
-```
-Edit `.env` and add your Replicate API token.
+## Why this repo exists
 
-### 4. Database
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
+Virtual try-on on Shopify is mostly closed and expensive. This is a complete, production-running reference for building one: theme app extension, app proxy, embedded admin, managed pricing, usage metering, result caching and storefront analytics.
 
-### 5. Run locally
-```bash
-npm run dev
-```
-Shopify CLI will create a tunnel and open the app in your dev store.
+## Stack
 
-### 6. Add to product page
-1. Go to your Shopify admin → Online Store → Customize
-2. Navigate to a product page template
-3. Add the "Virtual Try-On" block
-4. Configure button text, colors, etc.
-5. Save
-
-### 7. Deploy
-```bash
-npm run deploy
-```
+Remix · Shopify App Remix · Polaris · Prisma · Postgres · fal (image models) · Railway
 
 ## Architecture
 
 ```
-Customer clicks "Try The Look"
-  → Modal opens, uploads photo
-  → POST /apps/tryon (app proxy)
-  → Backend calls Replicate API (fashn-ai/tryon)
-  → Result image returned
-  → Shown in modal
+Storefront (theme app extension)
+  -> POST /apps/tryon            Shopify app proxy
+  -> app/routes/proxy-tryon.jsx  usage check, cache lookup, mode detection
+  -> image model via fal         selected by TRYON_MODEL
+  -> result returned to the modal
+  -> /log-tryon                  try-on and add-to-cart events
 ```
 
-## Cost
-- Replicate: ~$0.05-0.10 per try-on
-- Hosting: Free tier on Railway/Fly.io
-- Shopify: Free to develop, $0 until published to App Store
+```
+app/
+  routes/         admin pages, app proxy, webhooks, logging endpoints
+  lib/            plans, usage, analytics, guides
+  shopify.server.js
+extensions/try-on-block/
+  blocks/try-on.liquid      product page button + modal
+  blocks/card-badge.liquid  product card badge
+prisma/schema.prisma        Session, ShopSettings, TryOnLog, TryOnCache
+```
 
-## Files
+## Self-hosting
+
+Requirements: Node.js 18+, a Shopify Partner account, a fal API key, a Postgres database.
+
+```bash
+npm install
+cp .env.example .env        # fill in your own values
+npm run setup               # prisma generate + db push
+npm run dev                 # Shopify CLI tunnel + dev store
 ```
-├── app/
-│   ├── routes/
-│   │   ├── app.jsx              # Admin layout
-│   │   ├── app._index.jsx       # Dashboard
-│   │   ├── app.settings.jsx     # Merchant settings
-│   │   ├── app.proxy.tryon.jsx  # Try-on API endpoint
-│   │   ├── auth.$.jsx           # Auth callback
-│   │   ├── auth.login.jsx       # Login
-│   │   └── webhooks.jsx         # Webhooks
-│   ├── root.jsx
-│   └── shopify.server.js
-├── extensions/
-│   └── try-on-block/
-│       ├── blocks/
-│       │   └── try-on.liquid    # Frontend UI (button + modal)
-│       └── shopify.extension.toml
-├── prisma/
-│   └── schema.prisma
-├── .env.example
-├── shopify.app.toml
-└── package.json
-```
+
+Create your own app in the Partner Dashboard and run `npm run config:link` so `shopify.app.toml` points at your app, not the production one.
+
+Then in the theme editor, add the **Virtual Try-On** block to the product template.
+
+Deploy the extension with `npm run deploy`; host the server anywhere that runs Node (Railway is used in production).
+
+### Model selection
+
+| Variable | Purpose |
+| --- | --- |
+| `TRYON_MODEL` | `kolors` (default), `fashn`, `nano-banana`, `nano-banana-pro` |
+| `TRYON_MODEL_HOME` / `TRYON_MODEL_JEWELRY` / `TRYON_MODEL_SHOES` | Optional per-category override |
+
+## Contributing
+
+Issues and pull requests are welcome. Keep PRs small and focused, and describe how you tested the change on a dev store. Never commit `.env` or any API key.
+
+## Support
+
+support@futuretechiez.in
+
+## License
+
+[MIT](LICENSE) © Ashif Iqbal / [FutureTechiez](https://futuretechiez.in)

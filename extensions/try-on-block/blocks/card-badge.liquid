@@ -31,7 +31,8 @@
 if(window.__tryfitBadge)return;window.__tryfitBadge=1;
 if(window.Shopify&&Shopify.designMode&&!document.getElementById('tryfit-badge-cfg'))return;
 var C;try{C=JSON.parse(document.getElementById('tryfit-badge-cfg').textContent);}catch(e){return;}
-var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="11" cy="11.5" rx="6" ry="8.5"/><path d="M11 20v2.5M8 22.5h6"/><path d="M8.6 8.2a3.6 3.6 0 0 1 2.4-1.7"/><path d="M19.5 2.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z" fill="currentColor" stroke="none"/></svg>';
+var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d=\"M9.6 4.9a2.4 2.4 0 1 1 3.3 2.2c-.55.22-.9.74-.9 1.33V9.2\"/><path d=\"M12 9.2 3.3 15.1c-.95.65-.5 2.15.65 2.15h16.1c1.15 0 1.6-1.5.65-2.15z\"/><path d=\"M19.6 2.4l.5 1.25 1.25.5-1.25.5-.5 1.25-.5-1.25-1.25-.5 1.25-.5z\" fill=\"currentColor\" stroke=\"none\"/></svg>';
+var GEM_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d=\"M7 4.5h10l3.5 4.8L12 20 3.5 9.3z\"/><path d=\"M3.5 9.3h17M9.4 4.5 12 9.3l2.6-4.8M8.2 9.3 12 20l3.8-10.7\"/></svg>';
 var HOME_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M8 20v-4.5a1.5 1.5 0 0 1 1.5-1.5h5a1.5 1.5 0 0 1 1.5 1.5V20"/><path d="M18.5 2.5l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5z" fill="currentColor" stroke="none"/></svg>';
 var SKIP='header,footer,nav,cart-drawer,#CartDrawer,#cart-drawer,.cart-drawer,[id*="cart" i],predictive-search,.predictive-search,[role="dialog"],.tfb,#vto,.vto-root';
 var handleOf=function(h){var m=(h||'').match(/\/products\/([^/?#]+)/);return m?decodeURIComponent(m[1]):null;};
@@ -81,7 +82,7 @@ function place(a,h,mode){
   var home=mode==='h',t=document.createElement('button');t.type='button';
   t.className='tfb tfb--'+(C.pos||'br')+' tfb--'+(C.style||'dark')+(C.mobileIcon?' tfb--io':'');
   t.setAttribute('aria-label',(home?(C.home||'View in your room'):(C.text||'Virtual try-on')));
-  t.innerHTML=(home?HOME_ICON:ICON)+'<span>'+(home?(C.home||'View in room'):(C.text||'Virtual try-on')).replace(/[<>&]/g,'')+'</span>';
+  t.innerHTML=(home?HOME_ICON:mode==='j'?GEM_ICON:ICON)+'<span>'+(home?(C.home||'View in room'):(C.text||'Virtual try-on')).replace(/[<>&]/g,'')+'</span>';
   t.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var u=a.href;location.href=u+(u.indexOf('?')>-1?'&':'?')+'tryfit=open';},true);
   b.appendChild(t);
 }

@@ -18,9 +18,41 @@
   {%- if vto_cfg.buttonRadius != blank -%}{%- assign vto_btn_radius = vto_cfg.buttonRadius -%}{%- endif -%}
 {%- endif -%}
 {%- assign vto_mode = block.settings.tryon_mode | default: "auto" -%}
-{%- if vto_mode == "auto" and product -%}
-  {%- capture vto_m -%}{%- render 'tryfit-mode', p: product -%}{%- endcapture -%}
-  {%- assign vto_m = vto_m | strip -%}
+{%- if product and vto_mode == "auto" or product and vto_mode == "fashion" -%}
+  {%- assign p = product -%}
+{%- assign t = p.title | append: " " | append: p.type | append: " " | append: p.vendor -%}
+{%- assign tg = p.tags | join: " " -%}
+{%- assign hay = t | append: " " | append: tg | downcase | replace: "-", " " | replace: "_", " " | replace: ",", " " | replace: "/", " " | replace: "|", " " | replace: "(", " " | replace: ")", " " | replace: ".", " " | replace: "&", " " -%}
+{%- assign hay = " " | append: hay | append: " " -%}
+{%- assign m = "" -%}
+{%- comment -%} 1 · Jewelry worn on the neck / face → jewelry try-on {%- endcomment -%}
+{%- assign jw = "necklace,neckpiece,neck piece,pendant,choker,mangalsutra,mangal sutra,locket, haar ,rani haar,kanthi,hasli,earring,ear ring, studs ,ear cuff,jhumka,jhumki,chandbali,bali ,tikka,maang tikka,mang tikka,matha patti,nose ring,nosering,nose pin,nosepin, nath ,jewellery set,jewelry set,bridal set,necklace set" | split: "," -%}
+{%- for w in jw -%}{%- if hay contains w -%}{%- assign m = "j" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- comment -%} 1b · Footwear → shoes try-on (unless it is clearly a garment, e.g. "bootcut jeans") {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign sw = "shoe,sneaker,trainer,heels, heel ,stiletto,pumps,wedges,sandal,slipper,flip flop,flipflop, slides ,loafer,moccasin, boot , boots ,chelsea,oxford shoe,derby,brogue,mojari,jutti,juttis,kolhapuri,chappal,footwear, flats ,ballerina,mules,espadrille,clogs,crocs" | split: "," -%}
+  {%- for w in sw -%}{%- if hay contains w -%}{%- assign m = "s" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- if m == "s" -%}
+    {%- assign gw = "blouse,kurta,kurti,dress,gown,saree,sari,lehenga,top ,shirt,t shirt,tshirt,jacket,coat,blazer,skirt,trouser,pants,jeans,jumpsuit,co ord,anarkali,sharara,palazzo,dupatta,suit " | split: "," -%}
+    {%- for w in gw -%}{%- if hay contains w -%}{%- assign m = "" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%} 2 · Other jewelry & accessories (rings, bangles, anklets, watches…) → no try-on {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign no = " ring , rings ,finger ring,toe ring,bracelet,bangle, kada , kangan,anklet,payal,pajeb,brooch,cufflink,cuff link,hair clip,hairclip,hair pin,waist chain,kamarbandh,armlet,bajuband, watch , watches ,smartwatch" | split: "," -%}
+  {%- for w in no -%}{%- if hay contains w -%}{%- assign m = "0" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- if m == "0" -%}
+  {%- assign gw = "blouse,kurta,kurti,dress,gown,saree,sari,lehenga,top ,shirt,t shirt,tshirt,jacket,coat,blazer,skirt,trouser,pants,jeans,jumpsuit,co ord,anarkali,sharara,palazzo,dupatta,suit " | split: "," -%}
+  {%- for w in gw -%}{%- if hay contains w -%}{%- assign m = "" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- comment -%} 3 · Home decor → room placement {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign hw = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket, throw ,pillow,cushion,curtain,drape,rug ,carpet,doormat,table cloth,tablecloth,table runner,wall art,painting,photo frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
+  {%- for w in hw -%}{%- if hay contains w -%}{%- assign m = "h" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- if m == "" -%}{%- assign m = "f" -%}{%- endif -%}
+  {%- assign vto_m = m -%}
   {%- case vto_m -%}
     {%- when "j" -%}{%- assign vto_mode = "jewelry" -%}
     {%- when "h" -%}{%- assign vto_mode = "home" -%}
@@ -55,6 +87,7 @@
   data-shop="{{ shop.permanent_domain }}"
   data-category="{{ block.settings.garment_category }}"
   data-mode="{{ vto_mode }}"
+  data-mode-src="{{ block.settings.tryon_mode | default: 'auto' }}:{{ vto_m }}"
   data-vid="{{ product.selected_or_first_available_variant.id }}"
   data-cart-type="{{ settings.cart_type | default: '' }}"
 >
@@ -699,7 +732,7 @@ zoom?.addEventListener('click',e=>{if(e.target.id!=='vto-z-img')zoom.style.displ
     { "type": "header", "content": "AI Settings" },
     { "type": "select", "id": "tryon_mode", "label": "Experience", "default": "auto", "info": "Auto: footwear uses shoe try-on; necklaces, earrings, tikka and nose rings use jewelry try-on; rings, bangles, bracelets, anklets and watches are skipped; bedsheets, curtains, rugs, cushions and wall art use room placement.", "options": [
       { "value": "auto", "label": "Auto (recommended)" },
-      { "value": "fashion", "label": "Fashion — wear it on a photo" },
+      { "value": "fashion", "label": "Clothing (other categories still auto-detected)" },
       { "value": "home", "label": "Home decor — place it in a room photo" },
       { "value": "jewelry", "label": "Jewelry — necklaces, earrings, tikka, nose rings" },
       { "value": "shoes", "label": "Footwear — shoes, heels, sandals, juttis" }

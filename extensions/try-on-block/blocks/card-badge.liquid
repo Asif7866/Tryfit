@@ -8,9 +8,40 @@
 {%- for p in vto_list -%}{%- if p.object_type == "product" or p.handle -%}
   {%- assign off = false -%}
   {%- if vto_cfg and vto_cfg.disabledProducts -%}{%- assign pid = p.id | append: "" -%}{%- for d in vto_cfg.disabledProducts -%}{%- assign ds = d | append: "" -%}{%- if ds == pid -%}{%- assign off = true -%}{%- endif -%}{%- endfor -%}{%- endif -%}
-  {%- capture m -%}{%- render 'tryfit-mode', p: p -%}{%- endcapture -%}
+{%- assign t = p.title | append: " " | append: p.type | append: " " | append: p.vendor -%}
+{%- assign tg = p.tags | join: " " -%}
+{%- assign hay = t | append: " " | append: tg | downcase | replace: "-", " " | replace: "_", " " | replace: ",", " " | replace: "/", " " | replace: "|", " " | replace: "(", " " | replace: ")", " " | replace: ".", " " | replace: "&", " " -%}
+{%- assign hay = " " | append: hay | append: " " -%}
+{%- assign m = "" -%}
+{%- comment -%} 1 · Jewelry worn on the neck / face → jewelry try-on {%- endcomment -%}
+{%- assign jw = "necklace,neckpiece,neck piece,pendant,choker,mangalsutra,mangal sutra,locket, haar ,rani haar,kanthi,hasli,earring,ear ring, studs ,ear cuff,jhumka,jhumki,chandbali,bali ,tikka,maang tikka,mang tikka,matha patti,nose ring,nosering,nose pin,nosepin, nath ,jewellery set,jewelry set,bridal set,necklace set" | split: "," -%}
+{%- for w in jw -%}{%- if hay contains w -%}{%- assign m = "j" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- comment -%} 1b · Footwear → shoes try-on (unless it is clearly a garment, e.g. "bootcut jeans") {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign sw = "shoe,sneaker,trainer,heels, heel ,stiletto,pumps,wedges,sandal,slipper,flip flop,flipflop, slides ,loafer,moccasin, boot , boots ,chelsea,oxford shoe,derby,brogue,mojari,jutti,juttis,kolhapuri,chappal,footwear, flats ,ballerina,mules,espadrille,clogs,crocs" | split: "," -%}
+  {%- for w in sw -%}{%- if hay contains w -%}{%- assign m = "s" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- if m == "s" -%}
+    {%- assign gw = "blouse,kurta,kurti,dress,gown,saree,sari,lehenga,top ,shirt,t shirt,tshirt,jacket,coat,blazer,skirt,trouser,pants,jeans,jumpsuit,co ord,anarkali,sharara,palazzo,dupatta,suit " | split: "," -%}
+    {%- for w in gw -%}{%- if hay contains w -%}{%- assign m = "" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%} 2 · Other jewelry & accessories (rings, bangles, anklets, watches…) → no try-on {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign no = " ring , rings ,finger ring,toe ring,bracelet,bangle, kada , kangan,anklet,payal,pajeb,brooch,cufflink,cuff link,hair clip,hairclip,hair pin,waist chain,kamarbandh,armlet,bajuband, watch , watches ,smartwatch" | split: "," -%}
+  {%- for w in no -%}{%- if hay contains w -%}{%- assign m = "0" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- if m == "0" -%}
+  {%- assign gw = "blouse,kurta,kurti,dress,gown,saree,sari,lehenga,top ,shirt,t shirt,tshirt,jacket,coat,blazer,skirt,trouser,pants,jeans,jumpsuit,co ord,anarkali,sharara,palazzo,dupatta,suit " | split: "," -%}
+  {%- for w in gw -%}{%- if hay contains w -%}{%- assign m = "" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- comment -%} 3 · Home decor → room placement {%- endcomment -%}
+{%- if m == "" -%}
+  {%- assign hw = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket, throw ,pillow,cushion,curtain,drape,rug ,carpet,doormat,table cloth,tablecloth,table runner,wall art,painting,photo frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
+  {%- for w in hw -%}{%- if hay contains w -%}{%- assign m = "h" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- endif -%}
+{%- if m == "" -%}{%- assign m = "f" -%}{%- endif -%}
   {%- if off -%}{%- assign m = "0" -%}{%- endif -%}
-  {{ p.handle | json }}:"{{ m | strip }}",
+  {{ p.handle | json }}:"{{ m }}",
 {%- endif -%}{%- endfor -%}
 {%- endcapture -%}
 <script id="tryfit-badge-cfg" type="application/json">{"shop":{{ shop.permanent_domain | json }},"text":{{ block.settings.text | json }},"home":{{ block.settings.text_home | json }},"jew":{{ block.settings.text_jewelry | json }},"shoe":{{ block.settings.text_shoes | json }},"pos":{{ block.settings.position | json }},"style":{{ block.settings.style | json }},"mobileIcon":{{ block.settings.mobile_icon_only }},"off":{{ vto_cfg.disabledProducts | default: "[]" | json }},"map":{% if vto_map != blank %}{ {{ vto_map | strip | remove_last: "," }} }{% else %}null{% endif %}}</script>

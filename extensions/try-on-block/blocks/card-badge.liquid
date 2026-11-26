@@ -1,0 +1,104 @@
+{%- comment -%}
+  TryFit — "Virtual try-on" badge on product cards (collections, search, home, related products).
+  App embed: Theme customizer → App embeds → TryFit card badge.
+{%- endcomment -%}
+{%- assign vto_cfg = shop.metafields.tryfit.config.value -%}
+{%- assign vto_home_words = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket,throw,pillow,cushion,curtain,drape,rug,carpet,mat,table cloth,tablecloth,runner,wall art,painting,frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
+{%- capture vto_map -%}
+{%- assign vto_list = collection.products | default: search.results -%}
+{%- for p in vto_list -%}{%- if p.object_type == "product" or p.handle -%}
+  {%- assign off = false -%}
+  {%- if vto_cfg and vto_cfg.disabledProducts -%}{%- assign pid = p.id | append: "" -%}{%- for d in vto_cfg.disabledProducts -%}{%- assign ds = d | append: "" -%}{%- if ds == pid -%}{%- assign off = true -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+  {%- assign m = "f" -%}
+  {%- if off -%}{%- assign m = "0" -%}{%- else -%}
+    {%- assign hay = p.title | append: " " | append: p.type | append: " " | append: p.tags | join: " " | downcase -%}
+    {%- for w in vto_home_words -%}{%- if hay contains w -%}{%- assign m = "h" -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- endif -%}
+  {{ p.handle | json }}:"{{ m }}",
+{%- endif -%}{%- endfor -%}
+{%- endcapture -%}
+<script id="tryfit-badge-cfg" type="application/json">{"shop":{{ shop.permanent_domain | json }},"text":{{ block.settings.text | json }},"home":{{ block.settings.text_home | json }},"pos":{{ block.settings.position | json }},"style":{{ block.settings.style | json }},"mobileIcon":{{ block.settings.mobile_icon_only }},"map":{% if vto_map != blank %}{ {{ vto_map | strip | remove_last: "," }} }{% else %}null{% endif %}}</script>
+<style>
+.tfb{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 9px;border:none;border-radius:999px;font:700 10.5px/1 inherit;font-family:inherit;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;cursor:pointer;-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s,background .25s;opacity:0;animation:tfbIn .5s cubic-bezier(.16,1,.3,1) .1s forwards;}
+.tfb--dark{background:rgba(28,26,24,.72);color:#fff;}
+.tfb--light{background:rgba(255,255,255,.86);color:#1c1b1a;box-shadow:0 4px 14px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.04);}
+.tfb:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.22);}
+.tfb--br{right:12px;bottom:12px}.tfb--bl{left:12px;bottom:12px}.tfb--tr{right:12px;top:12px}.tfb--tl{left:12px;top:12px}
+.tfb svg{width:16px;height:16px;flex-shrink:0;display:block}
+@keyframes tfbIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(max-width:749px){.tfb{height:26px;padding:0 9px 0 7px;font-size:9px;gap:5px}.tfb--br,.tfb--bl{bottom:8px}.tfb--br,.tfb--tr{right:8px}.tfb--bl,.tfb--tl{left:8px}.tfb--tr,.tfb--tl{top:8px}.tfb svg{width:14px;height:14px}
+  .tfb.tfb--io{width:28px;height:28px;padding:0;justify-content:center}.tfb.tfb--io span{display:none}}
+@media (prefers-reduced-motion:reduce){.tfb{animation:none;opacity:1}}
+</style>
+<script>
+(function(){
+if(window.__tryfitBadge)return;window.__tryfitBadge=1;
+if(window.Shopify&&Shopify.designMode&&!document.getElementById('tryfit-badge-cfg'))return;
+var C;try{C=JSON.parse(document.getElementById('tryfit-badge-cfg').textContent);}catch(e){return;}
+var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="11" cy="11.5" rx="6" ry="8.5"/><path d="M11 20v2.5M8 22.5h6"/><path d="M8.6 8.2a3.6 3.6 0 0 1 2.4-1.7"/><path d="M19.5 2.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z" fill="currentColor" stroke="none"/></svg>';
+var HOME_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M8 20v-4.5a1.5 1.5 0 0 1 1.5-1.5h5a1.5 1.5 0 0 1 1.5 1.5V20"/><path d="M18.5 2.5l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5z" fill="currentColor" stroke="none"/></svg>';
+var SKIP='header,footer,nav,cart-drawer,#CartDrawer,#cart-drawer,.cart-drawer,[id*="cart" i],predictive-search,.predictive-search,[role="dialog"],.tfb,#vto,.vto-root';
+var handleOf=function(h){var m=(h||'').match(/\/products\/([^/?#]+)/);return m?decodeURIComponent(m[1]):null;};
+var mainHandle=handleOf(location.pathname);
+function boxFor(a){
+  var img=a.querySelector('img');
+  if(!img){var card=a.closest('li,article,product-card,.card,.product-card,.product-item,.grid__item,.grid-product,[class*="product-card"],[class*="productCard"]');img=card&&card.querySelector('img');}
+  if(!img)return null;
+  var b=img.parentElement;if(b&&b.tagName==='PICTURE')b=b.parentElement;
+  /* climb to the element that actually frames the image */
+  for(var i=0;i<3&&b&&b.parentElement&&b.offsetHeight<img.offsetHeight*0.9;i++)b=b.parentElement;
+  return b;
+}
+function badge(a){
+  if(a.closest(SKIP))return;
+  var h=handleOf(a.getAttribute('href'));if(!h)return;
+  var mode=C.map?C.map[h]:'f';if(mode==='0')return;if(!mode)mode='f';
+  var b=boxFor(a);if(!b||b.dataset.tfb)return;
+  if(b.offsetWidth<110||b.offsetHeight<110)return;
+  if(mainHandle&&h===mainHandle&&b.closest('main [class*="product__media"],main [class*="product-media"],main [class*="product-gallery"],main [class*="product__gallery"]'))return;
+  b.dataset.tfb='1';if(getComputedStyle(b).position==='static')b.style.position='relative';
+  var home=mode==='h',t=document.createElement('button');t.type='button';
+  t.className='tfb tfb--'+(C.pos||'br')+' tfb--'+(C.style||'dark')+(C.mobileIcon?' tfb--io':'');
+  t.setAttribute('aria-label',(home?(C.home||'View in your room'):(C.text||'Virtual try-on')));
+  t.innerHTML=(home?HOME_ICON:ICON)+'<span>'+(home?(C.home||'View in room'):(C.text||'Virtual try-on')).replace(/[<>&]/g,'')+'</span>';
+  t.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var u=a.href;location.href=u+(u.indexOf('?')>-1?'&':'?')+'tryfit=open';},true);
+  b.appendChild(t);
+}
+var scan=function(){document.querySelectorAll('a[href*="/products/"]').forEach(badge);};
+var q=null,later=function(){if(q)return;q=setTimeout(function(){q=null;scan();},250);};
+function start(){
+  scan();
+  try{new MutationObserver(later).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  window.addEventListener('load',later);window.addEventListener('resize',later);
+}
+/* Respect the monthly limit: no badges when the store is out of try-ons (shared 2-min cache with the PDP button) */
+var k='vto_av_'+C.shop,c=null;try{c=JSON.parse(sessionStorage.getItem(k)||'null');}catch(e){}
+if(c&&Date.now()-c.t<120000){if(c.a!==false)start();return;}
+fetch('https://tryfit-production.up.railway.app/proxy-tryon?shop='+encodeURIComponent(C.shop),{mode:'cors'}).then(function(r){return r.json();}).then(function(d){
+  var a=d.available!==false;try{sessionStorage.setItem(k,JSON.stringify({a:a,t:Date.now()}));}catch(e){}if(a)start();
+}).catch(start);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "TryFit card badge",
+  "target": "body",
+  "settings": [
+    { "type": "paragraph", "content": "Shows a try-on badge on product cards. Tapping it opens the product with try-on ready." },
+    { "type": "text", "id": "text", "label": "Badge text (fashion)", "default": "Virtual try-on" },
+    { "type": "text", "id": "text_home", "label": "Badge text (home decor)", "default": "View in your room" },
+    { "type": "select", "id": "style", "label": "Style", "default": "dark", "options": [
+      { "value": "dark", "label": "Dark glass" },
+      { "value": "light", "label": "Light glass" }
+    ]},
+    { "type": "select", "id": "position", "label": "Position", "default": "br", "options": [
+      { "value": "br", "label": "Bottom right" },
+      { "value": "bl", "label": "Bottom left" },
+      { "value": "tr", "label": "Top right" },
+      { "value": "tl", "label": "Top left" }
+    ]},
+    { "type": "checkbox", "id": "mobile_icon_only", "label": "Icon only on mobile", "default": false }
+  ]
+}
+{% endschema %}

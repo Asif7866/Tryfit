@@ -37,6 +37,12 @@ export const action = async ({ request }) => {
       return json({ success: true, event: "atc" }, { headers });
     }
 
+    if (event === "feedback_up" || event === "feedback_down" || event === "share") {
+      await prisma.tryOnLog.create({ data: { shop, productId, productTitle, resultUrl: "", status: event } });
+      return json({ success: true, event }, { headers });
+    }
+    if (event) return json({ success: true, ignored: event }, { headers }); // unknown events never count as usage
+
     await prisma.shopSettings.upsert({
       where: { shop },
       update: { monthlyTryOns: { increment: 1 }, totalTryOns: { increment: 1 } },

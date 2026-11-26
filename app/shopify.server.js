@@ -28,6 +28,7 @@ if (process.env.NODE_ENV !== "development" && !globalThis.__tokenMigrate) {
   globalThis.__tokenMigrate = true;
   const run = () => import("./lib/migrate-offline-tokens.server.js").then((m) => m.migrateOfflineTokens()).catch((e) => console.error("[token-migrate]", e.message));
   setTimeout(run, 15000);
+  setTimeout(() => import("./lib/guides.server.js").then((m) => m.warmGuides()).catch((e) => console.error("[guide]", e.message)), 20000);
   setInterval(run, 6 * 60 * 60 * 1000).unref?.(); // retry stragglers every 6h
 }
 

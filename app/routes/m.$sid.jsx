@@ -3,10 +3,10 @@ import { validSid, markOpened } from "../lib/handoff.server";
 const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const TIPS = {
-  home: ["Take a wide photo of the bed or wall", "No close-ups or dark photos"],
-  jewelry: ["Take a front-facing, chest-up photo", "Keep your neck and ears visible"],
-  shoes: ["Take a standing photo with your feet visible", "No selfies or cut-off feet"],
-  fashion: ["Take a full-length photo", "No group photos or selfies"],
+  home: ["Step back and capture the whole bed or wall", "Good daylight, no close-ups"],
+  jewelry: ["Face the camera, shoulders up", "Hair back so your neck and ears show"],
+  shoes: ["Stand on a plain floor, both feet in frame", "Don't crop at the ankles"],
+  fashion: ["Stand tall, head to toe in frame", "Just you, facing the camera"],
 };
 
 // Phone page opened from the storefront QR. Uploads one photo to the desktop session.
@@ -53,7 +53,7 @@ h1{margin-top:10px;font-size:24px;font-weight:400;letter-spacing:-.015em;line-he
 </style></head><body><div class="f"><div class="c">
 <div class="h">VIRTUAL TRY-ON</div>
 <div id="pick">
-<span class="chip">STEP 1</span><h1>Add your photo</h1>
+<span class="chip">STEP 1 OF 2</span><h1>Snap your photo</h1>
 ${m.t ? `<div class="p">${m.i ? `<img src="${esc(m.i)}" alt="">` : ""}<div><b>${esc(m.t)}</b><span>Your preview will appear on your computer</span></div></div>` : `<p class="tip" style="margin-top:14px">Your preview will appear on your computer</p>`}
 <div class="prev" id="prev"><img id="pimg" alt=""><div class="sc"></div></div>
 <div id="up" style="display:none"><div class="bar"><i id="bar"></i></div><p class="st" id="st">Sending to your computer…</p></div>
@@ -62,7 +62,7 @@ ${m.t ? `<div class="p">${m.i ? `<img src="${esc(m.i)}" alt="">` : ""}<div><b>${
 <label class="btn ghost"><input id="lib" type="file" accept="image/*"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>Choose from gallery</label></div>
 <p class="err" id="err"></p>
 </div>
-<div class="ok" id="ok"><div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>Photo sent</h2><p>Look at your computer — your try-on is being created there.</p></div>
+<div class="ok" id="ok"><div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>All set!</h2><p>Head back to your computer — your look is being styled there.</p></div>
 <a class="wm" href="https://apps.shopify.com/tryfit-2" target="_blank" rel="noopener">Powered by <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 3.8 4.3 5.7 2.6 10.2l3.1 1.2v8.8h12.6v-8.8l3.1-1.2-1.7-4.5-4.3-1.9c-.5 1.5-1.9 2.5-3.4 2.5s-2.9-1-3.4-2.5z"/></svg></i><b>Wearoom</b></a>
 </div></div>
 <script>

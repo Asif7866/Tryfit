@@ -114,8 +114,8 @@
       <!-- STEP 1 · UPLOAD -->
       <div id="vto-s-upload" class="vto-s vto-up">
         <div class="vto-up__in" id="vto-dropzone">
-          <span class="vto-chip">STEP 1</span>
-          <h2 class="vto-h" id="vto-subtitle">{% if vto_mode == "home" %}Ready to see it in your space?{% elsif vto_mode == "shoes" %}Ready to try these on?{% else %}Ready to try this on?{% endif %}</h2>
+          <span class="vto-chip">STEP 1 OF 2</span>
+          <h2 class="vto-h" id="vto-subtitle">{% if vto_mode == "home" %}Let's style your space{% elsif vto_mode == "shoes" %}Let's see them on you{% else %}Let's see it on you{% endif %}</h2>
 
           <div class="vto-fan" id="vto-fan">
             {%- if vto_mode == "home" -%}
@@ -123,7 +123,7 @@
               <img src="{{ 'tf-guide-closeup.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/closeup" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
               <img src="{{ 'tf-guide-room.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/room" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
-              <span class="vto-fan__tag">WHOLE SPACE</span></figure>
+              <span class="vto-fan__tag">WIDE SHOT</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
               <img src="{{ 'tf-guide-dark.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/dark" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- elsif vto_mode == "jewelry" -%}
@@ -131,7 +131,7 @@
               <img src="{{ 'tf-guide-jfar.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jfar" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
               <img src="{{ 'tf-guide-jportrait.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jportrait" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
-              <span class="vto-fan__tag">NECK &amp; EARS</span></figure>
+              <span class="vto-fan__tag">SHOULDERS UP</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
               <img src="{{ 'tf-guide-jcovered.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jcovered" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- elsif vto_mode == "shoes" -%}
@@ -139,7 +139,7 @@
               <img src="{{ 'tf-guide-selfie.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
               <img src="{{ 'tf-guide-sfull.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/sfull" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
-              <span class="vto-fan__tag">FEET VISIBLE</span></figure>
+              <span class="vto-fan__tag">BOTH FEET</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
               <img src="{{ 'tf-guide-scrop.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/scrop" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- else -%}
@@ -147,7 +147,7 @@
               <img src="{{ 'tf-guide-group.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/group" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
               <img src="{{ 'tf-guide-full.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/full" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
-              <span class="vto-fan__tag">FULL BODY</span></figure>
+              <span class="vto-fan__tag">HEAD TO TOE</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
               <img src="{{ 'tf-guide-selfie.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- endif -%}
@@ -155,20 +155,20 @@
 
           <div id="vto-qr" class="vto-qr" style="display:none;">
             <div class="vto-qr__box"><img id="vto-qr-img" alt="QR code" width="180" height="180" /></div>
-            <p class="vto-qr__t">Scan with your phone camera</p>
+            <p class="vto-qr__t">Point your phone camera here</p>
             <p class="vto-qr__st" id="vto-qr-st"><i></i><span>Take a photo on your phone — your look appears right here</span></p>
           </div>
 
-          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}A wide photo of the bed or wall works best.<br><span>No close-ups or dark photos.</span>{% elsif vto_mode == "shoes" %}A standing photo with your feet visible works best.<br><span>No selfies or cut-off feet.</span>{% elsif vto_mode == "jewelry" %}A front-facing, chest-up photo works best.<br><span>Keep your neck and ears visible.</span>{% else %}A full-length photo gives the most accurate fit.<br><span>No group photos or selfies.</span>{% endif %}</p>
+          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}Step back and capture the whole bed or wall.<br><span>Good daylight, no close-ups.</span>{% elsif vto_mode == "shoes" %}Stand on a plain floor, both feet in frame.<br><span>Keep them sharp — don't crop at the ankles.</span>{% elsif vto_mode == "jewelry" %}Face the camera, shoulders up.<br><span>Hair back so your neck and ears show.</span>{% else %}Stand tall, head to toe in frame.<br><span>Just you, facing the camera — no mirror selfies.</span>{% endif %}</p>
 
           <label class="vto-cta" for="vto-file">
             <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 4h5.2l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.9zM12 17.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4zm0-1.9a2.3 2.3 0 1 1 0-4.6 2.3 2.3 0 0 1 0 4.6z"/></svg>
-            <span>{% if vto_mode == "home" %}Choose a room photo{% else %}Choose a photo{% endif %}</span>
+            <span>{% if vto_mode == "home" %}Upload a room photo{% else %}Upload your photo{% endif %}</span>
           </label>
           <button id="vto-qr-btn" class="vto-ghost" type="button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>
-            <span id="vto-qr-lbl">Upload from mobile</span>
+            <span id="vto-qr-lbl">Use my phone instead</span>
           </button>
 
           <div id="vto-prev-wrap" class="vto-prev" style="display:none;">
@@ -178,13 +178,13 @@
           <p class="vto-priv"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Private · your photo is deleted after the preview</p>
           <a class="vto-wm" href="https://apps.shopify.com/tryfit-2" target="_blank" rel="noopener" aria-label="Powered by Wearoom"><span>Powered by</span><i class="vto-wm__logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 3.8 4.3 5.7 2.6 10.2l3.1 1.2v8.8h12.6v-8.8l3.1-1.2-1.7-4.5-4.3-1.9c-.5 1.5-1.9 2.5-3.4 2.5s-2.9-1-3.4-2.5z"/></svg></i><b>Wearoom</b></a>
         </div>
-        <div class="vto-uploading" id="vto-uploading"><span class="vto-spin"></span><strong>Uploading your image…</strong></div>
+        <div class="vto-uploading" id="vto-uploading"><span class="vto-spin"></span><strong>Getting your photo ready…</strong></div>
       </div>
 
       <!-- STEP 2 · PROCESSING -->
       <div id="vto-s-proc" class="vto-s vto-pr" style="display:none;">
-        <span class="vto-chip">STEP 2</span>
-        <h2 class="vto-h">{% if vto_mode == "home" %}Styling your space…{% elsif vto_mode == "jewelry" %}Adorning your look…{% elsif vto_mode == "shoes" %}Fitting your pair…{% else %}Preparing your look…{% endif %}</h2>
+        <span class="vto-chip">STEP 2 OF 2</span>
+        <h2 class="vto-h">{% if vto_mode == "home" %}Dressing up your room…{% elsif vto_mode == "jewelry" %}Adorning your look…{% elsif vto_mode == "shoes" %}Fitting your pair…{% else %}Styling your look…{% endif %}</h2>
         <div class="vto-pair">
           <div class="vto-pair__i"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
           <span class="vto-pair__sw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg></span>
@@ -213,7 +213,7 @@
           <li><i></i><span>Final touches</span></li>
           {%- endif -%}
         </ul>
-        <p class="vto-note">Colors and fit shown in AI-generated previews may vary slightly from the final product.</p>
+        <p class="vto-note">This is an AI preview — real colour and drape can differ a little.</p>
         <p class="vto-time"><span id="vto-timer">0 sec</span> · usually 15–30 sec</p>
         <button id="vto-to-mini" class="vto-link" type="button">Keep browsing — we'll bring it back ›</button>
         <a class="vto-wm" href="https://apps.shopify.com/tryfit-2" target="_blank" rel="noopener" aria-label="Powered by Wearoom"><span>Powered by</span><i class="vto-wm__logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 3.8 4.3 5.7 2.6 10.2l3.1 1.2v8.8h12.6v-8.8l3.1-1.2-1.7-4.5-4.3-1.9c-.5 1.5-1.9 2.5-3.4 2.5s-2.9-1-3.4-2.5z"/></svg></i><b>Wearoom</b></a>
@@ -231,7 +231,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
             </button>
             <div class="vto-fb" id="vto-fb">
-              <span id="vto-fb-t">Does this look right?</span><i></i>
+              <span id="vto-fb-t">Happy with it?</span><i></i>
               <button type="button" data-v="up" aria-label="Looks right"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 10v11H3V10zM7 10l4-7c1.7 0 2.7 1.3 2.3 3L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7.4A2.6 2.6 0 0 1 17.2 21H7"/></svg></button>
               <button type="button" data-v="down" aria-label="Doesn't look right"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="M7 10v11H3V10zM7 10l4-7c1.7 0 2.7 1.3 2.3 3L12.6 9H19a2 2 0 0 1 2 2.3l-1.2 7.4A2.6 2.6 0 0 1 17.2 21H7"/></svg></button>
             </div>
@@ -603,13 +603,13 @@ const hoStart=()=>{hoStop();
   hoT=setTimeout(hoPoll,1500);};
 const qr=on=>{const q=$('vto-qr'),f=$('vto-fan');if(!q)return;
   if(on)hoStart();else hoStop();
-  q.style.display=on?'flex':'none';f.style.display=on?'none':'block';$('vto-tip').style.display=on?'none':'block';$('vto-qr-lbl').textContent=on?'Back':'Upload from mobile';qrBtn.dataset.on=on?'1':'';};
+  q.style.display=on?'flex':'none';f.style.display=on?'none':'block';$('vto-tip').style.display=on?'none':'block';$('vto-qr-lbl').textContent=on?'Back':'Use my phone instead';qrBtn.dataset.on=on?'1':'';};
 qrBtn?.addEventListener('click',()=>qr(!qrBtn.dataset.on));
 
 /* Result */
 const showResult=url=>{
   const img=$('vto-res-img');img.src=url;$('vto-z-img').src=url;
-  const fb=$('vto-fb');fb.querySelectorAll('button').forEach(b=>b.classList.remove('is-on'));$('vto-fb-t').textContent='Does this look right?';
+  const fb=$('vto-fb');fb.querySelectorAll('button').forEach(b=>b.classList.remove('is-on'));$('vto-fb-t').textContent='Happy with it?';
   $('vto-pchip').classList.remove('is-open');
   show('result');setTimeout(()=>$('vto-pchip').classList.add('is-open'),700);
 };

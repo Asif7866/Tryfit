@@ -101,6 +101,7 @@
     <span>{{ vto_btn_label }}</span>
   </button>
 
+  <script>window.vtoImgErr=window.vtoImgErr||function(i){var k=+(i.dataset.r||0);if(k>4)return;i.dataset.r=k+1;var fb=i.dataset.fb;if(k===0&&fb){i.src=fb;return;}setTimeout(function(){i.src=(fb||i.src).split('?')[0]+'?r='+k;},5000*k);};</script>
   <!-- ═══ DRAWER ═══ -->
   <div id="vto-modal" class="vto-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="{% if vto_mode == 'home' %}See it in your room{% else %}Virtual try-on{% endif %}">
     <div class="vto-frame">
@@ -119,36 +120,36 @@
           <div class="vto-fan" id="vto-fan">
             {%- if vto_mode == "home" -%}
             <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/closeup" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-closeup.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/closeup" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/room" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" />
+              <img src="{{ 'tf-guide-room.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/room" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
               <span class="vto-fan__tag">WHOLE SPACE</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/dark" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-dark.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/dark" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- elsif vto_mode == "jewelry" -%}
             <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/jfar" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-jfar.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jfar" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/jportrait" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" />
+              <img src="{{ 'tf-guide-jportrait.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jportrait" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
               <span class="vto-fan__tag">NECK &amp; EARS</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/jcovered" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-jcovered.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/jcovered" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- elsif vto_mode == "shoes" -%}
             <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-selfie.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/sfull" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" />
+              <img src="{{ 'tf-guide-sfull.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/sfull" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
               <span class="vto-fan__tag">FEET VISIBLE</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/scrop" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-scrop.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/scrop" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- else -%}
             <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/group" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-group.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/group" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/full" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" />
+              <img src="{{ 'tf-guide-full.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/full" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" />
               <span class="vto-fan__tag">FULL BODY</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
-              <img src="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="var i=this,k=+(i.dataset.r||0);if(k<4){i.dataset.r=k+1;setTimeout(function(){i.src=i.src.split('?')[0]+'?r='+(k+1)},6000*(k+1))}" /></figure>
+              <img src="{{ 'tf-guide-selfie.jpg' | asset_url }}" data-fb="https://tryfit-production.up.railway.app/guide/selfie" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" onerror="vtoImgErr(this)" /></figure>
             {%- endif -%}
           </div>
 

@@ -1,6 +1,6 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Page, Layout, Card, Text, BlockStack, InlineStack, InlineGrid, Box,
   Badge, Button, ProgressBar, Divider, Thumbnail, EmptyState, Banner,
@@ -238,6 +238,10 @@ export default function Index() {
     else window.top.location.href = `https://admin.shopify.com/store/${slug}/charges/${APP_HANDLE}/pricing_plans`;
   };
   const themeEditorUrl = `https://admin.shopify.com/store/${slug}/themes/current/editor?template=product&addAppBlockId=${THEME_EXT_UID}/try-on&target=mainSection`;
+  const badgeEmbedUrl = `https://admin.shopify.com/store/${slug}/themes/current/editor?context=apps&template=collection&activateAppId=${THEME_EXT_UID}/card-badge`;
+  const [badgeHidden, setBadgeHidden] = useState(true);
+  useEffect(() => { try { setBadgeHidden(localStorage.getItem("tf_badge_cta") === "1"); } catch (e) { setBadgeHidden(false); } }, []);
+  const hideBadgeCta = () => { try { localStorage.setItem("tf_badge_cta", "1"); } catch (e) {} setBadgeHidden(true); };
   const planTone = plan.toLowerCase() === "free" ? "info" : ["pro","business","enterprise"].includes(plan.toLowerCase()) ? "success" : "attention";
   const usageTone = usagePercent >= 90 ? "critical" : usagePercent >= 70 ? "warning" : "success";
 
@@ -267,6 +271,23 @@ export default function Index() {
             <Banner title={usagePercent >= 100 ? "Monthly limit reached" : "Running low on try-ons"} tone={usagePercent >= 100 ? "critical" : "warning"} action={{ content: "Upgrade plan", onAction: goToPricing }}>
               <p>{monthlyTryOns} of {monthlyLimit} try-ons used this cycle. Upgrade to keep virtual try-on active for your shoppers.</p>
             </Banner>
+          </Layout.Section>
+        )}
+
+        {!badgeHidden && (
+          <Layout.Section>
+            <Card>
+              <InlineStack align="space-between" blockAlign="center" gap="400" wrap={false}>
+                <BlockStack gap="100">
+                  <InlineStack gap="200" blockAlign="center"><Text as="h2" variant="headingMd">Show try-on on product cards</Text><Badge tone="info">New</Badge></InlineStack>
+                  <Text as="p" variant="bodySm" tone="subdued">Adds a "Virtual try-on" badge on collection, search and home page product cards. Shoppers tap it and land on the product with try-on open. In the theme editor, switch it on and click Save.</Text>
+                </BlockStack>
+                <InlineStack gap="200" wrap={false}>
+                  <Button variant="primary" url={badgeEmbedUrl} external onClick={hideBadgeCta}>Enable badge</Button>
+                  <Button variant="tertiary" onClick={hideBadgeCta}>Dismiss</Button>
+                </InlineStack>
+              </InlineStack>
+            </Card>
           </Layout.Section>
         )}
 

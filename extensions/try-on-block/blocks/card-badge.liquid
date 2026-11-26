@@ -120,7 +120,7 @@ function place(a,h,mode){
   t.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var u=a.href;location.href=u+(u.indexOf('?')>-1?'&':'?')+'tryfit=open';},true);
   b.appendChild(t);
 }
-var scan=function(){document.querySelectorAll('a[href*="/products/"]').forEach(badge);};
+var logged=0;var scan=function(){document.querySelectorAll('a[href*="/products/"]').forEach(badge);if(!logged){logged=1;setTimeout(function(){try{console.log('%cWearoom%c card badges: '+document.querySelectorAll('.tfb').length,'background:#111;color:#fff;padding:2px 6px;border-radius:4px','color:#666');}catch(e){}},1500);}};
 var q=null,later=function(){if(q)return;q=setTimeout(function(){q=null;scan();},250);};
 function start(){
   scan();

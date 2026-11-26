@@ -15,6 +15,8 @@ const PROMPTS = {
   room: `${BASE} Wide eye-level interior photo of a bright, minimal modern bedroom showing the entire double bed with plain white bedding, the headboard, bedside table and some floor visible. Soft natural daylight, neutral warm tones.`,
   closeup: `${BASE} Extreme close-up of white cotton bed-sheet fabric with soft folds filling the entire frame, no furniture visible.`,
   dark: `${BASE} Dim, underexposed, slightly grainy smartphone photo of a bedroom at night, the bed barely visible in the shadows, a small lamp glowing faintly.`,
+  sfull: `${BASE} Full-length photo of a young woman standing on a light wooden floor facing the camera, feet slightly apart, wearing simple straight-leg cream trousers ending above the ankles and plain white sneakers, both feet and shoes fully visible and sharp, plain warm light-grey wall behind, soft daylight.`,
+  scrop: `${BASE} Photo of a person's legs where the bottom of the frame cuts off the feet at the ankles so no shoes are visible, wearing jeans, plain floor and wall, soft light.`,
   jportrait: `${BASE} Front-facing chest-up portrait of a young South Asian woman looking at the camera with a soft smile, hair neatly tied back so her neck, collarbones and both ears are clearly visible, wearing a plain off-shoulder top in a muted beige, no jewelry, plain warm light-grey backdrop, soft beauty lighting.`,
   jfar: `${BASE} Distant full-length photo of a woman standing far away in a park, very small in the frame, her neck and face too small to see details.`,
   jcovered: `${BASE} Side-profile photo of a young woman with long loose hair falling over her neck and covering her ears, wearing a high-neck winter sweater and scarf, soft indoor light.`,

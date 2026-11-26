@@ -49,7 +49,7 @@ export const action = async ({ request }) => {
     const productTitle = formData.get("product_title") || "garment";
     const productId = formData.get("product_id") || "";
     const rawMode = String(formData.get("mode") || "fashion").toLowerCase();
-    const mode = rawMode === "home" ? "home" : rawMode === "jewelry" ? "jewelry" : "fashion";
+    const mode = rawMode === "home" ? "home" : rawMode === "jewelry" ? "jewelry" : rawMode === "shoes" ? "shoes" : "fashion";
     const keepFrame = mode !== "fashion"; // room + jewelry: edit the shopper's photo in place
     const userPhotoFile = formData.get("user_photo");
     const shop = formData.get("shop");
@@ -146,6 +146,14 @@ export const action = async ({ request }) => {
                 "Ignore any staging, room, box, pedestal or props in the second image; only take the product itself. " +
                 "STRICT: the output must be the first image (the room) edited in place — identical framing, crop and aspect ratio as the first image. " +
                 "Never append, stack, tile or show the second image or any part of it. Output exactly one photorealistic image."
+              : mode === "shoes"
+              ? `Footwear virtual try-on. The first image is a photo of a customer. The second image shows a footwear product: ${productTitle}. ` +
+                "Replace whatever the person is wearing on their feet with this exact pair, worn on both feet. " +
+                "Reproduce the exact shape, toe, heel height, sole, straps, color, material, embroidery and details from the second image — do not restyle or invent details. " +
+                "Fit them to the person's feet with correct perspective, size and stance; add natural ground contact shadows matching the photo's lighting. " +
+                "Keep the person's body, legs, clothing, pose, face and background exactly unchanged; only the trouser hem may sit naturally over the shoes. " +
+                "Ignore any model, foot, box or background in the second image; only take the footwear. " +
+                "STRICT: the output must be the first image edited in place — identical framing, crop and aspect ratio. Never show the second image. Output exactly one photorealistic image."
               : mode === "jewelry"
               ? `Jewelry virtual try-on. The first image is a photo of a customer. The second image shows a jewelry product: ${productTitle}. ` +
                 "Put this exact jewelry piece on the person where it is worn — a necklace, choker, haar, chain, pendant, locket or mangalsutra around the neck resting naturally on the collarbones/chest; " +
@@ -169,9 +177,9 @@ export const action = async ({ request }) => {
       } catch (e) {
         console.error(`${model} failed, falling back to kolors:`, e.message);
       }
-      if (!resultUrl && mode === "jewelry") {
+      if (!resultUrl && (mode === "jewelry" || mode === "shoes")) {
         try {
-          const r2 = await fal.subscribe("fal-ai/nano-banana/edit", { input: { prompt: `Put the jewelry from the second image (${productTitle}) on the person in the first image exactly where it is worn. Keep the person and background unchanged, same framing. Output one photorealistic image.`, image_urls: [userPhotoUrl, garmImg], num_images: 1, output_format: "jpeg" } });
+          const r2 = await fal.subscribe("fal-ai/nano-banana/edit", { input: { prompt: `Put the ${mode === "shoes" ? "footwear" : "jewelry"} from the second image (${productTitle}) on the person in the first image exactly where it is worn. Keep the person and background unchanged, same framing. Output one photorealistic image.`, image_urls: [userPhotoUrl, garmImg], num_images: 1, output_format: "jpeg" } });
           resultUrl = r2.data?.images?.[0]?.url;
         } catch (e) { console.error("jewelry fallback failed:", e.message); }
       }

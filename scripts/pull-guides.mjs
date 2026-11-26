@@ -16,7 +16,7 @@ for (const n of NAMES) {
   let done = false;
   for (let i = 1; i <= 6 && !done; i++) {
     try {
-      const r = await fetch(`${API}/guide/${n}?w=360`);
+      const r = await fetch(`${API}/guide/${n}?w=300`);
       if (r.ok && (r.headers.get("content-type") || "").startsWith("image/")) {
         fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
         console.log(`✓ ${n}  (${Math.round(fs.statSync(file).size / 1024)} KB)`);

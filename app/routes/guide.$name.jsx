@@ -10,7 +10,7 @@ export const loader = async ({ params, request }) => {
     const w = Math.min(800, Math.max(120, Number(new URL(request.url).searchParams.get("w")) || 0));
     if (new URL(request.url).searchParams.has("w")) {
       const im = await Jimp.read(url);
-      im.resize(w, Jimp.AUTO).quality(82);
+      im.resize(w, Jimp.AUTO).quality(76);
       const buf = await im.getBufferAsync(Jimp.MIME_JPEG);
       return new Response(buf, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=604800", "Access-Control-Allow-Origin": "*" } });
     }

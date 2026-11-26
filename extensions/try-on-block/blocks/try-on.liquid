@@ -325,7 +325,7 @@
 .vto-up__in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px 14px;transition:filter .5s var(--ease),opacity .5s var(--ease),transform .5s var(--ease);}
 .vto-fan{position:relative;width:100%;height:178px;margin:16px 0 12px;}
 .vto-fan__c{position:absolute;top:50%;left:50%;margin:0;width:92px;height:124px;border-radius:12px;overflow:hidden;background:linear-gradient(140deg,#f1eee9,#e4dfd8);box-shadow:0 6px 16px -10px rgba(30,20,10,.22);}
-.vto-fan__c img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;opacity:0;transform:scale(1.06);transition:opacity .7s ease,transform 1.1s var(--ease);}
+.vto-fan__c img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;opacity:0;transform:scale(1.03);transition:opacity .3s ease,transform .6s var(--ease);}
 .vto-fan__c img.is-in{opacity:1;transform:none;}
 .vto-fan__c--l{transform:translate(-112%,-44%) rotate(-7deg);}
 .vto-fan__c--r{transform:translate(12%,-44%) rotate(7deg);}
@@ -544,6 +544,11 @@ const show=s=>{['upload','proc','result','error'].forEach(x=>{const e=$('vto-s-'
 const lockScroll=on=>{document.documentElement.style.overflow=on?'hidden':'';};
 const loadFont=()=>{if(window.__vtoFont)return;window.__vtoFont=1;try{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}};
 (window.requestIdleCallback||function(f){setTimeout(f,1200);})(loadFont);
+/* Warm the guide photos so the drawer opens fully painted */
+const warmGuides=()=>{if(window.__vtoWarm)return;window.__vtoWarm=1;try{modal.querySelectorAll('.vto-fan__c img').forEach(i=>{i.loading='eager';const p=new Image();p.decoding='async';p.onerror=()=>{if(i.dataset.fb&&p.src!==i.dataset.fb)p.src=i.dataset.fb;};p.src=i.getAttribute('src');});}catch(e){}};
+(window.requestIdleCallback||function(f){setTimeout(f,1500);})(warmGuides,{timeout:3000});
+$('vto-btn').addEventListener('pointerenter',warmGuides,{once:true});
+$('vto-btn').addEventListener('touchstart',warmGuides,{once:true,passive:true});
 let outT=null;
 const enter=()=>{clearTimeout(outT);modal.classList.remove('is-out');modal.style.display='flex';requestAnimationFrame(()=>requestAnimationFrame(()=>modal.classList.add('is-in')));};
 const leave=(after)=>{modal.classList.remove('is-in');modal.classList.add('is-out');clearTimeout(outT);outT=setTimeout(()=>{modal.style.display='none';modal.classList.remove('is-out');after&&after();},320);};

@@ -304,6 +304,7 @@ export default function Index() {
     if (window.shopify?.navigate) window.shopify.navigate(`/charges/${APP_HANDLE}/pricing_plans`);
     else window.top.location.href = `https://admin.shopify.com/store/${slug}/charges/${APP_HANDLE}/pricing_plans`;
   };
+  const openTab = (u) => () => window.open(u, "_blank", "noopener,noreferrer");
   const themeEditorUrl = `https://admin.shopify.com/store/${slug}/themes/current/editor?template=product&addAppBlockId=${THEME_EXT_UID}/try-on&target=mainSection`;
   const badgeEmbedUrl = `https://admin.shopify.com/store/${slug}/themes/current/editor?context=apps&template=collection&activateAppId=${THEME_EXT_UID}/card-badge`;
   const hideBadgeCta = () => { try { localStorage.setItem("tf_badge_cta", "1"); } catch (e) {} setBadgeHidden(true); };
@@ -324,7 +325,7 @@ export default function Index() {
   const steps = [
     { key: "plan", label: "Choose a plan", done: onboarding.planChosen, action: <Button size="slim" onClick={goToPricing}>View plans</Button> },
     { key: "theme", label: "Add the try-on button to your product page", done: onboarding.themeBlockAdded,
-      action: <InlineStack gap="200"><Button size="slim" url={themeEditorUrl} external>Open theme editor</Button>
+      action: <InlineStack gap="200"><Button size="slim" onClick={openTab(themeEditorUrl)}>Open theme editor</Button>
         <Checkbox label="Done" checked={onboarding.themeBlockAdded} onChange={(v) => submit({ intent: "theme_added", value: v ? "1" : "0" }, { method: "post" })} /></InlineStack> },
     { key: "test", label: "Run a test try-on on your storefront", done: onboarding.tested,
       action: <Button size="slim" url={`https://${shop}`} external>Open store</Button> },
@@ -364,7 +365,7 @@ export default function Index() {
                   <Text as="p" variant="bodySm" tone="subdued">Adds a "Virtual try-on" badge on collection, search and home page product cards. Shoppers tap it and land on the product with try-on open. In the theme editor, switch it on and click Save.</Text>
                 </BlockStack>
                 <InlineStack gap="200" wrap={false}>
-                  <Button variant="primary" url={badgeEmbedUrl} external onClick={hideBadgeCta}>Enable badge</Button>
+                  <Button variant="primary" onClick={() => { openTab(badgeEmbedUrl)(); hideBadgeCta(); }}>Enable badge</Button>
                   <Button variant="tertiary" onClick={hideBadgeCta}>Dismiss</Button>
                 </InlineStack>
               </InlineStack>
@@ -507,7 +508,7 @@ export default function Index() {
                           <td style={{ padding: "10px 16px" }}>
                             <InlineStack gap="300" blockAlign="center" wrap={false}>
                               <Thumbnail size="small" alt={p.title} source={im?.img || "https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"} />
-                              <BlockStack gap="050"><Text as="span" variant="bodyMd" fontWeight="medium">{p.title}</Text>{im?.handle && <PolarisLink url={`https://${shop}/products/${im.handle}`} external removeUnderline><Text as="span" variant="bodyXs" tone="subdued">View on store ↗</Text></PolarisLink>}</BlockStack>
+                              <BlockStack gap="050"><Text as="span" variant="bodyMd" fontWeight="medium">{p.title}</Text>{im?.handle && <a href={`https://${shop}/products/${im.handle}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}><Text as="span" variant="bodyXs" tone="subdued">View on store ↗</Text></a>}</BlockStack>
                             </InlineStack>
                           </td>
                           <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: 600 }}>{fmtN(p.tries)}</td>
@@ -650,7 +651,7 @@ export default function Index() {
                 ].map(([l, ok]) => (
                   <InlineStack key={l} align="space-between" blockAlign="center"><Text as="span" variant="bodySm">{l}</Text><Badge tone={ok ? "success" : "critical"} size="small">{ok ? "OK" : "Action needed"}</Badge></InlineStack>
                 ))}
-                <InlineStack align="space-between" blockAlign="center"><Text as="span" variant="bodySm">Badge on product cards</Text><Button variant="plain" url={badgeEmbedUrl} external>Check</Button></InlineStack>
+                <InlineStack align="space-between" blockAlign="center"><Text as="span" variant="bodySm">Badge on product cards</Text><Button variant="plain" onClick={openTab(badgeEmbedUrl)}>Check</Button></InlineStack>
                 <Divider />
                 <InlineStack align="space-between"><Text as="span" variant="bodySm" tone="subdued">All-time try-ons</Text><Text as="span" variant="bodySm" fontWeight="semibold">{fmtN(allTimeTryOns)}</Text></InlineStack>
                 <InlineStack align="space-between"><Text as="span" variant="bodySm" tone="subdued">Products in store</Text><Text as="span" variant="bodySm" fontWeight="semibold">{fmtN(totalProducts)}</Text></InlineStack>
@@ -708,7 +709,7 @@ export default function Index() {
       </Layout>
       <Box paddingBlockStart="800" paddingBlockEnd="400">
         <InlineStack align="center">
-          <Text as="p" variant="bodySm" tone="subdued">Wearoom by <PolarisLink url="https://futuretechiez.in" external removeUnderline>FutureTechiez</PolarisLink></Text>
+          <Text as="p" variant="bodySm" tone="subdued">Wearoom by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>FutureTechiez</a></Text>
         </InlineStack>
       </Box>
     </Page>

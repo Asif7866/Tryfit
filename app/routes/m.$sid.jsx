@@ -23,7 +23,7 @@ export const loader = async ({ params }) => {
 :root{--ink:#1d1b1a;--ink2:#46413e;--mute:#8a8582;--ease:cubic-bezier(.22,1,.36,1)}
 html,body{height:100%;background:#faf9f8}
 body{font-family:Urbanist,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
-.f{width:100%;max-width:400px;padding:1.5px;border-radius:30px;background:linear-gradient(155deg,#f4cfa9,#efbcd6 30%,#cdc7f6 62%,#bfe9df);box-shadow:0 24px 60px -28px rgba(40,30,20,.22)}
+.f{width:100%;max-width:400px;padding:1.5px;border-radius:30px;background:linear-gradient(205deg,#ecd9c6,#e6bdb3 46%,#c8b5dc);box-shadow:0 24px 60px -28px rgba(40,30,20,.22)}
 .c{background:#fff;border-radius:28.5px;padding:22px 22px 18px;text-align:center}
 .h{font-size:12px;font-weight:600;letter-spacing:.3em;padding-left:.3em}
 .chip{display:inline-block;margin-top:16px;padding:5px 10px 4px;border-radius:999px;background:#8e8a87;color:#fff;font-size:9px;font-weight:700;letter-spacing:.14em}

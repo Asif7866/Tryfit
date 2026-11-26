@@ -159,7 +159,7 @@
             <p class="vto-qr__st" id="vto-qr-st"><i></i><span>Take a photo on your phone — your look appears right here</span></p>
           </div>
 
-          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}Step back and capture the whole bed or wall.<br><span>Good daylight, no close-ups.</span>{% elsif vto_mode == "shoes" %}Stand on a plain floor, both feet in frame.<br><span>Keep them sharp — don't crop at the ankles.</span>{% elsif vto_mode == "jewelry" %}Face the camera, shoulders up.<br><span>Hair back so your neck and ears show.</span>{% else %}Stand tall, head to toe in frame.<br><span>Just you, facing the camera — no mirror selfies.</span>{% endif %}</p>
+          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}Step back and capture the whole bed or wall.<br><span>Good daylight, no close-ups.</span>{% elsif vto_mode == "shoes" %}Stand on a plain floor, both feet in frame.<br><span>Keep them sharp — don't crop at the ankles.</span>{% elsif vto_mode == "jewelry" %}Face the camera, shoulders up.<br><span>Hair back so your neck and ears show.</span>{% else %}Stand tall, head to toe in frame.<br><span>Just you, facing the camera.</span>{% endif %}</p>
 
           <label class="vto-cta" for="vto-file">
             <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
@@ -302,7 +302,7 @@
 .vto-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:flex-end;padding:20px 28px;background:rgba(250,249,248,.0);transition:background .5s var(--ease);}
 .vto-overlay.is-in{background:rgba(250,249,248,.28);}
 .vto-frame{position:relative;width:368px;max-width:100%;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);display:flex;padding:1.5px;border-radius:32px;
-  background:linear-gradient(155deg,#f4cfa9 0%,#efbcd6 30%,#cdc7f6 62%,#bfe9df 100%);
+  background:linear-gradient(205deg,#ecd9c6 0%,#e6bdb3 46%,#c8b5dc 100%);
   box-shadow:0 24px 60px -28px rgba(40,30,20,.22);
   opacity:0;transform:translateX(36px) scale(.97);transition:opacity .45s var(--ease),transform .6s var(--spring),height .5s var(--ease);}
 .vto-overlay.is-in .vto-frame{opacity:1;transform:none;}
@@ -327,8 +327,8 @@
 .vto-fan__c{position:absolute;top:50%;left:50%;margin:0;width:92px;height:124px;border-radius:12px;overflow:hidden;background:linear-gradient(140deg,#f1eee9,#e4dfd8);box-shadow:0 6px 16px -10px rgba(30,20,10,.22);}
 .vto-fan__c img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;opacity:0;transform:scale(1.03);transition:opacity .3s ease,transform .6s var(--ease);}
 .vto-fan__c img.is-in{opacity:1;transform:none;}
-.vto-fan__c--l{transform:translate(-112%,-44%) rotate(-7deg);}
-.vto-fan__c--r{transform:translate(12%,-44%) rotate(7deg);}
+.vto-fan__c--l{transform:translate(-108%,-45%) rotate(-5deg);}
+.vto-fan__c--r{transform:translate(8%,-45%) rotate(5deg);}
 .vto-fan__c--c{z-index:2;width:116px;height:160px;border-radius:14px;transform:translate(-50%,-50%);box-shadow:0 10px 24px -14px rgba(30,20,10,.3);}
 .vto-mk{position:absolute;top:7px;left:7px;z-index:2;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
 .vto-fan__c--r .vto-mk{left:auto;right:7px;}
@@ -337,7 +337,7 @@
 .vto-mk--x{background:#e2574f;}
 .vto-mk--x::before,.vto-mk--x::after{content:"";position:absolute;width:9px;height:2px;background:#fff;border-radius:2px;transform:rotate(45deg);}
 .vto-mk--x::after{transform:rotate(-45deg);}
-.vto-fan__tag{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;padding:4px 8px;border-radius:999px;background:rgba(40,37,35,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:7.5px;white-space:nowrap;font-weight:700;letter-spacing:.08em!important;text-transform:uppercase!important;}
+.vto-fan__tag{position:absolute;left:7px;bottom:7px;max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;padding:4px 8px;border-radius:999px;background:rgba(40,37,35,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:7.5px;white-space:nowrap;font-weight:700;letter-spacing:.08em!important;text-transform:uppercase!important;}
 .vto-tip{margin:0 0 14px;font-size:13.5px;line-height:1.45;color:var(--mute);max-width:300px;}
 .vto-tip span{color:#aaa5a2;}
 .vto-cta{position:relative;display:flex;align-items:center;justify-content:center;gap:11px;width:100%;height:48px;border-radius:13px;background:var(--ink2);color:#fff;font-size:16px;font-weight:500;cursor:pointer;border:none;overflow:hidden;transition:transform .35s var(--ease),background .3s,box-shadow .35s var(--ease);}
@@ -474,8 +474,8 @@
 @keyframes vReveal{from{opacity:0;transform:scale(1.06);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
 @keyframes vZoom{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 @keyframes vShine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-@keyframes vFanL{from{opacity:0;transform:translate(-50%,-48%) rotate(0) scale(.9)}to{opacity:1;transform:translate(-112%,-44%) rotate(-7deg)}}
-@keyframes vFanR{from{opacity:0;transform:translate(-50%,-48%) rotate(0) scale(.9)}to{opacity:1;transform:translate(12%,-44%) rotate(7deg)}}
+@keyframes vFanL{from{opacity:0;transform:translate(-50%,-48%) rotate(0) scale(.9)}to{opacity:1;transform:translate(-108%,-45%) rotate(-5deg)}}
+@keyframes vFanR{from{opacity:0;transform:translate(-50%,-48%) rotate(0) scale(.9)}to{opacity:1;transform:translate(8%,-45%) rotate(5deg)}}
 @keyframes vFanC{from{opacity:0;transform:translate(-50%,-46%) scale(.95)}to{opacity:1;transform:translate(-50%,-50%)}}
 @keyframes vFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
 .vto-s{animation:vF .45s var(--ease);}

@@ -123,7 +123,7 @@ export const action = async ({ request }) => {
 
     // Model switch: TRYON_MODEL=nano-banana | nano-banana-pro (Gemini via fal) | fashn (FASHN v1.6) | kolors (default)
     let model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
-    if (mode !== "fashion") model = "nano-banana-pro"; // room placement + jewelry need a general image editor
+    if (mode !== "fashion" && !model.startsWith("nano-banana")) model = "nano-banana-pro"; // room/jewelry/shoes need a general image editor; follows TRYON_MODEL when it is a Nano Banana variant
     const runKolors = async () => {
       const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
         input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
@@ -131,7 +131,7 @@ export const action = async ({ request }) => {
       return r.data?.image?.url;
     };
     let resultUrl;
-    if (model === "nano-banana" || model === "nano-banana-pro") {
+    if (model.startsWith("nano-banana")) {
       try {
         const r = await fal.subscribe(`fal-ai/${model}/edit`, {
           input: {

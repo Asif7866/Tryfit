@@ -60,5 +60,5 @@ export function getGuide(name) {
 
 /** Pre-generate all guide images at boot so no shopper waits for the first render. */
 export async function warmGuides() {
-  for (const n of GUIDE_NAMES) await getGuide(n).catch((e) => console.error("[guide] warm", n, e?.message));
+  await Promise.all(GUIDE_NAMES.map((n) => getGuide(n).then(() => console.log("[guide] ready", n)).catch((e) => console.error("[guide] warm", n, e?.message))));
 }

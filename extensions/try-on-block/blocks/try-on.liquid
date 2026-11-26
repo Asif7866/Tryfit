@@ -39,7 +39,11 @@
   └──────────────────────────────────────────────────────────────┘
 -->
 {%- assign vto_btn_label = vto_btn_text -%}
-{%- if vto_mode == "home" -%}{%- assign vto_btn_label = block.settings.button_text_home | default: "SEE IN MY ROOM" -%}{%- endif -%}
+{%- case vto_mode -%}
+  {%- when "home" -%}{%- assign vto_btn_label = block.settings.button_text_home | default: "SEE IN MY ROOM" -%}
+  {%- when "jewelry" -%}{%- assign vto_btn_label = block.settings.button_text_jewelry | default: "SEE IT ON YOU" -%}
+  {%- when "shoes" -%}{%- assign vto_btn_label = block.settings.button_text_shoes | default: "TRY THESE ON" -%}
+{%- endcase -%}
 <div
   id="vto"
   data-app="TryFit by FutureTechiez"
@@ -685,8 +689,10 @@ zoom?.addEventListener('click',e=>{if(e.target.id!=='vto-z-img')zoom.style.displ
   "templates": ["product"],
   "settings": [
     { "type": "header", "content": "Button" },
-    { "type": "text", "id": "button_text", "label": "Button Text (fashion)", "default": "TRY ON" },
+    { "type": "text", "id": "button_text", "label": "Button Text (clothing)", "default": "TRY ON" },
     { "type": "text", "id": "button_text_home", "label": "Button Text (home decor)", "default": "SEE IN MY ROOM" },
+    { "type": "text", "id": "button_text_jewelry", "label": "Button Text (jewelry)", "default": "SEE IT ON YOU" },
+    { "type": "text", "id": "button_text_shoes", "label": "Button Text (footwear)", "default": "TRY THESE ON" },
     { "type": "color", "id": "button_color", "label": "Button Color", "default": "#111111" },
     { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
     { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },

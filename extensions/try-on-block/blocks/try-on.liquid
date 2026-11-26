@@ -18,13 +18,15 @@
   {%- if vto_cfg.buttonRadius != blank -%}{%- assign vto_btn_radius = vto_cfg.buttonRadius -%}{%- endif -%}
 {%- endif -%}
 {%- assign vto_mode = block.settings.tryon_mode | default: "auto" -%}
-{%- if vto_mode == "auto" -%}
-  {%- assign vto_hay = product.title | append: " " | append: product.type | append: " " | append: product.tags | join: " " | downcase -%}
-  {%- assign vto_home_words = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket,throw,pillow,cushion,curtain,drape,rug,carpet,mat,table cloth,tablecloth,runner,wall art,painting,frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
-  {%- assign vto_mode = "fashion" -%}
-  {%- for w in vto_home_words -%}
-    {%- if vto_hay contains w -%}{%- assign vto_mode = "home" -%}{%- break -%}{%- endif -%}
-  {%- endfor -%}
+{%- if vto_mode == "auto" and product -%}
+  {%- capture vto_m -%}{%- render 'tryfit-mode', p: product -%}{%- endcapture -%}
+  {%- assign vto_m = vto_m | strip -%}
+  {%- case vto_m -%}
+    {%- when "j" -%}{%- assign vto_mode = "jewelry" -%}
+    {%- when "h" -%}{%- assign vto_mode = "home" -%}
+    {%- when "0" -%}{%- assign vto_mode = "fashion" -%}{%- assign vto_disabled = true -%}
+    {%- else -%}{%- assign vto_mode = "fashion" -%}
+  {%- endcase -%}
 {%- endif -%}
 {% if product and vto_disabled == false %}
 <!--
@@ -84,6 +86,14 @@
               <span class="vto-fan__tag">WHOLE SPACE</span></figure>
             <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
               <img src="https://tryfit-production.up.railway.app/guide/dark" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" /></figure>
+            {%- elsif vto_mode == "jewelry" -%}
+            <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
+              <img src="https://tryfit-production.up.railway.app/guide/jfar" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" /></figure>
+            <figure class="vto-fan__c vto-fan__c--c"><span class="vto-mk vto-mk--ok"></span>
+              <img src="https://tryfit-production.up.railway.app/guide/jportrait" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" />
+              <span class="vto-fan__tag">NECK &amp; EARS VISIBLE</span></figure>
+            <figure class="vto-fan__c vto-fan__c--r"><span class="vto-mk vto-mk--x"></span>
+              <img src="https://tryfit-production.up.railway.app/guide/jcovered" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" /></figure>
             {%- else -%}
             <figure class="vto-fan__c vto-fan__c--l"><span class="vto-mk vto-mk--x"></span>
               <img src="https://tryfit-production.up.railway.app/guide/group" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-in')" /></figure>
@@ -101,7 +111,7 @@
             <p class="vto-tip">Take or pick a photo on your phone — your result appears there.</p>
           </div>
 
-          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}A wide photo of the bed, window or wall gives the most realistic result.<br><span>No close-ups or dark photos.</span>{% else %}A full-length photo gives the most accurate fit.<br><span>No group photos or selfies.</span>{% endif %}</p>
+          <p class="vto-tip" id="vto-tip">{% if vto_mode == "home" %}A wide photo of the bed, window or wall gives the most realistic result.<br><span>No close-ups or dark photos.</span>{% elsif vto_mode == "jewelry" %}A front-facing photo from the chest up works best.<br><span>Keep your neck and ears visible — tie hair back if you can.</span>{% else %}A full-length photo gives the most accurate fit.<br><span>No group photos or selfies.</span>{% endif %}</p>
 
           <label class="vto-cta" for="vto-file">
             <input type="file" id="vto-file" accept="image/jpeg,image/png,image/webp" />
@@ -125,7 +135,7 @@
       <!-- STEP 2 · PROCESSING -->
       <div id="vto-s-proc" class="vto-s vto-pr" style="display:none;">
         <span class="vto-chip">STEP 2</span>
-        <h2 class="vto-h">{% if vto_mode == "home" %}Styling your space…{% else %}Preparing your look…{% endif %}</h2>
+        <h2 class="vto-h">{% if vto_mode == "home" %}Styling your space…{% elsif vto_mode == "jewelry" %}Adorning your look…{% else %}Preparing your look…{% endif %}</h2>
         <div class="vto-pair">
           <div class="vto-pair__i"><img id="vto-proc-p" src="{{ product.featured_image | image_url: width: 600 }}" alt="" /></div>
           <span class="vto-pair__sw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg></span>
@@ -139,6 +149,12 @@
           <li><i></i><span>Studying the product</span></li>
           <li><i></i><span>Placing it in your room</span></li>
           <li><i></i><span>Matching light &amp; perspective</span></li>
+          <li><i></i><span>Final touches</span></li>
+          {%- elsif vto_mode == "jewelry" -%}
+          <li><i></i><span>Reading your photo</span></li>
+          <li><i></i><span>Studying the design &amp; stones</span></li>
+          <li><i></i><span>Placing it on you</span></li>
+          <li><i></i><span>Matching shine &amp; shadows</span></li>
           <li><i></i><span>Final touches</span></li>
           {%- else -%}
           <li><i></i><span>Reading your photo</span></li>
@@ -621,10 +637,11 @@ zoom?.addEventListener('click',e=>{if(e.target.id!=='vto-z-img')zoom.style.displ
     { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#FFFFFF" },
     { "type": "range", "id": "button_radius", "label": "Corner Radius", "min": 0, "max": 30, "step": 2, "default": 12, "unit": "px" },
     { "type": "header", "content": "AI Settings" },
-    { "type": "select", "id": "tryon_mode", "label": "Experience", "default": "auto", "info": "Auto detects home-decor products (bedsheets, curtains, rugs, cushions, wall art) from title/type/tags and switches to room placement.", "options": [
+    { "type": "select", "id": "tryon_mode", "label": "Experience", "default": "auto", "info": "Auto: necklaces, earrings, tikka and nose rings use jewelry try-on; rings, bangles, bracelets, anklets and watches are skipped; bedsheets, curtains, rugs, cushions and wall art use room placement.", "options": [
       { "value": "auto", "label": "Auto (recommended)" },
       { "value": "fashion", "label": "Fashion — wear it on a photo" },
-      { "value": "home", "label": "Home decor — place it in a room photo" }
+      { "value": "home", "label": "Home decor — place it in a room photo" },
+      { "value": "jewelry", "label": "Jewelry — necklaces, earrings, tikka, nose rings" }
     ]},
     { "type": "select", "id": "garment_category", "label": "Garment Type", "default": "dresses", "info": "Upper body = tops/shirts. Lower body = pants/skirts. Full body = kurta sets, dresses, jumpsuits.", "options": [
       { "value": "upper_body", "label": "Upper Body (tops, shirts, jackets)" },

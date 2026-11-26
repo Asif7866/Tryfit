@@ -3,21 +3,17 @@
   App embed: Theme customizer → App embeds → TryFit card badge.
 {%- endcomment -%}
 {%- assign vto_cfg = shop.metafields.tryfit.config.value -%}
-{%- assign vto_home_words = "bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket,throw,pillow,cushion,curtain,drape,rug,carpet,mat,table cloth,tablecloth,runner,wall art,painting,frame,poster,tapestry,sofa cover,mattress" | split: "," -%}
 {%- capture vto_map -%}
 {%- assign vto_list = collection.products | default: search.results -%}
 {%- for p in vto_list -%}{%- if p.object_type == "product" or p.handle -%}
   {%- assign off = false -%}
   {%- if vto_cfg and vto_cfg.disabledProducts -%}{%- assign pid = p.id | append: "" -%}{%- for d in vto_cfg.disabledProducts -%}{%- assign ds = d | append: "" -%}{%- if ds == pid -%}{%- assign off = true -%}{%- endif -%}{%- endfor -%}{%- endif -%}
-  {%- assign m = "f" -%}
-  {%- if off -%}{%- assign m = "0" -%}{%- else -%}
-    {%- assign hay = p.title | append: " " | append: p.type | append: " " | append: p.tags | join: " " | downcase -%}
-    {%- for w in vto_home_words -%}{%- if hay contains w -%}{%- assign m = "h" -%}{%- break -%}{%- endif -%}{%- endfor -%}
-  {%- endif -%}
-  {{ p.handle | json }}:"{{ m }}",
+  {%- capture m -%}{%- render 'tryfit-mode', p: p -%}{%- endcapture -%}
+  {%- if off -%}{%- assign m = "0" -%}{%- endif -%}
+  {{ p.handle | json }}:"{{ m | strip }}",
 {%- endif -%}{%- endfor -%}
 {%- endcapture -%}
-<script id="tryfit-badge-cfg" type="application/json">{"shop":{{ shop.permanent_domain | json }},"text":{{ block.settings.text | json }},"home":{{ block.settings.text_home | json }},"pos":{{ block.settings.position | json }},"style":{{ block.settings.style | json }},"mobileIcon":{{ block.settings.mobile_icon_only }},"map":{% if vto_map != blank %}{ {{ vto_map | strip | remove_last: "," }} }{% else %}null{% endif %}}</script>
+<script id="tryfit-badge-cfg" type="application/json">{"shop":{{ shop.permanent_domain | json }},"text":{{ block.settings.text | json }},"home":{{ block.settings.text_home | json }},"pos":{{ block.settings.position | json }},"style":{{ block.settings.style | json }},"mobileIcon":{{ block.settings.mobile_icon_only }},"off":{{ vto_cfg.disabledProducts | default: "[]" | json }},"map":{% if vto_map != blank %}{ {{ vto_map | strip | remove_last: "," }} }{% else %}null{% endif %}}</script>
 <style>
 .tfb{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 9px;border:none;border-radius:999px;font:700 10.5px/1 inherit;font-family:inherit;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;cursor:pointer;-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s,background .25s;opacity:0;animation:tfbIn .5s cubic-bezier(.16,1,.3,1) .1s forwards;}
 .tfb--dark{background:rgba(28,26,24,.72);color:#fff;}
@@ -49,10 +45,35 @@ function boxFor(a){
   for(var i=0;i<3&&b&&b.parentElement&&b.offsetHeight<img.offsetHeight*0.9;i++)b=b.parentElement;
   return b;
 }
+/* Same rules as snippets/tryfit-mode.liquid — used for cards outside the current collection (home page, related products…) */
+var JW='necklace,neckpiece,neck piece,pendant,choker,mangalsutra,mangal sutra,locket, haar ,rani haar,kanthi,hasli,earring,ear ring, studs ,ear cuff,jhumka,jhumki,chandbali,bali ,tikka,maang tikka,mang tikka,matha patti,nose ring,nosering,nose pin,nosepin, nath ,jewellery set,jewelry set,bridal set,necklace set'.split(',');
+var NO=' ring , rings ,finger ring,toe ring,bracelet,bangle, kada , kangan,anklet,payal,pajeb,brooch,cufflink,cuff link,hair clip,hairclip,hair pin,waist chain,kamarbandh,armlet,bajuband, watch , watches ,smartwatch'.split(',');
+var HW='bedsheet,bed sheet,bedding,comforter,duvet,quilt,dohar,blanket, throw ,pillow,cushion,curtain,drape,rug ,carpet,doormat,table cloth,tablecloth,table runner,wall art,painting,photo frame,poster,tapestry,sofa cover,mattress'.split(',');
+var GW='blouse,kurta,kurti,dress,gown,saree,sari,lehenga,top ,shirt,t shirt,tshirt,jacket,coat,blazer,skirt,trouser,pants,jeans,jumpsuit,co ord,anarkali,sharara,palazzo,dupatta,suit '.split(',');
+var OFF=(C.off||[]).map(String);
+function modeOf(p){
+  if(OFF.indexOf(String(p.id))>-1)return '0';
+  var tags=Array.isArray(p.tags)?p.tags.join(' '):(p.tags||'');
+  var hay=(' '+[p.title,p.type||p.product_type,p.vendor,tags].join(' ').toLowerCase().replace(/[-_,\/|().&]/g,' ')+' ');
+  var has=function(l){return l.some(function(w){return hay.indexOf(w)>-1;});};
+  return has(JW)?'j':(has(NO)&&!has(GW))?'0':has(HW)?'h':'f';
+}
+var MK='tfb_modes',MC={};try{MC=JSON.parse(sessionStorage.getItem(MK)||'{}');}catch(e){}
+function resolveMode(h,cb){
+  if(C.map&&C.map[h])return cb(C.map[h]);
+  if(MC[h])return cb(MC[h]);
+  fetch('/products/'+encodeURIComponent(h)+'.js').then(function(r){return r.ok?r.json():null;}).then(function(p){
+    var m=p?modeOf(p):'0';MC[h]=m;try{sessionStorage.setItem(MK,JSON.stringify(MC));}catch(e){}cb(m);
+  }).catch(function(){});
+}
 function badge(a){
   if(a.closest(SKIP))return;
   var h=handleOf(a.getAttribute('href'));if(!h)return;
-  var mode=C.map?C.map[h]:'f';if(mode==='0')return;if(!mode)mode='f';
+  var b0=boxFor(a);if(!b0||b0.dataset.tfb)return;
+  b0.dataset.tfb='p';
+  resolveMode(h,function(m){if(m==='0'){b0.dataset.tfb='0';return;}delete b0.dataset.tfb;place(a,h,m);});
+}
+function place(a,h,mode){
   var b=boxFor(a);if(!b||b.dataset.tfb)return;
   if(b.offsetWidth<110||b.offsetHeight<110)return;
   if(mainHandle&&h===mainHandle&&b.closest('main [class*="product__media"],main [class*="product-media"],main [class*="product-gallery"],main [class*="product__gallery"]'))return;

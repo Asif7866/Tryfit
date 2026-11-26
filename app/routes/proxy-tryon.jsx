@@ -48,7 +48,9 @@ export const action = async ({ request }) => {
     const productImageUrl = formData.get("product_image_url");
     const productTitle = formData.get("product_title") || "garment";
     const productId = formData.get("product_id") || "";
-    const mode = (formData.get("mode") || "fashion").toLowerCase() === "home" ? "home" : "fashion";
+    const rawMode = String(formData.get("mode") || "fashion").toLowerCase();
+    const mode = rawMode === "home" ? "home" : rawMode === "jewelry" ? "jewelry" : "fashion";
+    const keepFrame = mode !== "fashion"; // room + jewelry: edit the shopper's photo in place
     const userPhotoFile = formData.get("user_photo");
     const shop = formData.get("shop");
 
@@ -121,7 +123,7 @@ export const action = async ({ request }) => {
 
     // Model switch: TRYON_MODEL=nano-banana | nano-banana-pro (Gemini via fal) | fashn (FASHN v1.6) | kolors (default)
     let model = (process.env.TRYON_MODEL || "kolors").toLowerCase();
-    if (mode === "home") model = "nano-banana-pro"; // room placement needs a general image editor
+    if (mode !== "fashion") model = "nano-banana-pro"; // room placement + jewelry need a general image editor
     const runKolors = async () => {
       const r = await fal.subscribe("fal-ai/kling/v1-5/kolors-virtual-try-on", {
         input: { human_image_url: userPhotoUrl, garment_image_url: garmImg },
@@ -144,6 +146,15 @@ export const action = async ({ request }) => {
                 "Ignore any staging, room, box, pedestal or props in the second image; only take the product itself. " +
                 "STRICT: the output must be the first image (the room) edited in place — identical framing, crop and aspect ratio as the first image. " +
                 "Never append, stack, tile or show the second image or any part of it. Output exactly one photorealistic image."
+              : mode === "jewelry"
+              ? `Jewelry virtual try-on. The first image is a photo of a customer. The second image shows a jewelry product: ${productTitle}. ` +
+                "Put this exact jewelry piece on the person where it is worn — a necklace, choker, haar, chain, pendant, locket or mangalsutra around the neck resting naturally on the collarbones/chest; " +
+                "earrings, jhumkas or studs on both earlobes as a matching pair; a maang tikka on the hair parting at the forehead; a nose ring or nose pin on the nostril. " +
+                "Reproduce the piece's exact design, metal color, stones, beads, size and proportions from the second image — do not simplify, restyle or invent details. " +
+                "Scale it realistically to the person's body, follow the neck curve, add natural contact shadows and metal/stone reflections that match the photo's lighting. " +
+                "Hair may fall naturally over or behind it. Keep the person's face, expression, skin tone, hair, clothing, pose and background exactly unchanged. " +
+                "Ignore any model, mannequin, bust, box or background in the second image; only take the jewelry itself. " +
+                "STRICT: the output must be the first image edited in place — identical framing, crop and aspect ratio. Never show the second image. Output exactly one photorealistic image."
               : `Virtual try-on. Dress the person in the first image in the exact garment shown in the second image (${productTitle}). ` +
                 "Keep the person's face, skin tone, hair, body shape, pose, and background exactly unchanged. " +
                 "Reproduce the garment's color, print, pattern, fabric texture, border, embroidery, and drape exactly as in the second image. " +
@@ -151,14 +162,20 @@ export const action = async ({ request }) => {
             image_urls: [userPhotoUrl, garmImg],
             num_images: 1,
             output_format: "jpeg",
-            ...(mode === "home" ? { aspect_ratio: await roomAspect(userBuffer) } : {}),
+            ...(keepFrame ? { aspect_ratio: await roomAspect(userBuffer) } : {}),
           },
         });
         resultUrl = r.data?.images?.[0]?.url;
       } catch (e) {
         console.error(`${model} failed, falling back to kolors:`, e.message);
       }
-      if (!resultUrl && mode !== "home") resultUrl = await runKolors();
+      if (!resultUrl && mode === "jewelry") {
+        try {
+          const r2 = await fal.subscribe("fal-ai/nano-banana/edit", { input: { prompt: `Put the jewelry from the second image (${productTitle}) on the person in the first image exactly where it is worn. Keep the person and background unchanged, same framing. Output one photorealistic image.`, image_urls: [userPhotoUrl, garmImg], num_images: 1, output_format: "jpeg" } });
+          resultUrl = r2.data?.images?.[0]?.url;
+        } catch (e) { console.error("jewelry fallback failed:", e.message); }
+      }
+      if (!resultUrl && mode === "fashion") resultUrl = await runKolors();
     } else if (model === "fashn") {
       const catMap = { upper_body: "tops", lower_body: "bottoms", dresses: "one-pieces" };
       const r = await fal.subscribe("fal-ai/fashn/tryon/v1.6", {
@@ -182,12 +199,12 @@ export const action = async ({ request }) => {
     }
 
     // Home mode safety net: if the model stitched the product photo below the room, crop back to the room's aspect ratio
-    if (mode === "home") {
+    if (keepFrame) {
       try { resultUrl = await cropToRoomAspect(resultUrl, userBuffer); } catch (e) { console.error("room crop skipped:", e.message); }
     }
 
     // Optional: studio backdrop matching the product photo (merchant toggle)
-    if (studio && mode !== "home") {
+    if (studio && mode === "fashion") {
       try {
         resultUrl = await applyStudioBackground(resultUrl, garmImg);
       } catch (bgErr) {

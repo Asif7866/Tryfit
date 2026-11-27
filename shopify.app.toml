@@ -1,4 +1,4 @@
-name = "TryFit"
+name = "Wearoom: AI Try-On & Room View"
 client_id = "801b072184a9733e9c66dc11391a28a5"
 application_url = "https://tryfit-production.up.railway.app"
 embedded = true

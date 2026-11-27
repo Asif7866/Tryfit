@@ -16,7 +16,7 @@ export const loader = async ({ params }) => {
   const m = markOpened(sid) || {};
   const [tip, sub] = TIPS[m.mode] || TIPS.fashion;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
-<title>Upload your photo · Wearoom</title>
+<title>Upload your photo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0}
@@ -63,7 +63,6 @@ ${m.t ? `<div class="p">${m.i ? `<img src="${esc(m.i)}" alt="">` : ""}<div><b>${
 <p class="err" id="err"></p>
 </div>
 <div class="ok" id="ok"><div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>All set!</h2><p>Head back to your computer — your look is being styled there.</p></div>
-<a class="wm" href="https://apps.shopify.com/tryfit-2" target="_blank" rel="noopener">Powered by <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 3.8 4.3 5.7 2.6 10.2l3.1 1.2v8.8h12.6v-8.8l3.1-1.2-1.7-4.5-4.3-1.9c-.5 1.5-1.9 2.5-3.4 2.5s-2.9-1-3.4-2.5z"/></svg></i><b>Wearoom</b></a>
 </div></div>
 <script>
 (function(){

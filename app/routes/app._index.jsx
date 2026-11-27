@@ -7,6 +7,7 @@ import {
   DataTable, Link as PolarisLink, Checkbox, ButtonGroup,
 } from "@shopify/polaris";
 import shopify, { prisma } from "../shopify.server";
+import MoreApps from "../components/MoreApps";
 import { ensureMonthlyReset } from "../lib/usage.server";
 import { PLAN_LIMITS, syncPlanFromShopify, planKeyFromName, planLabel } from "../lib/plans.server";
 import { buildAnalytics } from "../lib/analytics.server";
@@ -707,6 +708,7 @@ export default function Index() {
           </InlineGrid>
         </Layout.Section>
       </Layout>
+      <MoreApps current="wearoom" />
       <Box paddingBlockStart="800" paddingBlockEnd="400">
         <InlineStack align="center">
           <Text as="p" variant="bodySm" tone="subdued">Wearoom by <a href="https://futuretechiez.in" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>FutureTechiez</a></Text>
